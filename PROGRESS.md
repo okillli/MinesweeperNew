@@ -2,7 +2,14 @@
 
 _Made with love for Lizzie_ ✨
 
-## Phase 1: Core Proof of Fun ✅ COMPLETE (WITH FIXES)
+## Current Status: Phase 2 Complete ✅
+
+**Last Updated**: 2025-12-30
+**Version**: 0.3.0
+
+---
+
+## Phase 1: Core Proof of Fun ✅ COMPLETE
 
 **Date Completed**: 2025-12-30
 **Status**: Working and playable
@@ -137,18 +144,19 @@ python -m http.server 8000
 
 ---
 
-## Phase 2: Roguelike Resource Systems ✅ IMPLEMENTED (TESTING IN PROGRESS)
+## Phase 2: Roguelike Resource Systems ✅ COMPLETE
 
-**Date Started**: 2025-12-30
-**Status**: Implementation complete, ready for testing
+**Date Completed**: 2025-12-30
+**Status**: Fully implemented and tested
 
 ### Implemented Features
 
 **Resources & Economy** ✅
-- ✅ **HP system** - Players start with 3 HP, -1 per mine hit, game over at 0 HP
+- ✅ **HP system** - Configurable starting HP (1-10), -1 per mine hit, game over at 0 HP
 - ✅ **Coin generation** - +10 coins per safe cell revealed (including cascades)
 - ✅ **Mana system** - +5 mana per cell revealed, +10 per flag placed (capped at 100)
-- ✅ **Reactive HUD** - Real-time updates for HP, coins, mana display
+- ✅ **Reactive HUD** - Real-time updates with color-coded HP display
+- ✅ **Configurable HP** - Settings screen allows adjusting starting HP (1-10)
 
 ### Implementation Details
 
@@ -186,45 +194,29 @@ python -m http.server 8000
   - Keyboard handlers: Space reveal, C chord, F flag (lines ~1157-1310)
   - updateHUD() function updated (lines 96-102)
 
-### Testing Status
+### Testing Status ✅ PASSED
 
-**Server Running**: http://localhost:8000
+All test cases verified:
+- ✅ TC1: HP damage system working (configurable HP → decrements → game over at 0)
+- ✅ TC2: Coin from reveal (+10 per cell)
+- ✅ TC3: Coin from cascade (+10 × cells revealed)
+- ✅ TC4: Mana from reveal (+5 per cell)
+- ✅ TC5: Mana from flag (+10 per flag placed)
+- ✅ TC6: Mana cap (stops at 100)
+- ✅ TC7: HUD updates immediately with color-coded HP
+- ✅ TC8: Chording with mines (damage per mine)
+- ✅ TC9: No rewards for mine hits
+- ✅ TC10: Mobile touch input works
+- ✅ TC11: Keyboard controls work (arrows, Space, F, C)
 
-**Manual Testing Required** (from PLAN_phase2-resources.md):
-- [ ] TC1: HP damage system (3 HP → 2 → 1 → 0 game over)
-- [ ] TC2: Coin from reveal (+10 per cell)
-- [ ] TC3: Coin from cascade (+10 × cells revealed)
-- [ ] TC4: Mana from reveal (+5 per cell)
-- [ ] TC5: Mana from flag (+10 per flag placed)
-- [ ] TC6: Mana cap (stops at 100)
-- [ ] TC7: HUD updates immediately
-- [ ] TC8: Chording with mines (damage per mine)
-- [ ] TC9: No rewards for mine hits
-- [ ] TC10: Mobile touch input works
-- [ ] TC11: Keyboard controls work
+### What's NOT Implemented Yet (Future Phases)
 
-**Expected Behavior**:
-- Start with HP: 3/3, Coins: 0, Mana: 0/100
-- Reveal safe cell: +10 coins, +5 mana
-- Reveal 10-cell cascade: +100 coins, +50 mana
-- Place flag: +10 mana
-- Hit mine: -1 HP, game continues if HP > 0
-- Hit 3 mines: Game over
-
-### What's NOT Implemented Yet (Phase 2+)
-
-**Resources & Economy**:
-- ✅ HP system (damage tracking) - DONE
-- ✅ Coin generation (+10 per cell) - DONE
-- ✅ Mana system (ability fuel) - DONE
-- ✅ HUD display (showing HP/coins/mana) - DONE
-
-**Items & Shop**:
+**Items & Shop** (Phase 2B):
 - ❌ Item system (20 items)
 - ❌ Shop between boards
 - ❌ Item effects (passive/active/consumable)
 
-**Progression**:
+**Progression** (Phase 3):
 - ❌ Multi-board runs (5 boards + boss)
 - ❌ Difficulty scaling
 - ❌ Quest system
@@ -232,70 +224,50 @@ python -m http.server 8000
 - ❌ Gems & unlocks
 - ❌ Save/load system
 
-**UI/Polish**:
-- ✅ Menu screens (working and wired up)
-- ✅ Game over screen (complete with stats and "New Game" button)
-- ✅ **Hover feedback** (visual highlights on mouse-over)
-- ✅ **Touch support** (tap to reveal, long-press to flag)
-- ✅ **Cursor feedback** (pointer cursor during gameplay)
-- ❌ Quest/character selection (Phase 2)
-- ❌ Shop UI (Phase 2)
-- ❌ Animations/juice (Phase 4)
-- ❌ Sound effects (Phase 4)
+**Polish** (Phase 4):
+- ❌ Animations/juice
+- ❌ Sound effects
+- ❌ Tutorial/onboarding
 
-### Recent Bug Fixes & Improvements (2025-12-30)
+### All Features Implemented (2025-12-30)
 
-**Bug Fixes**:
-- ✅ Fixed click coordinate mapping (off-by-one error in grid positioning)
-- ✅ Implemented complete game over flow (reveals all mines, shows stats, offers replay)
-- ✅ Added full mobile/tablet touch support (tap to reveal, long-press to flag)
+**Core Gameplay**:
+- ✅ Complete minesweeper mechanics (reveal, flag, chord, cascade)
+- ✅ HP damage system (configurable 1-10 starting HP)
+- ✅ Coin system (+10 per safe cell)
+- ✅ Mana system (+5 per cell, +10 per flag, capped at 100)
+- ✅ Color-coded HP display (green/orange/red with pulse animation)
 
-**Code Quality Improvements**:
-- ✅ Added Grid input validation (prevents infinite loops)
-- ✅ Added RAF loop error handling (prevents silent failures)
-- ✅ Added Canvas input validation (clearer error messages)
-- ✅ Implemented AbortController for event cleanup (prevents memory leaks)
+**Input Systems**:
+- ✅ Mouse controls (click reveal, right-click flag, hover feedback)
+- ✅ Touch controls (tap reveal, long-press flag, haptic feedback)
+- ✅ Keyboard navigation (arrows, Space/Enter, F, C, Shift+Space)
+- ✅ Seamless input mode switching
 
-**UX Enhancements**:
-- ✅ **Hover feedback system** - Visual highlights before clicking
-  - Green border + white overlay on unrevealed cells
-  - Blue border on revealed cells (chording indication)
-  - Orange border on flagged cells (matches flag color)
-  - Pointer cursor during gameplay
-  - Smooth, optimized performance (only updates on cell change)
+**Game Flow**:
+- ✅ Menu navigation (all buttons work)
+- ✅ Settings screen (configurable starting HP, sound/music toggles)
+- ✅ Game over overlay (stats display, new game, return to menu)
+- ✅ HUD with real-time resource updates
 
-**Documentation Updates**:
-- ✅ Documented EventBus as Phase 2 feature
-- ✅ Documented GameState public properties design
-- ✅ Marked StateMachine as Phase 2 feature
-- ✅ Added Phase 2 tasks to roadmap
-- ✅ Created HOVER_TESTING_GUIDE.md
-- ✅ Created HOVER_IMPLEMENTATION_SUMMARY.md
-
-### Phase 1 Success Criteria
-
-**Goal**: Validate that basic minesweeper is fun
-
-✅ **Achieved**:
-- Core minesweeper mechanics work flawlessly
-- Click handling is responsive
-- Grid renders correctly
-- Win/lose conditions work
-- Code is clean and maintainable
-
-**Next**: Playtest to validate fun factor before proceeding to Phase 2!
+**Code Quality**:
+- ✅ Grid input validation (prevents infinite loops)
+- ✅ RAF loop error handling (prevents silent failures)
+- ✅ Canvas input validation (clearer error messages)
+- ✅ AbortController for event cleanup (prevents memory leaks)
+- ✅ Comprehensive JSDoc documentation
 
 ---
 
-## Next Steps: Phase 2 Planning
+## Next Steps: Phase 2B - Items & Shop
 
-### Phase 2: Roguelike Elements (Week 3-4)
+### Phase 2B: Item System
 
-**Goal**: Add items, shops, and HP system to create roguelike loop
+**Goal**: Add items, shops, and multi-board progression
 
 **High Priority Tasks**:
-1. Implement resource systems (HP, coins, mana)
-2. Create HUD display
+1. ~~Implement resource systems (HP, coins, mana)~~ ✅ DONE
+2. ~~Create HUD display~~ ✅ DONE
 3. Define 20 items in data/items.js
 4. Implement ItemSystem
 5. Implement ShopSystem
@@ -307,9 +279,8 @@ python -m http.server 8000
 - `src/data/items.js` - Item definitions (20 items)
 - `src/systems/ItemSystem.js` - Item effects and management
 - `src/systems/ShopSystem.js` - Shop logic and purchasing
-- `src/rendering/UIRenderer.js` - Update DOM UI elements (HUD, shop)
 
-**Estimated Time**: 15-20 hours
+**Estimated Time**: 10-15 hours
 
 ---
 
@@ -339,19 +310,18 @@ python -m http.server 8000
 
 ### Known Issues
 
-None currently - Phase 1 MVP is working!
+None currently - all implemented features working!
 
 ### Technical Debt
 
 - **Module System**: Currently using global scripts; may want to migrate to ES6 modules later
 - **Hardcoded Test Grid**: Need to implement proper board generation from constants
-- **No Error Handling**: MVP has minimal error handling; add validation for production
 - **Console Logging**: Using console.log for debugging; implement proper logging system later
 
 ---
 
 **Last Updated**: 2025-12-30
-**Phase**: 1 (Core Proof of Fun) - COMPLETE ✅
-**Next Phase**: 2 (Roguelike Elements)
-**Total Lines of Code**: ~1,600 (7 core files + hover system)
-**Recent Addition**: Hover feedback system with context-aware visual highlights
+**Phase**: 2A (Resource Systems) - COMPLETE ✅
+**Next Phase**: 2B (Items & Shop)
+**Total Lines of Code**: ~2,000 (7 core files + resource systems + input handling)
+**Recent Additions**: Configurable HP, keyboard navigation, game over flow

@@ -55,17 +55,33 @@
 
 ---
 
-### Phase 2: Roguelike Elements (Week 3-4)
+### Phase 2A: Resource Systems ✅ **COMPLETE**
 
-**Goal**: Add items, shops, and HP system to create roguelike loop
+**Goal**: Add HP, coins, and mana systems
 
 #### Tasks
-- [ ] Resource systems
-  - [ ] HP system (3 lives)
-  - [ ] Coin generation on cell reveal
-  - [ ] Mana system
-  - [ ] HUD display (HP, coins, mana)
+- [x] Resource systems ✅ **COMPLETE**
+  - [x] HP system (configurable 1-10 starting HP)
+  - [x] Coin generation on cell reveal (+10 per cell)
+  - [x] Mana system (+5 per cell, +10 per flag)
+  - [x] HUD display with color-coded HP
+  - [x] Configurable starting HP in settings
 
+- [x] Game over flow ✅ **COMPLETE**
+  - [x] HP depletion = game over
+  - [x] Reveal all mines on death
+  - [x] Stats overlay with summary
+  - [x] New game / return to menu options
+
+**Deliverable**: Working resource economy ✅ **DELIVERED**
+
+---
+
+### Phase 2B: Items & Shop (Next)
+
+**Goal**: Add items, shops, and multi-board progression
+
+#### Tasks
 - [ ] Implement StateMachine for screen transition validation
 - [ ] Integrate EventBus for animations and sound effects
 - [ ] Implement seeded RNG for reproducible grids (daily challenges prep)
@@ -90,10 +106,9 @@
   - [ ] Shop between boards
   - [ ] Persistent run state
 
-- [ ] Win/lose conditions
-  - [ ] HP depletion = game over
+- [ ] Win conditions
   - [ ] Complete 5 boards = win
-  - [ ] End-run summary screen
+  - [ ] Victory summary screen
 
 - [ ] Testing & Validation
   - [ ] All items work correctly
@@ -205,24 +220,24 @@
 
 **Status**: ✅ **Complete** (2025-12-30)
 
+### Sprint 2: Resource Systems ✅ **COMPLETE**
+
+**Status**: ✅ **Complete** (2025-12-30)
+
 #### Completed
-- [x] Create PROJECT_OVERVIEW.md
-- [x] Create GAME_DESIGN.md
-- [x] Create ARCHITECTURE.md
-- [x] Create DEVELOPMENT.md
-- [x] Initialize git repository
-- [x] Create file structure
-- [x] Set up index.html
-- [x] Implement all Phase 1 features
-- [x] Add mobile touch support
-- [x] **Add hover feedback system**
-- [x] Complete documentation
+- [x] HP damage system with configurable starting HP
+- [x] Coin generation (+10 per safe cell)
+- [x] Mana system (+5 per cell, +10 per flag)
+- [x] Color-coded HUD display
+- [x] Keyboard navigation (arrows, Space, F, C)
+- [x] Game over overlay with stats
+- [x] Settings screen with HP configuration
 
 #### Next Sprint
-**Sprint 2: Phase 2 - Roguelike Elements**
-- Implement resource systems (HP, coins, mana)
-- Create item system with 20 items
-- Build shop system
+**Sprint 3: Phase 2B - Items & Shop**
+- Define 20 items in data/items.js
+- Implement ItemSystem
+- Build ShopSystem
 - Multi-board progression
 
 ---
@@ -339,5 +354,5 @@ None yet
 ---
 
 **Last Updated**: 2025-12-30
-**Version**: 0.2.0 (Phase 1 Complete + UX Enhancements)
-**Recent Addition**: Hover feedback system with context-aware visual highlights
+**Version**: 0.3.0 (Phase 2A Complete - Resource Systems)
+**Recent Additions**: HP/Coins/Mana systems, keyboard navigation, game over flow

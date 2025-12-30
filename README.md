@@ -39,18 +39,27 @@ _Made with love for Lizzie_ ✨
 
 ## 🚀 Quick Start
 
-1. Open `index.html` in your browser
-2. Choose a quest and character
-3. Clear boards, collect items, and complete objectives!
+1. Open `index.html` in your browser (or run `python -m http.server 8000`)
+2. Click "Start Run" to begin
+3. Reveal cells, avoid mines, and see how long you can survive!
+
+**Currently Playable**: Core minesweeper with HP system, coins, mana, and configurable difficulty.
 
 ## 🎯 Features
 
-- **Quest-Based Gameplay**: Different objectives each run (treasure hunts, speed runs, perfect clears)
-- **Roguelike Progression**: Collect items, build synergies, unlock new content
+### Currently Implemented ✅
+- **HP Damage System**: Survive multiple mine hits (configurable 1-10 starting HP)
+- **Resource Economy**: Earn coins (+10/cell) and mana (+5/cell, +10/flag)
+- **Color-Coded HUD**: Real-time HP/Coins/Mana display with visual feedback
+- **Multi-Input Support**: Mouse, keyboard (arrows/Space/F/C), and touch controls
+- **Mobile-Friendly**: Tap to reveal, long-press to flag
+- **Game Over Flow**: Stats display, new game, return to menu
+
+### Coming Soon 🚧
+- **Quest-Based Gameplay**: Different objectives each run
+- **Roguelike Progression**: Collect items, build synergies
 - **Character Classes**: 5 unique classes with different playstyles
-- **Fully Accessible**: Keyboard, mouse, and touch controls (WCAG 2.1 Level AA)
-- **Mobile-Friendly**: Touch controls optimized for mobile browsers
-- **No Installation**: Runs directly in your browser
+- **Shop System**: Buy items between boards
 
 ## 🎲 How to Play
 
@@ -152,5 +161,5 @@ Inspired by:
 
 ---
 
-**Version**: 0.1.0 (Pre-MVP)
-**Status**: In Development
+**Version**: 0.3.0
+**Status**: Phase 2A Complete - Playable with HP/Coins/Mana

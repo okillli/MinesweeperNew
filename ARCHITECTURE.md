@@ -753,4 +753,4 @@ events.emit('cell_revealed', { x: 5, y: 3, isMine: false });
 ---
 
 **Last Updated**: 2025-12-30
-**Version**: 0.1.0 (Pre-MVP)
+**Version**: 0.3.0 (Phase 2A Complete)

@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Multi-Session Coordination
 1. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Read session protocols
-2. **[SESSION_SUMMARY.md](SESSION_SUMMARY.md)** - Check file ownership
+2. **[PROGRESS.md](PROGRESS.md)** - Check current status
 3. **This file** - Development workflow section
 
 ---
@@ -61,8 +61,14 @@ git push -u origin main
 # Then enable GitHub Pages in repo settings
 ```
 
-### No Build/Test Commands
-This is vanilla JavaScript with no build process, bundler, or test framework currently configured.
+### Testing
+```bash
+# Run Playwright tests (requires npm install first)
+npm install
+npx playwright test
+```
+
+This is vanilla JavaScript with no build process or bundler. Tests are written using Playwright.
 
 ## Architecture Overview
 

@@ -121,18 +121,27 @@ Build: None (vanilla JS)
 
 > See [DEVELOPMENT.md](DEVELOPMENT.md) for complete roadmap and task details
 
-### Phase 1: Core Proof of Fun ✅ Started
+### Phase 1: Core Proof of Fun ✅ COMPLETE
 - [x] Project setup & documentation
 - [x] File structure created
 - [x] Git initialized
 - [x] HTML/CSS templates
-- [ ] Basic minesweeper (Cell, Grid classes)
-- [ ] Canvas rendering
-- [ ] Click handling
-- [ ] Simple game loop
+- [x] Basic minesweeper (Cell, Grid classes)
+- [x] Canvas rendering
+- [x] Click handling
+- [x] Simple game loop
+- [x] Touch controls
+- [x] Hover feedback
 
-### Phase 2: Roguelike Elements (Next)
-- [ ] HP/Coins/Mana systems
+### Phase 2A: Resource Systems ✅ COMPLETE
+- [x] HP system (configurable 1-10)
+- [x] Coins (+10 per cell)
+- [x] Mana (+5 per cell, +10 per flag)
+- [x] HUD with color-coded HP
+- [x] Game over flow
+- [x] Keyboard navigation
+
+### Phase 2B: Items & Shop (Next)
 - [ ] 20 items implemented
 - [ ] Shop system
 - [ ] Multi-board runs
@@ -147,7 +156,6 @@ Build: None (vanilla JS)
 
 ### Phase 4: Polish
 - [ ] Animations & juice
-- [ ] Mobile controls
 - [ ] Tutorial
 - [ ] Deploy to GitHub Pages
 
@@ -262,11 +270,11 @@ git push -u origin main
 
 ## 🎯 Next Immediate Steps
 
-1. Implement `Cell.js` and `Grid.js` (minesweeper logic)
-2. Implement `CanvasRenderer.js` (draw grid)
-3. Wire up click handlers
-4. Test basic minesweeper gameplay
-5. **PLAYTEST** - Is it fun?
+1. Define 20 items in `src/data/items.js`
+2. Implement `ItemSystem` for item effects
+3. Implement `ShopSystem` for purchasing
+4. Wire up multi-board progression
+5. **PLAYTEST** - Do items add strategic depth?
 
 ---
 
@@ -289,3 +297,4 @@ git push -u origin main
 - **Workflow**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) - Session protocols
 
 **Last Updated**: 2025-12-30
+**Version**: 0.3.0
