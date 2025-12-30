@@ -1,6 +1,36 @@
 /**
  * CanvasRenderer - Renders the minesweeper grid to an HTML5 canvas
  *
+ * DEPENDENCIES (what this imports):
+ * - None (reads from GameState passed as parameter)
+ *
+ * DEPENDENTS (what imports this):
+ * - Game.js (creates instance, calls render())
+ * - main.js (accesses renderer properties for input conversion)
+ *
+ * CRITICAL PATHS:
+ * 1. Game loop → Game.render() → CanvasRenderer.render(GameState) → canvas draw
+ * 2. User click → main.js → canvasToGrid() → uses renderer.cellSize/padding
+ * 3. Hover → main.js → GameState.hoverCell set → CanvasRenderer.renderHoverHighlight()
+ *
+ * CHANGE IMPACT: MEDIUM
+ * - Visual-only changes have low risk
+ * - cellSize / padding changes break input coordinate conversion
+ * - Rendering algorithm changes could affect performance
+ *
+ * PUBLIC PROPERTIES ACCESSED:
+ * - renderer.cellSize (accessed by main.js for coordinate conversion)
+ * - renderer.padding (accessed by main.js for coordinate conversion)
+ *
+ * SIDE EFFECTS:
+ * - Canvas drawing operations (GPU usage)
+ * - Clears and redraws entire canvas every frame
+ *
+ * ASSUMPTIONS:
+ * - GameState structure is stable (currentScreen, grid, hoverCell, cursor)
+ * - Grid.cells array is valid when rendering
+ * - Canvas context is available and functional
+ *
  * Responsibilities:
  * - Pure rendering logic (no game state modification)
  * - Draws grid, cells, numbers, mines, and flags

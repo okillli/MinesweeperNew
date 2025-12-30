@@ -71,6 +71,34 @@ body {
     font-size: 1.1em;
 }
 
+/* HP display color coding */
+#hp-display {
+    transition: color 0.3s ease;
+}
+
+#hp-display.hp-critical {
+    color: #e63946;
+    text-shadow: 0 0 8px rgba(230, 57, 70, 0.6);
+    animation: pulse-hp 1s ease-in-out infinite;
+}
+
+#hp-display.hp-low {
+    color: #f4a261;
+}
+
+#hp-display.hp-full {
+    color: #2ecc71;
+}
+
+@keyframes pulse-hp {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
 /* ===========================
    Screens
    =========================== */
@@ -94,28 +122,83 @@ body {
     width: 100%;
 }
 
-/* Overlay screen - sits on top of other screens */
-.screen-overlay {
+/* ===========================
+   Game Over Overlay
+   =========================== */
+
+/* Game over overlay - appears on top of game screen without hiding it */
+.gameover-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Dark semi-transparent backdrop */
-    z-index: 2000; /* Above everything else */
-    display: flex; /* Always use flex layout */
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent backdrop */
+    z-index: 2000;
+    overflow-y: auto; /* Allow scrolling to see stats */
+    overflow-x: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.gameover-overlay:not(.hidden) {
+    opacity: 1;
+}
+
+.gameover-overlay.hidden {
+    display: none;
+    opacity: 0;
+}
+
+/* Semi-transparent message box centered on screen */
+.gameover-message-box {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
 }
 
-/* When overlay is not active, hide it */
-.screen-overlay:not(.active) {
-    display: none;
+.gameover-message-box::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    height: auto;
+    min-height: 200px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 16px;
+    border: 3px solid #e63946;
+    z-index: -1;
 }
 
-/* Game screen should stay visible when overlay is active */
-#game-screen {
-    z-index: 1; /* Below overlay but visible */
+.gameover-message-box.victory::before {
+    border-color: #f4a261;
+}
+
+/* Spacer to push stats below viewport */
+.gameover-spacer {
+    height: 20vh;
+}
+
+/* Stats container with solid background */
+.gameover-stats-container {
+    background: #1a1a2e;
+    width: 100%;
+    padding: 40px 20px 60px;
+    min-height: 50vh;
+}
+
+/* Stats section styling */
+.stats-section {
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 /* ===========================
@@ -126,10 +209,45 @@ body {
     font-size: 3em;
     font-weight: bold;
     margin-bottom: 10px;
+    letter-spacing: -2px;
+    line-height: 1.2;
+}
+
+/* Logo styling - MINE and SWEEPER emphasized */
+.logo-mine,
+.logo-sweeper {
     background: linear-gradient(135deg, #f4a261 0%, #e76f51 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    font-size: 1.3em;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    display: inline-block;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.logo-lizzie {
+    color: #aaa;
+    font-size: 0.6em;
+    font-weight: 400;
+    text-transform: lowercase;
+    opacity: 0.7;
+    position: relative;
+    top: 0.1em;
+    letter-spacing: 0;
+}
+
+/* Subtle glow animation for MINE and SWEEPER */
+@keyframes glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 4px rgba(244, 162, 97, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(244, 162, 97, 0.8));
+    }
 }
 
 .subtitle {
@@ -406,15 +524,16 @@ h3 {
 }
 
 /* ===========================
-   Game Over Screen
+   Game Over Message Box Content
    =========================== */
 
 /* Title styling */
 #gameover-title {
     font-size: 2.5em;
-    margin-bottom: 10px;
-    text-align: center;
+    margin: 0 0 15px 0;
     font-weight: bold;
+    position: relative;
+    z-index: 1;
 }
 
 /* Victory title - gold gradient */
@@ -432,11 +551,12 @@ h3 {
 
 /* Message text */
 #gameover-message {
-    font-size: 1.2em;
+    font-size: 1.3em;
     color: #eee;
-    text-align: center;
-    margin-bottom: 30px;
+    margin: 0 0 20px 0;
     line-height: 1.5;
+    position: relative;
+    z-index: 1;
 }
 
 /* Highlight board number in message */
@@ -444,25 +564,68 @@ h3 {
     color: #f4a261;
 }
 
+/* Scroll hint */
+.gameover-hint {
+    font-size: 1.1em;
+    color: #aaa;
+    margin: 20px 0 0 0;
+    animation: bounce 2s infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .gameover-hint {
+        animation: none;
+    }
+    .gameover-overlay {
+        transition: none;
+    }
+    .logo-mine,
+    .logo-sweeper {
+        animation: none;
+    }
+}
+
+.stats-section h2 {
+    color: #f4a261;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
 .stats-summary {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 20px;
-    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 25px;
+    border-radius: 12px;
     margin: 20px 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stats-summary h3 {
     color: #f4a261;
-    margin-bottom: 15px;
-    font-size: 1.3em;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    text-align: center;
 }
 
 .stats-summary p {
     display: flex;
     justify-content: space-between;
-    margin: 10px 0;
-    font-size: 1.1em;
+    margin: 12px 0;
+    font-size: 1.2em;
     color: #ddd;
 }
 
@@ -473,22 +636,34 @@ h3 {
 
 .rewards {
     background: rgba(244, 162, 97, 0.15);
-    padding: 20px;
-    border-radius: 8px;
+    padding: 25px;
+    border-radius: 12px;
     border: 2px solid #f4a261;
-    margin-bottom: 30px;
+    margin: 20px 0 30px;
 }
 
 .rewards h3 {
     color: #f4a261;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.4em;
 }
 
 .gems-earned {
-    font-size: 1.8em;
+    font-size: 2em;
     font-weight: bold;
-    color: #ffd700; /* Gold for gems */
+    color: #ffd700;
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    text-align: center;
+}
+
+/* Action buttons */
+.gameover-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
 }
 
 /* ===========================
@@ -562,6 +737,11 @@ h3 {
 @media (max-width: 768px) {
     .title {
         font-size: 2em;
+        letter-spacing: -1px;
+    }
+
+    .logo-lizzie {
+        font-size: 0.5em;
     }
 
     .btn {
@@ -588,19 +768,44 @@ h3 {
         height: 50px;
     }
 
-    /* Game over screen mobile optimizations */
+    /* Game over overlay mobile optimizations */
+    .gameover-message-box {
+        padding: 30px 15px;
+    }
+
+    .gameover-message-box::before {
+        width: 95%;
+        min-height: 180px;
+    }
+
     #gameover-title {
         font-size: 2em;
     }
 
     #gameover-message {
+        font-size: 1.1em;
+    }
+
+    .gameover-hint {
         font-size: 1em;
     }
 
-    .screen-overlay .screen-content {
-        max-height: 90vh;
-        overflow-y: auto;
+    .gameover-stats-container {
+        padding: 30px 15px 60px;
+    }
+
+    .stats-summary,
+    .rewards {
         padding: 20px;
+    }
+
+    .gameover-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .gameover-actions .btn {
+        width: 100%;
     }
 }
 

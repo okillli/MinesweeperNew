@@ -4,6 +4,36 @@
  * Centralized state management for MineQuest.
  * This is the single source of truth for all game state.
  *
+ * DEPENDENCIES (what this imports):
+ * - None (pure state container)
+ * - Conceptually depends on Grid, but doesn't import it (stores reference)
+ *
+ * DEPENDENTS (what imports this):
+ * - Game.js (creates GameState instance, calls update())
+ * - main.js (reads/modifies state for UI updates, resource tracking)
+ * - CanvasRenderer.js (reads state for rendering decisions)
+ *
+ * CRITICAL PATHS:
+ * 1. Game loop → Game.update() → GameState.update() → system updates
+ * 2. User action → main.js → GameState resource methods → HUD update
+ * 3. Game over → GameState.endRun() → stat tracking → persistent save
+ * 4. Keyboard navigation → GameState cursor methods → CanvasRenderer display
+ *
+ * CHANGE IMPACT: CRITICAL
+ * - Everything depends on GameState structure
+ * - Property renames break all consumers
+ * - Adding properties is generally safe, removing is dangerous
+ *
+ * SIDE EFFECTS:
+ * - Modifies persistent stats (saved to localStorage eventually)
+ * - Awards gems on run completion
+ * - Tracks run statistics for achievements
+ *
+ * ASSUMPTIONS:
+ * - Grid is initialized when cursor methods are called
+ * - Resource methods are only called during active gameplay
+ * - endRun() is called exactly once per run
+ *
  * State Management Philosophy:
  * - Pure data structure with minimal logic
  * - Never directly manipulates DOM or Canvas

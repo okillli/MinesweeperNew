@@ -37,7 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // The loop runs continuously, but only renders when on PLAYING screen
   game.start();
 
-  console.log('MineQuest initialized');
+  console.log('LiMineZZsweeperIE initialized - Made for Lizzie ✨');
+
+  // Create EventBus instance for game events
+  // Note: EventBus is currently used for keyboard navigation events
+  // Future phases will expand usage for animations, sounds, achievements
+  const events = new EventBus();
 
   // ============================================================================
   // SCREEN TRANSITION SYSTEM
@@ -92,10 +97,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Updates the HUD display with current game state
+   * Includes color-coded HP display for better visual feedback
    */
   function updateHUD() {
     const run = game.state.currentRun;
-    document.getElementById('hp-display').textContent = run.hp;
+
+    // Update HP display with color coding
+    const hpDisplay = document.getElementById('hp-display');
+    hpDisplay.textContent = `${run.hp}/${run.maxHp}`;
+
+    // Calculate HP percentage for color coding
+    const hpPercent = run.hp / run.maxHp;
+
+    // Remove all HP classes first
+    hpDisplay.classList.remove('hp-critical', 'hp-low', 'hp-full');
+
+    // Apply appropriate class based on HP percentage
+    if (hpPercent <= 0.33) {
+      hpDisplay.classList.add('hp-critical'); // Red + pulsing (≤33%)
+    } else if (hpPercent <= 0.66) {
+      hpDisplay.classList.add('hp-low'); // Orange (34-66%)
+    } else {
+      hpDisplay.classList.add('hp-full'); // Green (67-100%)
+    }
+
+    // Update other HUD elements
     document.getElementById('mana-display').textContent = `${run.mana}/${run.maxMana}`;
     document.getElementById('coins-display').textContent = run.coins;
     document.getElementById('board-display').textContent = `${run.boardNumber}/6`;
@@ -106,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
 
   /**
-   * Updates the game over screen with contextual information
+   * Updates the game over overlay with contextual information
    * @param {Object} summary - Summary data from GameState.endRun()
    */
   function updateGameOverScreen(summary) {
@@ -116,6 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.getElementById('gameover-title');
     title.textContent = victory ? 'Victory!' : 'Game Over';
     title.className = victory ? 'victory' : 'defeat';
+
+    // Update message box styling
+    const messageBox = document.querySelector('.gameover-message-box');
+    if (messageBox) {
+      messageBox.className = victory ? 'gameover-message-box victory' : 'gameover-message-box';
+    }
 
     // Update message with context
     const message = document.getElementById('gameover-message');
@@ -134,11 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Handles game over when a mine is hit
-   * - Reveals all mines on the grid
-   * - Stops game loop and freezes canvas
-   * - Updates game over screen with stats
-   * - Transitions to game over screen after a delay
+   * Handles game over when HP is depleted
+   *
+   * Flow (following UX best practices):
+   * 1. Mine explosion is already shown (mine revealed before this is called)
+   * 2. Wait 1 second - let player see what happened (cause-and-effect)
+   * 3. Reveal all remaining mines - show where mines were located (learning opportunity)
+   * 4. Wait another 1 second - processing time
+   * 5. Fade in semi-transparent overlay on top of game screen
+   * 6. Game screen stays visible beneath, overlay is scrollable to show stats
    */
   function handleGameOver() {
     // Set game over flag to prevent further clicks
@@ -146,27 +182,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const grid = game.state.grid;
 
-    // Reveal all mines on the grid
-    if (grid) {
-      grid.revealAllMines();
-    }
-
-    // Stop the game loop - final frame stays on canvas
-    game.stop();
-
-    // Freeze canvas rendering - preserve final state
-    game.renderer.freeze();
-
-    // Transition state and get summary
-    const summary = game.state.endRun(false); // false = defeat
-
-    // Update game over UI with summary
-    updateGameOverScreen(summary);
-
-    // Show game over overlay (after brief delay for impact)
+    // Step 1: Mine explosion already shown (mine was revealed before calling this)
+    // Step 2: Wait 1 second to let player process what happened
     setTimeout(() => {
-      showScreen('gameover-screen');
-    }, 300);
+      // Step 3: Reveal all remaining mines on the grid
+      if (grid) {
+        grid.revealAllMines();
+      }
+
+      // Step 4: Wait another second to show all mines
+      setTimeout(() => {
+        // Stop the game loop and freeze canvas rendering
+        // This preserves the final state visible beneath the overlay
+        game.stop();
+        game.renderer.freeze();
+
+        // Transition state and get summary
+        const summary = game.state.endRun(false); // false = defeat
+
+        // Update overlay UI with summary
+        updateGameOverScreen(summary);
+
+        // Step 5: Show semi-transparent overlay on top of game screen
+        // Game screen stays active - we just add overlay on top
+        const overlay = document.getElementById('gameover-overlay');
+        if (overlay) {
+          overlay.classList.remove('hidden');
+          // Scroll overlay to top to show message box
+          overlay.scrollTop = 0;
+        }
+
+        console.log('Game Over - overlay shown, game screen visible beneath');
+      }, 1000);
+    }, 1000);
   }
 
   // ============================================================================
@@ -202,8 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize run state for testing
     game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = 3;
-    game.state.currentRun.maxHp = 3;
+    game.state.currentRun.hp = 1;  // Set to 1 for easier game over testing
+    game.state.currentRun.maxHp = 1;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
@@ -275,11 +323,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /**
-   * Game Over screen "New Game" button
+   * Game Over overlay "New Game" button
    */
   document.getElementById('gameover-newgame-button').addEventListener('click', () => {
+    // Hide the game over overlay (game screen is already visible beneath)
+    const overlay = document.getElementById('gameover-overlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
+
     // Clear board state and reset flags
     game.state.clearBoard();
+
+    // Create a new test grid (must happen BEFORE centerCursor)
+    const testGrid = new Grid(10, 10, 15);
+    game.state.grid = testGrid;
+
+    // Center keyboard cursor on new grid (grid must exist first!)
+    game.state.centerCursor();
 
     // Unfreeze renderer
     game.renderer.unfreeze();
@@ -287,21 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Restart game loop
     game.start();
 
-    // Create a new test grid
-    const testGrid = new Grid(10, 10, 15);
-    game.state.grid = testGrid;
-
-    // Center keyboard cursor on new grid
-    game.state.centerCursor();
-
     // Focus canvas for keyboard navigation
     canvas.tabIndex = 0;
     canvas.focus();
 
     // Initialize run state
     game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = 3;
-    game.state.currentRun.maxHp = 3;
+    game.state.currentRun.hp = 1;  // Set to 1 for easier game over testing
+    game.state.currentRun.maxHp = 1;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
@@ -317,16 +371,25 @@ document.addEventListener('DOMContentLoaded', () => {
       perfectBoards: 0
     };
 
-    // Transition to game screen
+    // Update HUD with reset values
+    updateHUD();
+
+    // Show game screen (critical - without this, user stays on whatever screen was active)
     showScreen('game-screen');
 
-    console.log('New game started from game over screen');
+    console.log('New game started from game over overlay');
   });
 
   /**
-   * Game Over screen "Return to Menu" button
+   * Game Over overlay "Return to Menu" button
    */
   document.getElementById('gameover-menu-button').addEventListener('click', () => {
+    // Hide the game over overlay
+    const overlay = document.getElementById('gameover-overlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
+
     // Clear board state
     game.state.clearBoard();
 
@@ -455,15 +518,37 @@ document.addEventListener('DOMContentLoaded', () => {
       if (chordedCells.length > 0) {
         console.log(`Chorded ${chordedCells.length} cells at (${x}, ${y})`);
 
+        // Count safe cells and mines
+        const minesHit = chordedCells.filter(c => c.isMine).length;
+        const safeCells = chordedCells.length - minesHit;
+
         // Update cells revealed stat
         game.state.currentRun.stats.cellsRevealed += chordedCells.length;
 
-        // Check if any chorded cells were mines (game over condition)
-        const hitMine = chordedCells.some(c => c.isMine);
-        if (hitMine) {
-          console.log('Hit a mine while chording! Game Over.');
-          game.state.currentRun.stats.minesHit++;
-          handleGameOver();
+        // Award coins and mana for safe cells
+        if (safeCells > 0) {
+          const coinsEarned = safeCells * 10;
+          const manaEarned = safeCells * 5;
+          game.state.addCoins(coinsEarned);
+          game.state.addMana(manaEarned);
+          updateHUD();
+          console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
+        }
+
+        // Apply damage for mines hit
+        if (minesHit > 0) {
+          game.state.takeDamage(minesHit);
+          updateHUD();
+
+          console.log(`Chord hit ${minesHit} mine(s)! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+          // Only game over if HP depleted
+          if (game.state.currentRun.hp <= 0) {
+            console.log('HP depleted! Game Over.');
+            handleGameOver();
+          } else {
+            console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+          }
           return;
         }
 
@@ -476,28 +561,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Otherwise, reveal the cell
     else {
+      // Track cells revealed for coin calculation
+      const revealedBefore = grid.revealed;
+
       const revealedCell = grid.revealCell(x, y);
 
       if (revealedCell) {
         console.log(`Revealed cell at (${x}, ${y}) - Mine: ${revealedCell.isMine}, Number: ${revealedCell.number}`);
 
-        // Update cells revealed stat (revealCell may cascade, so count all revealed)
-        const cellsRevealedBefore = grid.revealed;
-        game.state.currentRun.stats.cellsRevealed = cellsRevealedBefore;
-
-        // Check if we hit a mine (game over condition)
+        // Check if we hit a mine (damage system)
         if (revealedCell.isMine) {
-          console.log('Hit a mine! Game Over.');
-          game.state.currentRun.stats.minesHit++;
-          handleGameOver();
+          // Damage system - lose 1 HP per mine
+          game.state.takeDamage(1);
+          updateHUD();
+
+          console.log(`Hit mine! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+          // Only game over if HP depleted
+          if (game.state.currentRun.hp <= 0) {
+            console.log('HP depleted! Game Over.');
+            handleGameOver();
+          } else {
+            console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+          }
           return;
         }
+
+        // Calculate how many cells were revealed (including cascade)
+        const cellsRevealed = grid.revealed - revealedBefore;
+
+        // Update cells revealed stat
+        game.state.currentRun.stats.cellsRevealed += cellsRevealed;
+
+        // Award coins (+10 per cell)
+        const coinsEarned = cellsRevealed * 10;
+        game.state.addCoins(coinsEarned);
+
+        // Award mana (+5 per cell)
+        const manaEarned = cellsRevealed * 5;
+        game.state.addMana(manaEarned);
+
+        // Update HUD
+        updateHUD();
+
+        console.log(`Revealed ${cellsRevealed} cells | +${coinsEarned} coins | +${manaEarned} mana`);
 
         // Check win condition (all non-mine cells revealed)
         if (grid.isComplete()) {
           console.log('Congratulations! You won!');
           // TODO: In full game, this would:
-          // - Award coins/mana based on cells revealed
           // - Transition to shop or next board
           // - Update quest progress
           // For MVP, we just log it
@@ -547,6 +659,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const cell = grid.getCell(x, y);
       console.log(`${cell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y})`);
       console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
+
+      // Award mana for placing flag (+10)
+      if (cell.isFlagged) {
+        game.state.addMana(10);
+        updateHUD();
+        console.log('Flag placed! +10 mana');
+      }
     }
 
     // Re-render is automatic - the game loop continuously renders
@@ -629,6 +748,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const updatedCell = grid.getCell(x, y);
           console.log(`${updatedCell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y}) via long-press`);
           console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
+
+          // Award mana for placing flag (+10)
+          if (updatedCell.isFlagged) {
+            game.state.addMana(10);
+            updateHUD();
+            console.log('Flag placed! +10 mana');
+          }
         }
 
         longPressTriggered = true;
@@ -764,15 +890,37 @@ document.addEventListener('DOMContentLoaded', () => {
       if (chordedCells.length > 0) {
         console.log(`Chorded ${chordedCells.length} cells at (${x}, ${y}) via tap`);
 
+        // Count safe cells and mines
+        const minesHit = chordedCells.filter(c => c.isMine).length;
+        const safeCells = chordedCells.length - minesHit;
+
         // Update cells revealed stat
         game.state.currentRun.stats.cellsRevealed += chordedCells.length;
 
-        // Check if any chorded cells were mines (game over condition)
-        const hitMine = chordedCells.some(c => c.isMine);
-        if (hitMine) {
-          console.log('Hit a mine while chording! Game Over.');
-          game.state.currentRun.stats.minesHit++;
-          handleGameOver();
+        // Award coins and mana for safe cells
+        if (safeCells > 0) {
+          const coinsEarned = safeCells * 10;
+          const manaEarned = safeCells * 5;
+          game.state.addCoins(coinsEarned);
+          game.state.addMana(manaEarned);
+          updateHUD();
+          console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
+        }
+
+        // Apply damage for mines hit
+        if (minesHit > 0) {
+          game.state.takeDamage(minesHit);
+          updateHUD();
+
+          console.log(`Chord hit ${minesHit} mine(s)! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+          // Only game over if HP depleted
+          if (game.state.currentRun.hp <= 0) {
+            console.log('HP depleted! Game Over.');
+            handleGameOver();
+          } else {
+            console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+          }
           touchStartPos = null;
           return;
         }
@@ -786,22 +934,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Otherwise, reveal the cell
     else {
+      // Track cells revealed for coin calculation
+      const revealedBefore = grid.revealed;
+
       const revealedCell = grid.revealCell(x, y);
 
       if (revealedCell) {
         console.log(`Revealed cell at (${x}, ${y}) via tap - Mine: ${revealedCell.isMine}, Number: ${revealedCell.number}`);
 
-        // Update cells revealed stat
-        game.state.currentRun.stats.cellsRevealed = grid.revealed;
-
-        // Check if we hit a mine (game over condition)
+        // Check if we hit a mine (damage system)
         if (revealedCell.isMine) {
-          console.log('Hit a mine! Game Over.');
-          game.state.currentRun.stats.minesHit++;
-          handleGameOver();
+          // Damage system - lose 1 HP per mine
+          game.state.takeDamage(1);
+          updateHUD();
+
+          console.log(`Hit mine! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+          // Only game over if HP depleted
+          if (game.state.currentRun.hp <= 0) {
+            console.log('HP depleted! Game Over.');
+            handleGameOver();
+          } else {
+            console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+          }
           touchStartPos = null;
           return;
         }
+
+        // Calculate how many cells were revealed (including cascade)
+        const cellsRevealed = grid.revealed - revealedBefore;
+
+        // Update cells revealed stat
+        game.state.currentRun.stats.cellsRevealed += cellsRevealed;
+
+        // Award coins (+10 per cell)
+        const coinsEarned = cellsRevealed * 10;
+        game.state.addCoins(coinsEarned);
+
+        // Award mana (+5 per cell)
+        const manaEarned = cellsRevealed * 5;
+        game.state.addMana(manaEarned);
+
+        // Update HUD
+        updateHUD();
+
+        console.log(`Revealed ${cellsRevealed} cells | +${coinsEarned} coins | +${manaEarned} mana`);
 
         // Check win condition (all non-mine cells revealed)
         if (grid.isComplete()) {
@@ -1016,28 +1193,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!cell || cell.isRevealed || cell.isFlagged) return;
 
+    // Track cells revealed for coin calculation
+    const revealedBefore = game.state.grid.revealed;
+
     const revealed = game.state.grid.revealCell(x, y);
     if (!revealed) return;
 
-    // Handle mine hit
+    // Handle mine hit (damage system)
     if (revealed.isMine) {
-      game.state.currentRun.hp = Math.max(0, game.state.currentRun.hp - 1);
-      game.state.currentRun.stats.minesHit++;
-      events.emit('mine_hit', { x, y, hp: game.state.currentRun.hp });
+      // Damage system - lose 1 HP per mine
+      game.state.takeDamage(1);
+      updateHUD();
 
-      if (game.state.currentRun.hp === 0) {
-        game.state.isGameOver = true;
-        events.emit('game_over', { reason: 'death' });
+      console.log(`Hit mine! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+      // Only game over if HP depleted
+      if (game.state.currentRun.hp <= 0) {
+        console.log('HP depleted! Game Over.');
+        // Small delay to show the revealed mine before game over sequence
+        setTimeout(() => {
+          handleGameOver();
+        }, 200);
+      } else {
+        console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
       }
+      return;
     } else {
-      // Reward coins and mana for safe reveal
-      const coinsEarned = Math.floor(10 * (game.state.currentRun.coinMultiplier || 1.0));
-      game.state.currentRun.coins += coinsEarned;
-      game.state.currentRun.mana = Math.min(
-        game.state.currentRun.maxMana,
-        game.state.currentRun.mana + 5
-      );
-      game.state.currentRun.stats.cellsRevealed++;
+      // Calculate how many cells were revealed (including cascade)
+      const cellsRevealed = game.state.grid.revealed - revealedBefore;
+
+      // Update cells revealed stat
+      game.state.currentRun.stats.cellsRevealed += cellsRevealed;
+
+      // Award coins (+10 per cell)
+      const coinsEarned = cellsRevealed * 10;
+      game.state.addCoins(coinsEarned);
+
+      // Award mana (+5 per cell)
+      const manaEarned = cellsRevealed * 5;
+      game.state.addMana(manaEarned);
+
+      // Update HUD
+      updateHUD();
+
+      console.log(`Revealed ${cellsRevealed} cells | +${coinsEarned} coins | +${manaEarned} mana`);
       events.emit('cell_revealed', { x, y, coinsEarned });
     }
 
@@ -1060,13 +1259,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const success = game.state.grid.toggleFlag(x, y);
 
-    // Mana bonus for correct flag placement
-    if (success && cell.isFlagged && cell.isMine) {
-      game.state.currentRun.mana = Math.min(
-        game.state.currentRun.maxMana,
-        game.state.currentRun.mana + 10
-      );
-      events.emit('correct_flag', { x, y });
+    // Award mana for placing flag (+10)
+    if (success) {
+      const updatedCell = game.state.grid.getCell(x, y);
+      if (updatedCell && updatedCell.isFlagged) {
+        game.state.addMana(10);
+        updateHUD();
+        console.log('Flag placed! +10 mana');
+        events.emit('flag_placed', { x, y });
+      }
     }
   }
 
@@ -1082,35 +1283,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const revealedCells = game.state.grid.chord(x, y);
 
-    // Process each revealed cell
-    for (const revealed of revealedCells) {
-      if (revealed.isMine) {
-        game.state.currentRun.hp = Math.max(0, game.state.currentRun.hp - 1);
-        game.state.currentRun.stats.minesHit++;
-        events.emit('mine_hit', {
-          x: revealed.x,
-          y: revealed.y,
-          hp: game.state.currentRun.hp
-        });
+    // Check if any chorded cells were mines (damage system)
+    const minesHit = revealedCells.filter(c => c.isMine).length;
+    if (minesHit > 0) {
+      // Apply damage for each mine hit
+      game.state.takeDamage(minesHit);
+      updateHUD();
 
-        if (game.state.currentRun.hp === 0) {
-          game.state.isGameOver = true;
-          events.emit('game_over', { reason: 'death' });
-          break;
-        }
+      console.log(`💥 Chord hit ${minesHit} mine(s)! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+      // Only game over if HP depleted
+      if (game.state.currentRun.hp <= 0) {
+        console.log('☠️  HP depleted! Game Over.');
+        // Small delay to show the revealed mine before game over sequence
+        setTimeout(() => {
+          handleGameOver();
+        }, 200);
       } else {
-        const coinsEarned = Math.floor(10 * (game.state.currentRun.coinMultiplier || 1.0));
-        game.state.currentRun.coins += coinsEarned;
-        game.state.currentRun.mana = Math.min(
-          game.state.currentRun.maxMana,
-          game.state.currentRun.mana + 5
-        );
-        game.state.currentRun.stats.cellsRevealed++;
-        events.emit('cell_revealed', {
-          x: revealed.x,
-          y: revealed.y,
-          coinsEarned
-        });
+        console.log(`❤️  Still alive! ${game.state.currentRun.hp} HP remaining`);
+      }
+      return;
+    }
+
+    // Count safe cells and award resources
+    const safeCells = revealedCells.filter(c => !c.isMine).length;
+
+    if (safeCells > 0) {
+      // Award coins and mana for safe cells
+      const coinsEarned = safeCells * 10;
+      const manaEarned = safeCells * 5;
+      game.state.addCoins(coinsEarned);
+      game.state.addMana(manaEarned);
+
+      // Update stats
+      game.state.currentRun.stats.cellsRevealed += safeCells;
+
+      // Update HUD
+      updateHUD();
+
+      console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
+
+      // Emit events for each revealed cell
+      for (const revealed of revealedCells) {
+        if (!revealed.isMine) {
+          events.emit('cell_revealed', {
+            x: revealed.x,
+            y: revealed.y,
+            coinsEarned: 10
+          });
+        }
       }
     }
 

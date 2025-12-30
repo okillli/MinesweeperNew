@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="MineQuest - A modern minesweeper roguelike with quests and progression">
+    <meta name="description" content="LiMineZZsweeperIE - A modern minesweeper roguelike with quests and progression">
     <meta name="theme-color" content="#1a1a2e">
 
-    <title>MineQuest - Minesweeper Roguelike</title>
+    <title>LiMineZZsweeperIE - Minesweeper Roguelike</title>
 
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -40,7 +40,9 @@
         <!-- Main Menu Screen -->
         <div id="menu-screen" class="screen active">
             <div class="screen-content">
-                <h1 class="title">MineQuest</h1>
+                <h1 class="title">
+                    <span class="logo-lizzie">li</span><span class="logo-mine">MINE</span><span class="logo-lizzie">zz</span><span class="logo-sweeper">SWEEPER</span><span class="logo-lizzie">ie</span>
+                </h1>
                 <p class="subtitle">A Minesweeper Roguelike</p>
 
                 <div class="menu-buttons">
@@ -107,28 +109,40 @@
             </div>
         </div>
 
-        <!-- Game Over Screen -->
-        <div id="gameover-screen" class="screen screen-overlay">
-            <div class="screen-content">
-                <h2 id="gameover-title">Victory!</h2>
-                <p id="gameover-message">You completed the quest!</p>
+        <!-- Game Over Overlay (appears on top of game screen) -->
+        <div id="gameover-overlay" class="gameover-overlay hidden">
+            <!-- Semi-transparent message box centered on screen -->
+            <div class="gameover-message-box">
+                <h2 id="gameover-title">Game Over</h2>
+                <p id="gameover-message">You were defeated!</p>
+                <p class="gameover-hint">Scroll down for details ↓</p>
+            </div>
 
-                <div class="stats-summary">
-                    <h3>Run Statistics</h3>
-                    <p>Boards Cleared: <span id="stat-boards">0</span></p>
-                    <p>Cells Revealed: <span id="stat-cells">0</span></p>
-                    <p>Coins Earned: <span id="stat-coins">0</span></p>
-                    <p>Damage Taken: <span id="stat-damage">0</span></p>
-                </div>
+            <!-- Spacer to push stats below the viewport -->
+            <div class="gameover-spacer"></div>
 
-                <div class="rewards">
-                    <h3>Rewards</h3>
-                    <p class="gems-earned">+<span id="gems-earned">0</span> Gems</p>
-                </div>
+            <!-- Stats Section (Below viewport - user scrolls to see) -->
+            <div class="gameover-stats-container">
+                <div class="stats-section">
+                    <h2>Run Complete</h2>
 
-                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
-                    <button id="gameover-newgame-button" class="btn btn-primary">New Game</button>
-                    <button id="gameover-menu-button" class="btn btn-secondary">Return to Menu</button>
+                    <div class="stats-summary">
+                        <h3>Run Statistics</h3>
+                        <p>Boards Cleared: <span id="stat-boards">0</span></p>
+                        <p>Cells Revealed: <span id="stat-cells">0</span></p>
+                        <p>Coins Earned: <span id="stat-coins">0</span></p>
+                        <p>Damage Taken: <span id="stat-damage">0</span></p>
+                    </div>
+
+                    <div class="rewards">
+                        <h3>Rewards</h3>
+                        <p class="gems-earned">+<span id="gems-earned">0</span> Gems</p>
+                    </div>
+
+                    <div class="gameover-actions">
+                        <button id="gameover-newgame-button" class="btn btn-primary">New Game</button>
+                        <button id="gameover-menu-button" class="btn btn-secondary">Return to Menu</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -177,44 +191,31 @@
     </div>
 
     <!-- Load game scripts -->
-    <!-- Data -->
-    <script src="src/data/constants.js"></script>
-    <script src="src/data/items.js"></script>
-    <script src="src/data/quests.js"></script>
-    <script src="src/data/characters.js"></script>
-
-    <!-- Utils -->
-    <script src="src/utils/random.js"></script>
-    <script src="src/utils/storage.js"></script>
-    <script src="src/utils/math.js"></script>
-    <script src="src/utils/helpers.js"></script>
+    <!-- Phase 1 MVP - Core Files Only -->
 
     <!-- Entities -->
     <script src="src/entities/Cell.js"></script>
     <script src="src/entities/Grid.js"></script>
-    <script src="src/entities/Item.js"></script>
-    <script src="src/entities/Character.js"></script>
-
-    <!-- Systems -->
-    <script src="src/systems/GridSystem.js"></script>
-    <script src="src/systems/ShopSystem.js"></script>
-    <script src="src/systems/ItemSystem.js"></script>
-    <script src="src/systems/QuestSystem.js"></script>
-    <script src="src/systems/ProgressionSystem.js"></script>
-    <script src="src/systems/SaveSystem.js"></script>
 
     <!-- Rendering -->
     <script src="src/rendering/CanvasRenderer.js"></script>
-    <script src="src/rendering/UIRenderer.js"></script>
-    <script src="src/rendering/effects.js"></script>
 
     <!-- Core -->
     <script src="src/core/EventBus.js"></script>
-    <script src="src/core/StateMachine.js"></script>
     <script src="src/core/GameState.js"></script>
     <script src="src/core/Game.js"></script>
 
     <!-- Main entry point -->
     <script src="src/main.js"></script>
+
+    <!--
+    Phase 2+ Files (not yet implemented):
+    - src/data/constants.js, items.js, quests.js, characters.js
+    - src/utils/random.js, storage.js, math.js, helpers.js
+    - src/entities/Item.js, Character.js
+    - src/systems/GridSystem.js, ShopSystem.js, ItemSystem.js, QuestSystem.js, ProgressionSystem.js, SaveSystem.js
+    - src/rendering/UIRenderer.js, effects.js
+    - src/core/StateMachine.js
+    -->
 </body>
 </html>
