@@ -63,17 +63,32 @@ class Game {
   loop(timestamp) {
     if (!this.running) return;
 
-    // Calculate delta time in seconds
-    const deltaTime = (timestamp - this.lastTime) / 1000;
-    this.lastTime = timestamp;
+    try {
+      // Calculate delta time in seconds
+      const deltaTime = (timestamp - this.lastTime) / 1000;
+      this.lastTime = timestamp;
 
-    // Update game state (logic)
-    this.update(deltaTime);
+      // Update game state (logic)
+      this.update(deltaTime);
 
-    // Render current state (visuals)
-    this.render();
+      // Render current state (visuals)
+      this.render();
+    } catch (error) {
+      // Log error for debugging
+      console.error('Game loop error:', error);
+      console.error('Stack trace:', error.stack);
 
-    // Continue loop
+      // Stop the game loop to prevent error spam
+      this.running = false;
+
+      // Optionally: Show error to user (can add later)
+      // this.showErrorScreen?.(error);
+
+      // Don't continue loop after error
+      return;
+    }
+
+    // Continue loop (only if no error occurred)
     requestAnimationFrame((t) => this.loop(t));
   }
 

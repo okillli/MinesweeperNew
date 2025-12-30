@@ -9,6 +9,11 @@
  * - Never directly manipulates DOM or Canvas
  * - Returns data that renderers consume
  * - State flows in one direction: Input → Update → State → Render
+ *
+ * Design Note: Properties are intentionally public. This class serves as a
+ * "state bag" - a pure data holder without behavior. Direct property access
+ * is preferred over getter/setter methods for simplicity and performance.
+ * Validation occurs before mutation in the calling code.
  */
 
 class GameState {
@@ -18,6 +23,19 @@ class GameState {
   constructor() {
     // Meta state - current screen being displayed
     this.currentScreen = 'MENU'; // 'MENU' | 'PLAYING' | 'SHOP' | 'GAME_OVER'
+
+    // Game state flags
+    this.isGameOver = false; // Prevents further interaction when true
+
+    // Hover state - tracks which cell is currently hovered for visual feedback
+    this.hoverCell = null; // { x: number, y: number } | null
+
+    // Keyboard cursor state - tracks position for keyboard navigation
+    this.cursor = {
+      x: 0,           // Current grid column (0-based)
+      y: 0,           // Current grid row (0-based)
+      visible: false  // Show cursor highlight (true when using keyboard)
+    };
 
     // Run state - data for the current run (resets each run)
     this.currentRun = {
@@ -112,6 +130,9 @@ class GameState {
    * @param {Object} character - Character definition from characters.js
    */
   startRun(quest, character) {
+    // Reset game over flag
+    this.isGameOver = false;
+
     // Set quest and character
     this.currentRun.quest = quest;
     this.currentRun.character = character;
@@ -219,8 +240,8 @@ class GameState {
     this.persistent.stats.totalCellsRevealed += this.currentRun.stats.cellsRevealed;
     this.persistent.stats.totalItemsPurchased += this.currentRun.stats.itemsPurchased;
 
-    // Clear grid
-    this.grid = null;
+    // DON'T clear grid - we want to keep it visible for the game over screen!
+    // The grid will be cleared when starting a new game via clearBoard()
 
     // Transition to game over screen
     this.currentScreen = 'GAME_OVER';
@@ -233,6 +254,7 @@ class GameState {
       victory,
       gemsEarned,
       runDuration,
+      boardNumber: this.currentRun.boardNumber, // Include final board number
       stats: { ...this.currentRun.stats }
     };
   }
@@ -329,6 +351,17 @@ class GameState {
   }
 
   /**
+   * Clear the grid and reset for a new game
+   * Call this when user clicks "New Game" from game over screen
+   */
+  clearBoard() {
+    this.grid = null;
+    this.isGameOver = false;
+    this.hoverCell = null;
+    this.cursor = { x: 0, y: 0, visible: false };
+  }
+
+  /**
    * Check if the current board is the boss board
    * @returns {boolean} - Whether current board is the boss (board 6)
    */
@@ -345,11 +378,57 @@ class GameState {
   }
 
   /**
+   * Move keyboard cursor by delta
+   * @param {number} dx - Horizontal movement (-1, 0, or 1)
+   * @param {number} dy - Vertical movement (-1, 0, or 1)
+   */
+  moveCursor(dx, dy) {
+    if (!this.grid) return;
+
+    // Update cursor position with boundary clamping
+    this.cursor.x = Math.max(0, Math.min(this.grid.width - 1, this.cursor.x + dx));
+    this.cursor.y = Math.max(0, Math.min(this.grid.height - 1, this.cursor.y + dy));
+
+    // Show cursor when moved via keyboard
+    this.cursor.visible = true;
+  }
+
+  /**
+   * Center cursor on grid (called when new grid is created)
+   */
+  centerCursor() {
+    if (!this.grid) return;
+
+    this.cursor.x = Math.floor(this.grid.width / 2);
+    this.cursor.y = Math.floor(this.grid.height / 2);
+    this.cursor.visible = false; // Hidden until keyboard input
+  }
+
+  /**
+   * Hide keyboard cursor (called on mouse/touch input)
+   */
+  hideCursor() {
+    this.cursor.visible = false;
+  }
+
+  /**
+   * Get the cell at current cursor position
+   * @returns {Cell|null} - Cell object or null if out of bounds
+   */
+  getCursorCell() {
+    if (!this.grid) return null;
+    return this.grid.getCell(this.cursor.x, this.cursor.y);
+  }
+
+  /**
    * Reset all game state (for new game / clear save)
    */
   reset() {
     // Reset to default state
     this.currentScreen = 'MENU';
+    this.isGameOver = false;
+    this.hoverCell = null;
+    this.cursor = { x: 0, y: 0, visible: false };
 
     // Reset run state
     this.currentRun = {

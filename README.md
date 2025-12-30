@@ -15,6 +15,8 @@ A modern, web-based minesweeper roguelike with quest-based objectives, power-ups
 - **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - High-level design and vision
 - **[CLAUDE.md](CLAUDE.md)** - For AI assistants working on this project
 - **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session workflow protocol
+- **[CHANGE_PROTOCOL.md](CHANGE_PROTOCOL.md)** - Change workflow & Definition of Done
+- **[AUTOMATION_FRAMEWORK.md](AUTOMATION_FRAMEWORK.md)** - Testing & automation strategy
 
 ### Technical Details
 - **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete mechanics and balancing
@@ -25,7 +27,8 @@ A modern, web-based minesweeper roguelike with quest-based objectives, power-ups
 | Situation | Read This |
 |-----------|-----------|
 | New to the project? | README.md → QUICK_REFERENCE.md |
-| Starting work session? | QUICK_REFERENCE.md |
+| Starting work session? | QUICK_REFERENCE.md → PROGRESS.md |
+| Making code changes? | CHANGE_PROTOCOL.md (Definition of Done) |
 | Implementing features? | GAME_DESIGN.md + ARCHITECTURE.md |
 | Need code patterns? | ARCHITECTURE.md |
 | Planning next phase? | PROJECT_OVERVIEW.md + DEVELOPMENT.md |

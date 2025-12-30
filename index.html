@@ -108,7 +108,7 @@
         </div>
 
         <!-- Game Over Screen -->
-        <div id="gameover-screen" class="screen">
+        <div id="gameover-screen" class="screen screen-overlay">
             <div class="screen-content">
                 <h2 id="gameover-title">Victory!</h2>
                 <p id="gameover-message">You completed the quest!</p>
@@ -126,7 +126,10 @@
                     <p class="gems-earned">+<span id="gems-earned">0</span> Gems</p>
                 </div>
 
-                <button id="gameover-menu-button" class="btn btn-primary">Return to Menu</button>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button id="gameover-newgame-button" class="btn btn-primary">New Game</button>
+                    <button id="gameover-menu-button" class="btn btn-secondary">Return to Menu</button>
+                </div>
             </div>
         </div>
 

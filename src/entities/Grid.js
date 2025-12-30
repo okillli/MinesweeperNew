@@ -25,6 +25,27 @@ class Grid {
    * @param {number} mineCount - Number of mines to place
    */
   constructor(width, height, mineCount) {
+    // Validate dimensions are positive integers
+    if (!Number.isInteger(width) || width <= 0) {
+      throw new Error(`Invalid grid width: ${width}. Must be a positive integer.`);
+    }
+    if (!Number.isInteger(height) || height <= 0) {
+      throw new Error(`Invalid grid height: ${height}. Must be a positive integer.`);
+    }
+
+    // Validate mine count
+    if (!Number.isInteger(mineCount) || mineCount < 0) {
+      throw new Error(`Invalid mine count: ${mineCount}. Must be a non-negative integer.`);
+    }
+
+    const totalCells = width * height;
+    if (mineCount >= totalCells) {
+      throw new Error(
+        `Too many mines (${mineCount}) for grid size ${width}×${height} (${totalCells} cells). ` +
+        `Maximum mines: ${totalCells - 1}.`
+      );
+    }
+
     /**
      * Number of columns in the grid
      * @type {number}
@@ -304,6 +325,22 @@ class Grid {
     // All non-mine cells revealed
     const totalCells = this.width * this.height;
     return this.revealed === totalCells - this.mineCount;
+  }
+
+  /**
+   * Reveals all mines on the grid (called on game over)
+   *
+   * This method is used to show the player where all mines were located
+   * when they hit a mine or when the game ends.
+   */
+  revealAllMines() {
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        if (this.cells[y][x].isMine) {
+          this.cells[y][x].isRevealed = true;
+        }
+      }
+    }
   }
 }
 

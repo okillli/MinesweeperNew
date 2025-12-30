@@ -28,6 +28,7 @@
   - Run state (HP, coins, mana, items, stats)
   - Persistent state (gems, unlocks, achievements)
   - Helper methods for resources
+  - **Hover state tracking** (currently hovered cell coordinates)
 
 - ✅ **src/core/EventBus.js** - Event communication system
   - Pub/sub pattern
@@ -41,15 +42,19 @@
   - Mine rendering (black circle)
   - Flag rendering (orange triangle)
   - Centered grid layout
+  - **Hover feedback highlights** (context-aware borders and overlays)
 
 #### Entry Point
 - ✅ **src/main.js** - Wiring and input handling
   - DOM initialization
   - MVP test setup (10x10 grid, 15 mines)
   - Click handlers (left-click reveal, right-click flag)
+  - **Touch handlers** (tap to reveal, long-press to flag)
+  - **Hover tracking** (mousemove, mouseleave handlers)
   - Coordinate conversion (canvas → grid)
   - Chording support
   - Win/lose detection
+  - Event listener cleanup (AbortController)
 
 ### What Works
 
@@ -118,7 +123,9 @@ python -m http.server 8000
 3. `553e62a` - Add CLAUDE.md for future Claude Code instances
 4. `fd3508b` - Phase 1 MVP: Implement core minesweeper game
 5. `89c7bb0` - Add PROGRESS.md documenting Phase 1 completion
-6. `4fe5dac` - Fix menu navigation and screen transitions (CRITICAL FIX)
+6. `4fe5dac` - Fix menu navigation and screen transitions
+7. `7d38d8d` - Consolidate and cross-reference all documentation
+8. *(pending)* - Phase 1 final fixes: coordinate mapping, game over, mobile touch, hover feedback
 
 ### What's NOT Implemented Yet (Phase 2+)
 
@@ -142,12 +149,44 @@ python -m http.server 8000
 - ❌ Save/load system
 
 **UI/Polish**:
-- ❌ Menu screens (working, but not wired up)
-- ❌ Quest/character selection
-- ❌ Shop UI
-- ❌ Game over screen
-- ❌ Animations/juice
-- ❌ Sound effects
+- ✅ Menu screens (working and wired up)
+- ✅ Game over screen (complete with stats and "New Game" button)
+- ✅ **Hover feedback** (visual highlights on mouse-over)
+- ✅ **Touch support** (tap to reveal, long-press to flag)
+- ✅ **Cursor feedback** (pointer cursor during gameplay)
+- ❌ Quest/character selection (Phase 2)
+- ❌ Shop UI (Phase 2)
+- ❌ Animations/juice (Phase 4)
+- ❌ Sound effects (Phase 4)
+
+### Recent Bug Fixes & Improvements (2025-12-30)
+
+**Bug Fixes**:
+- ✅ Fixed click coordinate mapping (off-by-one error in grid positioning)
+- ✅ Implemented complete game over flow (reveals all mines, shows stats, offers replay)
+- ✅ Added full mobile/tablet touch support (tap to reveal, long-press to flag)
+
+**Code Quality Improvements**:
+- ✅ Added Grid input validation (prevents infinite loops)
+- ✅ Added RAF loop error handling (prevents silent failures)
+- ✅ Added Canvas input validation (clearer error messages)
+- ✅ Implemented AbortController for event cleanup (prevents memory leaks)
+
+**UX Enhancements**:
+- ✅ **Hover feedback system** - Visual highlights before clicking
+  - Green border + white overlay on unrevealed cells
+  - Blue border on revealed cells (chording indication)
+  - Orange border on flagged cells (matches flag color)
+  - Pointer cursor during gameplay
+  - Smooth, optimized performance (only updates on cell change)
+
+**Documentation Updates**:
+- ✅ Documented EventBus as Phase 2 feature
+- ✅ Documented GameState public properties design
+- ✅ Marked StateMachine as Phase 2 feature
+- ✅ Added Phase 2 tasks to roadmap
+- ✅ Created HOVER_TESTING_GUIDE.md
+- ✅ Created HOVER_IMPLEMENTATION_SUMMARY.md
 
 ### Phase 1 Success Criteria
 
@@ -230,4 +269,5 @@ None currently - Phase 1 MVP is working!
 **Last Updated**: 2025-12-30
 **Phase**: 1 (Core Proof of Fun) - COMPLETE ✅
 **Next Phase**: 2 (Roguelike Elements)
-**Total Lines of Code**: ~1,400 (7 files)
+**Total Lines of Code**: ~1,600 (7 core files + hover system)
+**Recent Addition**: Hover feedback system with context-aware visual highlights

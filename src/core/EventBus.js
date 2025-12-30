@@ -18,6 +18,13 @@
  *
  * // Remove listener
  * events.off('cell_revealed', handlerFunction);
+ *
+ * NOTE: This class is implemented but not integrated in Phase 1.
+ * Phase 2 will integrate EventBus for:
+ * - Animation triggers (cell reveal, mine explosion)
+ * - Sound effects (flag placed, mine hit, board complete)
+ * - Achievement unlocks
+ * - Statistics tracking
  */
 class EventBus {
   /**

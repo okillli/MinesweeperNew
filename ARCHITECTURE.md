@@ -163,6 +163,9 @@ class GameState {
     // Meta state
     this.currentScreen = 'MENU'; // MENU, PLAYING, SHOP, GAME_OVER
 
+    // Hover state (UX feedback)
+    this.hoverCell = null; // { x: number, y: number } | null
+
     // Run state
     this.currentRun = {
       quest: null,           // Current quest object
@@ -241,7 +244,10 @@ class GameState {
 }
 ```
 
-### State Machine
+### StateMachine (Phase 2 Feature)
+
+> **Note**: StateMachine is planned for Phase 2 when shop/board transitions require validation.
+> Phase 1 uses simple screen mapping in main.js which is sufficient for current needs.
 
 ```javascript
 class StateMachine {
@@ -487,6 +493,11 @@ class CanvasRenderer {
     // Render grid if playing
     if (gameState.currentScreen === 'PLAYING' && gameState.grid) {
       this.renderGrid(gameState.grid);
+
+      // Render hover highlight for visual feedback
+      if (gameState.hoverCell) {
+        this.renderHoverHighlight(gameState.grid, gameState.hoverCell);
+      }
     }
   }
 
@@ -566,6 +577,33 @@ class CanvasRenderer {
     this.ctx.lineTo(x + size * 0.3, y + size * 0.6);
     this.ctx.closePath();
     this.ctx.fill();
+  }
+
+  renderHoverHighlight(grid, hoverCell) {
+    // Calculate cell position
+    const { x, y } = hoverCell;
+    const cell = grid.getCell(x, y);
+    if (!cell) return;
+
+    // Different highlights based on cell state:
+    // - Unrevealed: Green border + white overlay (primary action)
+    // - Revealed: Blue border (chording indication)
+    // - Flagged: Orange border (unflag indication)
+    if (cell.isRevealed) {
+      this.ctx.strokeStyle = '#4a90e2';
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+    } else if (cell.isFlagged) {
+      this.ctx.strokeStyle = '#f4a261';
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+    } else {
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      this.ctx.fillRect(cellX, cellY, size, size);
+      this.ctx.strokeStyle = '#2ecc71';
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+    }
 
     // Flag pole
     this.ctx.strokeStyle = '#000';
