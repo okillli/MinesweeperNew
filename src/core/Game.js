@@ -151,9 +151,14 @@ class Game {
    * Safe to call multiple times - subsequent calls have no effect.
    */
   start() {
+    if (this.running) return; // Already running, don't restart
+
     this.running = true;
-    this.lastTime = performance.now();
-    requestAnimationFrame((t) => this.loop(t));
+    this.lastTime = 0; // Will be set on first frame
+    requestAnimationFrame((t) => {
+      this.lastTime = t; // Initialize with RAF timestamp
+      this.loop(t);
+    });
   }
 
   /**

@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Future phases will expand usage for animations, sounds, achievements
   const events = new EventBus();
 
+  // Test Mode Configuration
+  // Set to true to start with 1 HP for easier game over testing
+  // Set to false for normal gameplay (3 HP)
+  const TEST_MODE = false;
+
   // ============================================================================
   // SCREEN TRANSITION SYSTEM
   // ============================================================================
@@ -250,8 +255,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize run state for testing
     game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = 1;  // Set to 1 for easier game over testing
-    game.state.currentRun.maxHp = 1;
+    game.state.currentRun.hp = TEST_MODE ? 1 : 3;
+    game.state.currentRun.maxHp = TEST_MODE ? 1 : 3;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
@@ -354,8 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize run state
     game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = 1;  // Set to 1 for easier game over testing
-    game.state.currentRun.maxHp = 1;
+    game.state.currentRun.hp = TEST_MODE ? 1 : 3;
+    game.state.currentRun.maxHp = TEST_MODE ? 1 : 3;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
