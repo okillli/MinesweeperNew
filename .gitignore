@@ -34,6 +34,8 @@ logs/
 
 # Testing
 coverage/
+playwright-report/
+test-results/
 
 # Misc
 *.bak
