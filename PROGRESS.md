@@ -1,8 +1,9 @@
 # MineQuest - Development Progress
 
-## Phase 1: Core Proof of Fun ✅ COMPLETE
+## Phase 1: Core Proof of Fun ✅ COMPLETE (WITH FIXES)
 
 **Date Completed**: 2025-12-30
+**Status**: Working and playable
 
 ### Implemented Files (7 core files)
 
@@ -78,16 +79,23 @@
 
 ### Testing Status
 
+**✅ FIXED**: Menu navigation now works correctly!
+
 **How to Test**:
 ```bash
-# Option 1: Open directly (file://)
-# Just double-click index.html
-
-# Option 2: HTTP server (recommended)
+# HTTP server (recommended)
 cd C:\Users\User\Desktop\Claude\MinesweeperNew
 python -m http.server 8000
 # Open http://localhost:8000
 ```
+
+**Complete Game Flow Now Working**:
+1. ✅ Game starts on menu screen
+2. ✅ "Start Run" button creates game and transitions to playing
+3. ✅ All menu buttons work (Collection, Settings)
+4. ✅ All back buttons return to correct screens
+5. ✅ HUD displays during gameplay
+6. ✅ Game loop only renders on playing screen
 
 **Test Cases**:
 - ✅ Reveal cell (left-click)
@@ -109,6 +117,8 @@ python -m http.server 8000
 2. `7c46832` - Add quick reference and session summary documentation
 3. `553e62a` - Add CLAUDE.md for future Claude Code instances
 4. `fd3508b` - Phase 1 MVP: Implement core minesweeper game
+5. `89c7bb0` - Add PROGRESS.md documenting Phase 1 completion
+6. `4fe5dac` - Fix menu navigation and screen transitions (CRITICAL FIX)
 
 ### What's NOT Implemented Yet (Phase 2+)
 
