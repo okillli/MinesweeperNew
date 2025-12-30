@@ -806,6 +806,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleVictory() {
     game.state.isGameOver = true;
 
+    // Visual effects: Victory confetti
+    effects.victory();
+
     // End run with victory
     const summary = game.state.endRun(true);
 
@@ -817,6 +820,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (overlay) {
       overlay.classList.remove('hidden');
       overlay.scrollTop = 0;
+    }
+
+    // Add victory glow to title
+    const title = document.getElementById('gameover-title');
+    if (title) {
+      title.classList.add('victory-title');
     }
 
     console.log('Victory! All 6 boards cleared!');
@@ -831,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * @param {Object} summary - Summary data from GameState.endRun()
    */
   function updateGameOverScreen(summary) {
-    const { victory, gemsEarned, boardNumber, stats } = summary;
+    const { victory, gemsEarned, boardNumber, stats, objectiveComplete, quest } = summary;
 
     // Update title with victory/defeat styling
     const title = document.getElementById('gameover-title');
@@ -847,7 +856,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update message with context
     const message = document.getElementById('gameover-message');
     if (victory) {
-      message.innerHTML = 'You completed the quest! Excellent work!';
+      if (objectiveComplete && quest) {
+        message.innerHTML = `Quest complete: <strong>${quest.name}</strong><br>Objective achieved! Bonus gems earned!`;
+      } else if (quest) {
+        message.innerHTML = `Quest complete: <strong>${quest.name}</strong><br>Objective not met - no bonus gems.`;
+      } else {
+        message.innerHTML = 'You completed the quest! Excellent work!';
+      }
     } else {
       message.innerHTML = `You were defeated on <strong>Board ${boardNumber}</strong>`;
     }
@@ -995,8 +1010,17 @@ document.addEventListener('DOMContentLoaded', () => {
       overlay.classList.add('hidden');
     }
 
+    // Remove victory glow from title if present
+    const title = document.getElementById('gameover-title');
+    if (title) {
+      title.classList.remove('victory-title');
+    }
+
     // Clear board state and reset flags
     game.state.clearBoard();
+
+    // Clear all visual effects
+    effects.clear();
 
     // Unfreeze renderer
     game.renderer.unfreeze();
@@ -1507,6 +1531,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Apply damage for mines hit
         if (minesHit > 0) {
+          // Visual effects: Damage feedback for chord hit
+          const layout = getGridLayout();
+          effects.damage(minesHit, x, y, layout);
+          animateStatChange('hp-display', 'hp-change');
+
           game.state.takeDamage(minesHit);
           updateHUD();
 
@@ -1973,6 +2002,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Apply damage for mines hit
         if (minesHit > 0) {
+          // Visual effects: Damage feedback for chord hit
+          const layout = getGridLayout();
+          effects.damage(minesHit, x, y, layout);
+          animateStatChange('hp-display', 'hp-change');
+
           game.state.takeDamage(minesHit);
           updateHUD();
 
@@ -2490,21 +2524,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if any chorded cells were mines (damage system)
     const minesHit = revealedCells.filter(c => c.isMine).length;
     if (minesHit > 0) {
+      // Visual effects: Damage feedback for chord hit
+      const layout = getGridLayout();
+      effects.damage(minesHit, x, y, layout);
+      animateStatChange('hp-display', 'hp-change');
+
       // Apply damage for each mine hit
       game.state.takeDamage(minesHit);
       updateHUD();
 
-      console.log(`💥 Chord hit ${minesHit} mine(s)! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+      console.log(`Chord hit ${minesHit} mine(s)! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
 
       // Only game over if HP depleted
       if (game.state.currentRun.hp <= 0) {
-        console.log('☠️  HP depleted! Game Over.');
+        console.log('HP depleted! Game Over.');
         // Small delay to show the revealed mine before game over sequence
         setTimeout(() => {
           handleGameOver();
         }, 200);
       } else {
-        console.log(`❤️  Still alive! ${game.state.currentRun.hp} HP remaining`);
+        console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
       }
       return;
     }

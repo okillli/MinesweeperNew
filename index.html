@@ -117,6 +117,16 @@
                 <span class="mode-label">REVEAL</span>
             </button>
 
+            <!-- Zoom Controls (shown for large boards) -->
+            <div id="zoom-controls" class="zoom-controls hidden" role="toolbar" aria-label="Zoom controls">
+                <button id="zoom-in" class="zoom-btn" aria-label="Zoom in" title="Zoom in">+</button>
+                <button id="zoom-out" class="zoom-btn" aria-label="Zoom out" title="Zoom out">-</button>
+                <button id="zoom-fit" class="zoom-btn zoom-fit-btn" aria-label="Fit to screen" title="Fit to screen">Fit</button>
+            </div>
+
+            <!-- Minimap (shown for boards 25x25 and larger) -->
+            <canvas id="minimap-canvas" class="minimap hidden" aria-label="Minimap showing grid overview"></canvas>
+
             <!-- Debug Overlay (Press D to toggle) -->
             <div id="debug-overlay" class="debug-overlay hidden">
                 <div class="debug-title">Debug Info (Press D to close)</div>
@@ -370,6 +380,7 @@
     <script src="src/rendering/CanvasRenderer.js"></script>
 
     <!-- Core -->
+    <script src="src/core/Camera.js"></script>
     <script src="src/core/EventBus.js"></script>
     <script src="src/core/GameState.js"></script>
     <script src="src/core/Game.js"></script>

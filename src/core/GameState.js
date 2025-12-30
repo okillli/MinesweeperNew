@@ -115,6 +115,9 @@ class GameState {
     // Current board state
     this.grid = null;        // Current Grid instance (null when not playing)
 
+    // Camera for pan/zoom on large boards
+    this.camera = typeof Camera !== 'undefined' ? new Camera() : null;
+
     // Persistent state - saved to localStorage
     this.persistent = {
       gems: 0,               // Total gems (meta-currency)
@@ -264,6 +267,14 @@ class GameState {
     // Create new grid with scaled dimensions
     this.grid = new Grid(config.width, config.height, config.mines);
 
+    // Initialize camera for large boards
+    if (this.camera) {
+      this.camera.reset();
+      // Enable camera for boards 15x15 or larger
+      const isLargeBoard = config.width >= 15 || config.height >= 15;
+      this.camera.setEnabled(isLargeBoard);
+    }
+
     // Set board modifiers
     this.currentRun.coinMultiplier = config.coinMult;
     this.currentRun.perfectBoardTracker = true;
@@ -297,15 +308,26 @@ class GameState {
 
     // Calculate gems earned
     let gemsEarned = 0;
+    let objectiveComplete = false;
 
     if (victory) {
       // Base quest completion reward
-      gemsEarned += this.currentRun.quest.rewards?.gems || 20;
+      gemsEarned += this.currentRun.quest?.rewards?.gems || 20;
 
-      // Quest objective bonus (quest-specific logic would go here)
-      // For now, just add quest bonus if it exists
-      if (this.currentRun.quest.rewards?.bonus) {
-        gemsEarned += this.currentRun.quest.rewards.bonus;
+      // Check if quest objective was completed for bonus
+      if (this.currentRun.quest && typeof isQuestObjectiveComplete === 'function') {
+        const runStats = {
+          boardNumber: this.currentRun.boardNumber,
+          coinsEarned: this.currentRun.stats.coinsEarned,
+          perfectBoards: this.currentRun.stats.perfectBoards,
+          startTime: this.currentRun.stats.startTime
+        };
+        objectiveComplete = isQuestObjectiveComplete(this.currentRun.quest, runStats);
+
+        // Only award bonus if objective was completed
+        if (objectiveComplete && this.currentRun.quest.rewards?.bonus) {
+          gemsEarned += this.currentRun.quest.rewards.bonus;
+        }
       }
 
       // Perfect board bonuses (+5 gems per perfect board)
@@ -341,6 +363,8 @@ class GameState {
       victory,
       gemsEarned,
       runDuration,
+      objectiveComplete,
+      quest: this.currentRun.quest,
       boardNumber: this.currentRun.boardNumber, // Include final board number
       stats: { ...this.currentRun.stats }
     };
@@ -446,6 +470,9 @@ class GameState {
     this.isGameOver = false;
     this.hoverCell = null;
     this.cursor = { x: 0, y: 0, visible: false };
+    if (this.camera) {
+      this.camera.reset();
+    }
   }
 
   /**
@@ -549,6 +576,11 @@ class GameState {
 
     // Clear grid
     this.grid = null;
+
+    // Reset camera
+    if (this.camera) {
+      this.camera.reset();
+    }
 
     // Reset persistent state
     this.persistent = {
