@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document maps upstream and downstream dependencies across the MineQuest codebase to enable effective impact analysis when making changes.
+This document maps upstream and downstream dependencies across the LiMineZZsweeperIE codebase to enable effective impact analysis when making changes.
 
 **Key Concepts:**
 - **Upstream Dependencies**: Components this module depends on (imports)

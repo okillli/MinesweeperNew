@@ -2,7 +2,7 @@
 
 > **Purpose**: Overview of the complete dependency tracking and impact analysis system
 > **Last Updated**: 2025-12-30
-> **For**: Claude Code instances and developers working on MineQuest
+> **For**: Claude Code instances and developers working on LiMineZZsweeperIE
 
 ---
 

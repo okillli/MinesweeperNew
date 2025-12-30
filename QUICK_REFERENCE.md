@@ -1,313 +1,146 @@
-# LiMineZZsweeperIE - Quick Reference Guide
+# LiMineZZsweeperIE - Quick Reference
 
 _Made with love for Lizzie_ ✨
 
-> **⭐ START HERE for new sessions**
->
-> **When to Read This**: Beginning of every work session, when you need quick facts
-> **Related Docs**: All other docs link here for quick reference
-> **Read Time**: ~5 minutes (skim), ~10 minutes (full read)
-
-This is your one-stop reference for essential information needed during development.
-
-## 📋 Which Doc to Read When
-
-### Starting a Work Session
-1. **QUICK_REFERENCE.md** (this file) - Refresh context (2 min)
-2. **[PROGRESS.md](PROGRESS.md)** - See what's complete (1 min)
-3. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Find next task (1 min)
-
-### Implementing Features
-1. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Mechanics & balancing
-2. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Code patterns & structure
-3. **This file** - Quick reference for constants/rules
-
-### Strategic Planning
-1. **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Vision & principles
-2. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap & phases
-3. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session workflow
-
-### For AI Assistants
-1. **[CLAUDE.md](CLAUDE.md)** - Claude-specific guidance (read first!)
-2. **This file** - Quick facts during work
-3. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Session protocols
-
-## 📋 Essential Documents Table
-
-| Document | Purpose | When to Read |
-|----------|---------|--------------|
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | This file - quick facts, constants | Every session start |
-| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | High-level concept, design principles | Strategic decisions, first session |
-| [GAME_DESIGN.md](GAME_DESIGN.md) | Complete game mechanics, balancing | Implementing features |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Code structure, patterns, systems | Writing code |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | Roadmap, tasks, progress tracking | Planning work |
-| [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) | Multi-session workflow, coordination | Before starting any work |
-| [CLAUDE.md](CLAUDE.md) | AI assistant guidance | For Claude Code instances |
-| [README.md](README.md) | User-facing documentation | Public/player questions |
+> **⭐ START HERE for new sessions** | **Read Time**: ~5 minutes
 
 ---
 
-## 🎮 Core Game Rules (Never Forget)
+## 📋 Which Doc When?
 
-> See [GAME_DESIGN.md](GAME_DESIGN.md) for complete mechanics details
+| Situation | Read |
+|-----------|------|
+| Starting session | This file → [PROGRESS.md](PROGRESS.md) → [DEVELOPMENT.md](DEVELOPMENT.md) |
+| Implementing feature | [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md) → [GAME_DESIGN.md](GAME_DESIGN.md) → [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Strategic planning | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) → [DEVELOPMENT.md](DEVELOPMENT.md) |
+| Claude Code | [CLAUDE.md](CLAUDE.md) (read first!) |
 
-### Resource System
-- **HP**: Start with 3, hitting mine costs 1, 0 HP = game over
-- **Coins**: +10 per cell revealed, spend in shops
-- **Mana**: +5 per cell revealed, powers active abilities
-- **Gems**: Earned after runs, unlock new content
+---
 
-### Run Structure
-1. Choose quest & character → 2. Play 5 boards → 3. Shop between boards → 4. Boss board → 5. Earn gems
+## 🎮 Core Game Rules
+
+> **Authoritative source**: [GAME_DESIGN.md](GAME_DESIGN.md)
+
+### Resources
+| Resource | Earn | Spend | Note |
+|----------|------|-------|------|
+| **HP** | Start 3 | -1 per mine | 0 = game over |
+| **Coins** | +10/cell | Shop items | Resets each run |
+| **Mana** | +5/cell, +10/flag | Active abilities | Cap: 100 |
+| **Gems** | Quest completion | Permanent unlocks | Persists forever |
+
+### Run Flow
+```
+Quest → Character → 5 Boards (shops between) → Boss → Gems
+```
 
 ### Board Progression
-| Board | Size | Mines | Density |
-|-------|------|-------|---------|
-| 1 | 8x8 | 10 | 15.6% |
-| 2 | 10x10 | 15 | 15% |
-| 3 | 12x12 | 25 | 17.4% |
-| 4 | 14x14 | 35 | 17.9% |
-| 5 | 14x14 | 40 | 20.4% |
-| 6 (Boss) | 16x16 | 50 | 19.5% |
+| Board | Size | Mines |
+|-------|------|-------|
+| 1 | 8×8 | 10 |
+| 2 | 10×10 | 15 |
+| 3 | 12×12 | 25 |
+| 4 | 14×14 | 35 |
+| 5 | 14×14 | 40 |
+| Boss | 16×16 | 50 |
 
-## 🏗️ Technical Stack
+---
 
-> See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical architecture
+## 🏗️ Tech Stack
 
 ```
-Language: Vanilla JavaScript (ES6+)
-Rendering: Canvas (grid) + DOM (UI)
-Storage: localStorage
-Hosting: GitHub Pages
-Build: None (vanilla JS)
+Vanilla JavaScript (ES6+) | Canvas + DOM | localStorage | No build step
 ```
 
-## 📁 Key Files & Responsibilities
+### Key Files
+| File | Purpose |
+|------|---------|
+| `src/core/GameState.js` | Single source of truth |
+| `src/entities/Grid.js` | Minesweeper logic |
+| `src/rendering/CanvasRenderer.js` | Grid visualization |
+| `src/main.js` | Entry point, input handlers |
 
-> See [ARCHITECTURE.md](ARCHITECTURE.md) for complete file structure and patterns
+> **Complete file map**: [ARCHITECTURE.md](ARCHITECTURE.md)
 
-### Data Files (Define Content)
-- `src/data/constants.js` - Game constants (grid sizes, costs, etc.)
-- `src/data/items.js` - All 20 items (passive, active, consumable)
-- `src/data/quests.js` - 5 quest definitions
-- `src/data/characters.js` - 5 character class definitions
+---
 
-### Core Systems (Game Logic)
-- `src/core/Game.js` - Main game loop (RAF)
-- `src/core/GameState.js` - Centralized state management
-- `src/core/StateMachine.js` - Screen/state transitions
-- `src/core/EventBus.js` - Event communication
+## 📱 Mobile-First (CRITICAL)
 
-### Game Systems (Features)
-- `src/systems/GridSystem.js` - Minesweeper logic
-- `src/systems/ShopSystem.js` - Shop & purchasing
-- `src/systems/ItemSystem.js` - Item effects & management
-- `src/systems/QuestSystem.js` - Quest tracking
-- `src/systems/ProgressionSystem.js` - Unlocks & achievements
-- `src/systems/SaveSystem.js` - localStorage save/load
+**Design for mobile FIRST. Desktop is an enhancement.**
 
-### Entities (Game Objects)
-- `src/entities/Cell.js` - Individual grid cell
-- `src/entities/Grid.js` - Minesweeper grid container
-- `src/entities/Item.js` - Item base class
-- `src/entities/Character.js` - Character class
+- Touch: Tap reveal, long-press (500ms) flag
+- Targets: Minimum 44×44px (prefer 60×60px)
+- Test on mobile BEFORE desktop
+- Never require hover
 
-### Rendering (Visual)
-- `src/rendering/CanvasRenderer.js` - Grid drawing
-- `src/rendering/UIRenderer.js` - DOM UI updates
-- `src/rendering/effects.js` - Visual effects (juice)
+---
 
-## 🎯 MVP Checklist
+## 🎲 Game Content Summary
 
-> See [DEVELOPMENT.md](DEVELOPMENT.md) for complete roadmap and task details
+> **Complete details**: [GAME_DESIGN.md](GAME_DESIGN.md)
 
-### Phase 1: Core Proof of Fun ✅ COMPLETE
-- [x] Project setup & documentation
-- [x] File structure created
-- [x] Git initialized
-- [x] HTML/CSS templates
-- [x] Basic minesweeper (Cell, Grid classes)
-- [x] Canvas rendering
-- [x] Click handling
-- [x] Simple game loop
-- [x] Touch controls
-- [x] Hover feedback
+### Items (20 total)
+- **Passive (10)**: Shield Generator, Coin Magnet, Mana Crystal, Lucky Charm, Fortify Armor, Treasure Sense, Flag Efficiency, Second Wind, Range Boost, Combo Master
+- **Active (5)**: Scan Area, Safe Column, Mine Detector, Auto-Chord, Rewind
+- **Consumable (5)**: Health Potion, Vision Scroll, Shield Token, Mana Potion, Lucky Coin
 
-### Phase 2A: Resource Systems ✅ COMPLETE
-- [x] HP system (configurable 1-10)
-- [x] Coins (+10 per cell)
-- [x] Mana (+5 per cell, +10 per flag)
-- [x] HUD with color-coded HP
-- [x] Game over flow
-- [x] Keyboard navigation
+### Characters (5)
+| Class | HP | Special |
+|-------|-----|---------|
+| Explorer | 3 | None (starter) |
+| Scout | 3 | First reveal = 3×3 |
+| Merchant | 3 | 2× coins |
+| Tank | 5 | Regen HP |
+| Mage | 2 | -25% ability cost |
 
-### Phase 2B: Items & Shop (Next)
-- [ ] 20 items implemented
-- [ ] Shop system
-- [ ] Multi-board runs
-- [ ] Item effects working
+### Quests (5)
+Classic Clear • Treasure Hunter • Speed Runner • Perfect Game • Boss Slayer
 
-### Phase 3: Progression
-- [ ] Quest system
-- [ ] Character classes
-- [ ] Gems & unlocks
-- [ ] Save/load
-- [ ] Boss board
+---
 
-### Phase 4: Polish
-- [ ] Animations & juice
-- [ ] Tutorial
-- [ ] Deploy to GitHub Pages
+## ✅ Current Status
 
-## 🔑 Key Design Principles
+> **Detailed progress**: [PROGRESS.md](PROGRESS.md) | **Roadmap**: [DEVELOPMENT.md](DEVELOPMENT.md)
 
-> See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for complete design philosophy
+- ✅ Phase 1: Core Minesweeper
+- ✅ Phase 2A: HP, Coins, Mana
+- 🚧 Phase 2B: Items & Shop (NEXT)
+- ⏳ Phase 3: Quests, Characters, Progression
+- ⏳ Phase 4: Polish & Deploy
 
-1. **Simplicity First**: Don't over-engineer, start simple
-2. **Separation of Concerns**: Logic ≠ Rendering
-3. **Mobile-First**: Design for mobile FIRST, desktop is an enhancement (not the reverse)
-4. **No Feature Creep**: MVP first, expand later
-5. **Playtesting**: Test fun factor after each phase
+---
 
-## 🎲 Item Categories (20 Total)
+## 🔑 Design Principles
 
-> See [GAME_DESIGN.md](GAME_DESIGN.md) for complete item details and effects
+1. **Simplicity First** - Don't over-engineer
+2. **Separation of Concerns** - Logic ≠ Rendering
+3. **Mobile-First** - Design for touch, enhance for desktop
+4. **No Feature Creep** - MVP first
+5. **Playtest Early** - Validate fun after each phase
 
-### Passive (10)
-Shield Generator, Coin Magnet, Mana Crystal, Lucky Charm, Fortify Armor, Treasure Sense, Flag Efficiency, Second Wind, Range Boost, Combo Master
+---
 
-### Active (5)
-Scan Area, Safe Column, Mine Detector, Auto-Chord, Rewind
+## 🚫 Anti-Patterns
 
-### Consumable (5)
-Health Potion, Vision Scroll, Shield Token, Mana Potion, Lucky Coin
-
-## 👥 Character Classes (5)
-
-| Class | HP | Mana | Special |
-|-------|-----|------|---------|
-| Explorer | 3 | 0 | None (starter) |
-| Scout | 3 | 50 | First reveal = 3x3 area |
-| Merchant | 3 | 0 | 2x coins |
-| Tank | 5 | 0 | Regen 1 HP/3 boards |
-| Mage | 2 | 150 | Abilities cost -25% |
-
-## 🎯 Quests (5)
-
-1. **Classic Clear**: Complete all boards
-2. **Treasure Hunter**: Earn 500+ coins
-3. **Speed Runner**: Finish in <8 minutes
-4. **Perfect Game**: Take no damage
-5. **Boss Slayer**: Defeat final boss
-
-## 🚫 Anti-Patterns to Avoid
-
-- ❌ Adding features before core loop is fun
+- ❌ Desktop-first thinking
 - ❌ Mixing game logic with rendering
-- ❌ Over-engineering simple systems
-- ❌ **Desktop-first thinking** (always design for mobile FIRST!)
-- ❌ Making unlocks required to win
-- ❌ Hover-dependent UI (mobile has no hover)
-
-## 💾 Save Data Structure
-
-```javascript
-{
-  version: '1.0.0',
-  persistent: {
-    gems: 0,
-    unlockedItems: [],
-    unlockedCharacters: [],
-    unlockedQuests: [],
-    achievements: [],
-    stats: { totalRuns, totalWins, totalCoins, etc. }
-  }
-}
-```
-
-## 🎨 Color Palette
-
-- Background: `#1a1a2e` (dark blue)
-- Accent: `#f4a261` (orange)
-- Secondary: `#e76f51` (red-orange)
-- Text: `#eee` (light gray)
-- Mines: `#e63946` (red)
-- Flags: `#f4a261` (yellow)
-
-## 📱 Mobile-First Design (PRIMARY Platform)
-
-**This project is mobile-first. Design for mobile FIRST, then ensure desktop works well.**
-
-### Mobile Design Requirements
-- **Touch Controls**: Tap reveal, long-press flag (500ms)
-- **Min Touch Target**: 44x44px (preferably 60x60px)
-- **Viewport**: `width=device-width, initial-scale=1, user-scalable=no`
-- **Performance**: Target 60 FPS on mid-range phones, 30+ FPS on low-end
-- **Orientation**: Portrait-first (landscape optional)
-- **One-handed**: Critical controls must be thumb-reachable
-
-### Mobile-First Development Rules
-1. Start all UI/UX decisions assuming phone touch input
-2. Test on mobile browsers BEFORE desktop browsers
-3. Desktop support is an enhancement, not the primary experience
-4. Never require hover for essential functionality
-5. Haptic feedback on flag actions (where supported)
-
-## 🔄 Development Workflow
-
-1. **Read relevant docs** before starting work
-2. **Update DEVELOPMENT.md** with progress
-3. **Test frequently** - playtest after each feature
-4. **Commit often** with descriptive messages
-5. **Document decisions** in this file or design docs
-
-## 📞 Quick Commands
-
-```bash
-# Start development (just open index.html in browser)
-# No build process needed!
-
-# Initialize git (already done)
-git init
-
-# Commit changes
-git add .
-git commit -m "Description of changes"
-
-# Deploy to GitHub Pages (when ready)
-# Create repo on GitHub, then:
-git remote add origin <repo-url>
-git push -u origin main
-# Enable GitHub Pages in repo settings
-```
-
-## 🎯 Next Immediate Steps
-
-1. Define 20 items in `src/data/items.js`
-2. Implement `ItemSystem` for item effects
-3. Implement `ShopSystem` for purchasing
-4. Wire up multi-board progression
-5. **PLAYTEST** - Do items add strategic depth?
+- ❌ Hover-dependent UI
+- ❌ Features before core is fun
+- ❌ Unlocks required to win
 
 ---
 
-**Pro Tips:**
-- Read [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) if losing context
-- Check [ARCHITECTURE.md](ARCHITECTURE.md) before writing code
-- Update [DEVELOPMENT.md](DEVELOPMENT.md) when completing tasks
-- Follow [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) for multi-session work
-- Playtest early and often!
-- Keep it simple - complexity kills momentum
+## 🔗 Quick Links
+
+| Doc | Purpose |
+|-----|---------|
+| [CLAUDE.md](CLAUDE.md) | Claude Code guidance |
+| [GAME_DESIGN.md](GAME_DESIGN.md) | Complete mechanics |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Code patterns |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Roadmap & tasks |
+| [PROGRESS.md](PROGRESS.md) | What's complete |
+| [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md) | Before coding |
 
 ---
 
-## 🔗 Quick Navigation
-
-- **Up**: [README.md](README.md) - Main project page
-- **Strategic**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - Vision & principles
-- **Implementation**: [GAME_DESIGN.md](GAME_DESIGN.md) + [ARCHITECTURE.md](ARCHITECTURE.md)
-- **Planning**: [DEVELOPMENT.md](DEVELOPMENT.md) - Tasks & roadmap
-- **Workflow**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) - Session protocols
-
-**Last Updated**: 2025-12-30
-**Version**: 0.3.0
+**Version**: 0.3.0 | **Last Updated**: 2025-12-30

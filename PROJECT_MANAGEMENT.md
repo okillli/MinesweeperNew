@@ -1,4 +1,4 @@
-# MineQuest - Project Management Protocol
+# LiMineZZsweeperIE - Project Management Protocol
 
 > **When to Read This**: Before starting any work session, especially multi-session or parallel work
 > **Related Docs**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for quick context, [CLAUDE.md](CLAUDE.md) for Claude-specific guidance

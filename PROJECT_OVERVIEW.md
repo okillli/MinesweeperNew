@@ -2,169 +2,97 @@
 
 _Made with love for Lizzie_ ✨
 
-> **When to Read This**: First session, strategic planning, or when you need to understand the "why" behind decisions
-> **Related Docs**: [GAME_DESIGN.md](GAME_DESIGN.md) for mechanics, [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
-> **Read Time**: ~5 minutes
+> **When to Read This**: First session, strategic planning, understanding the "why"
+> **Read Time**: ~3 minutes
+
+---
 
 ## 🎮 Game Concept
 
-**LiMineZZsweeperIE** is a web-based minesweeper roguelike that combines classic minesweeper mechanics with roguelike progression, power-ups, and quest-based objectives.
+A web-based minesweeper roguelike combining classic minesweeper with roguelike progression, items, and quest objectives.
 
-### Unique Selling Points
-- **Quest-based objectives**: Different goals each run (rescue missions, treasure hunts, speed runs)
-- **Mobile-first design**: Built for touch from day one, desktop is a bonus (not the other way around)
-- **Minimalist aesthetic**: Clean, modern design with multiple themes
-- **Quick sessions**: 5-10 minute runs perfect for casual play
+### What Makes It Unique
+- **Quest-based objectives**: Different goals each run (rescue, treasure hunt, speed run)
+- **Mobile-first**: Built for touch from day one, desktop is an enhancement
+- **Quick sessions**: 5-10 minute runs
 - **Simple but deep**: Easy to learn, hard to master
+
+---
 
 ## 🎯 Core Design Principles
 
-1. **Simplicity First**: Core is just minesweeper + items
-2. **Web-Native**: Runs in any browser, no installation
-3. **Mobile-First**: Design for touch/mobile FIRST, then ensure desktop works well (not the reverse)
-4. **Not Overcomplicated**: Start with 20 items, add more later
-5. **Fair Progression**: Unlocks add variety, not just power
+1. **Simplicity First** - Core is minesweeper + items, nothing more
+2. **Mobile-First** - Design for touch FIRST, then desktop (never reverse)
+3. **Web-Native** - Runs in any browser, no installation
+4. **Fair Progression** - Unlocks add variety, not power
+5. **Playtest Early** - Validate fun after each phase
 
-## 🔑 Key Game Rules
-
-> See [GAME_DESIGN.md](GAME_DESIGN.md) for complete mechanics and balancing details
-
-### Minesweeper Mechanics
-- Classic minesweeper grid (numbers show adjacent mine count)
-- Left-click/tap to reveal cells
-- Right-click/long-press to flag mines
-- Chording: Click revealed number to auto-reveal if flags match
-
-### Core Gameplay Loop (Single Run)
-1. Choose quest objective & character class
-2. Play through 5 boards (increasing difficulty)
-3. Earn coins by revealing safe cells (+10 per cell)
-4. Shop appears between boards (buy items with coins)
-5. Build synergies with items collected
-6. Face boss board (special challenge)
-7. Complete quest → earn gems → unlock new content
-
-### Resource System
-- **HP (Health Points)**: Start with 3 HP, hitting mine costs 1 HP, 0 HP = run ends
-- **Coins**: In-run currency, earned by revealing cells, spent in shops
-- **Mana**: Rechargeable resource for active abilities, +5 per cell revealed
-- **Gems**: Meta-currency, earned after runs, spent on permanent unlocks
-
-### Progression
-- **In-Run**: Collect items, build synergies, get stronger within single run
-- **Meta**: Unlock new items, character classes, quests with gems
-- **No Power Creep**: Unlocks add variety/options, not just stat increases
+---
 
 ## 📊 Target Metrics
 
-- **Run Duration**: 5-10 minutes
-- **Item Count (MVP)**: 20 total (10 passive, 5 active, 5 consumable)
-- **Boards Per Run**: 5 normal + 1 boss
-- **Starting Grid Size**: 10x10
-- **Max Grid Size**: 16x16 (boss board)
+| Metric | Target |
+|--------|--------|
+| Run duration | 5-10 minutes |
+| Items (MVP) | 20 total |
+| Boards per run | 5 + 1 boss |
+| Grid sizes | 8×8 to 16×16 |
 
-## 🎨 Theme & Aesthetic
+---
 
-### Visual Style
+## 🎨 Visual Direction
+
 - **Minimalist**: Clean lines, clear iconography
-- **High Contrast**: Accessible color schemes
-- **Responsive**: Scales from mobile to desktop
+- **High contrast**: Accessible colors
+- **Responsive**: Scales mobile → desktop
 
-### Theme Options (Choose One for MVP)
-1. **Space Station**: Sci-fi, exploring derelict station
-2. **Underwater Lab**: Ocean research facility
-3. **Archaeological Dig**: Ancient ruins excavation
-
-## 🏗️ Technical Architecture
-
-> See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed code structure and patterns
-
-### Tech Stack
-- **Language**: Vanilla JavaScript (ES6+)
-- **Rendering**: HTML5 Canvas (game grid) + DOM (UI)
-- **Storage**: localStorage for saves
-- **Hosting**: GitHub Pages (free, simple)
-- **Build**: No build tools needed (vanilla JS)
-
-### File Structure
-```
-/src
-  /core     - Game loop, state management
-  /systems  - Grid logic, shop, power-ups
-  /rendering - Canvas & UI rendering
-  /data     - Item & quest definitions
-  /utils    - Save/load, RNG, helpers
-```
-
-## 📈 Development Phases
-
-> See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed roadmap and task breakdowns
-
-### Phase 1: Core Proof of Fun (1-2 weeks)
-Basic minesweeper + simple scoring
-
-### Phase 2: Roguelike Elements (1-2 weeks)
-Items, shop, HP/mana systems
-
-### Phase 3: Progression (1 week)
-Unlocks, quests, character classes
-
-### Phase 4: Polish & Launch (1 week)
-Animations, sounds, juice, deployment
+---
 
 ## 🎯 Success Criteria
 
 ### MVP Must Have
 - Core minesweeper works flawlessly
-- Items create meaningful strategic choices
-- "One more run" compulsion (playtesters want to replay)
-- Runs on mobile browsers smoothly
+- Items create strategic choices
+- "One more run" feeling
+- Runs smoothly on mobile
 - Save/load works reliably
 
 ### Nice to Have (Post-MVP)
-- PWA support (installable)
-- Multiple themes
-- Leaderboards
-- Daily challenges
-- Sound effects & music
+PWA • Multiple themes • Leaderboards • Daily challenges • Sound/music
 
-## 📝 Design Decisions Log
+---
 
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2025-12-30 | Vanilla JS over frameworks | Simplicity, performance, no dependencies |
-| 2025-12-30 | Quest-based objectives | Unique angle, not done in existing games |
-| 2025-12-30 | Mobile-first design | Broader audience, untapped market |
-| 2025-12-30 | 3 HP system | Forgiving, reduces frustration |
-| 2025-12-30 | Dual currency (coins/gems) | Separates in-run and meta progression |
+## 📝 Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Vanilla JS | Simplicity, performance, no dependencies |
+| Quest objectives | Unique angle for minesweeper |
+| Mobile-first | Broader audience, untapped market |
+| 3 HP system | Forgiving, reduces frustration |
+| Dual currency | Separates in-run vs meta progression |
+
+---
 
 ## 🚫 Anti-Patterns to Avoid
 
-1. **Feature Creep**: Don't add features before core loop is fun
-2. **Over-Engineering**: Keep it simple, add complexity only when needed
-3. **Power Creep**: Don't make unlocks required to win
-4. **Tutorial Overload**: Teach through gameplay, not text
-5. **Desktop-First Thinking**: Always design for mobile FIRST, then adapt to desktop (never the reverse)
-
-## 📚 Related Documentation
-
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick facts and constants for development
-- **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete game mechanics and balancing
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical implementation details
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap and task tracking
-- **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session workflow
+1. **Desktop-First Thinking** - Always mobile FIRST
+2. **Feature Creep** - Don't add before core is fun
+3. **Over-Engineering** - Start simple
+4. **Power Creep** - First run must be winnable
+5. **Tutorial Overload** - Teach through gameplay
 
 ---
 
-## 🔗 Quick Navigation
+## 🔗 Related Docs
 
-- **Up**: [README.md](README.md) - Main project page
-- **Quick Reference**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Fast facts
-- **Mechanics**: [GAME_DESIGN.md](GAME_DESIGN.md) - Detailed game design
-- **Technical**: [ARCHITECTURE.md](ARCHITECTURE.md) - Code structure
-- **Planning**: [DEVELOPMENT.md](DEVELOPMENT.md) - Roadmap
+| Doc | Purpose |
+|-----|---------|
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Quick facts, constants |
+| [GAME_DESIGN.md](GAME_DESIGN.md) | Complete mechanics |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Code structure |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Roadmap, tasks |
 
 ---
 
-**Last Updated**: 2025-12-30
-**Version**: 0.3.0
+**Version**: 0.3.0 | **Last Updated**: 2025-12-30
