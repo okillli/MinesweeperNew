@@ -1,0 +1,130 @@
+/**
+ * Game.js
+ *
+ * Main game loop orchestrator using RequestAnimationFrame pattern.
+ * Coordinates the update-render cycle and manages the game lifecycle.
+ *
+ * Responsibilities:
+ * - RAF loop management with delta time calculation
+ * - Coordinating state updates via GameState
+ * - Coordinating visual rendering via CanvasRenderer
+ * - Starting/stopping the game loop
+ *
+ * Pattern: Strict separation between update (logic) and render (visuals)
+ */
+
+/**
+ * Core game loop orchestrator
+ *
+ * Manages the main game loop using requestAnimationFrame, coordinating
+ * updates to game state and rendering to the canvas. Maintains frame-
+ * independent timing using delta time calculations.
+ */
+class Game {
+  /**
+   * Creates a new Game instance
+   *
+   * @param {HTMLCanvasElement} canvas - The canvas element to render to
+   */
+  constructor(canvas) {
+    /**
+     * Game state manager - single source of truth for all game data
+     * @type {GameState}
+     */
+    this.state = new GameState();
+
+    /**
+     * Canvas renderer - handles all visual output
+     * @type {CanvasRenderer}
+     */
+    this.renderer = new CanvasRenderer(canvas);
+
+    /**
+     * Last timestamp from RAF, used for delta time calculation
+     * @type {number}
+     */
+    this.lastTime = 0;
+
+    /**
+     * Whether the game loop is currently running
+     * @type {boolean}
+     */
+    this.running = false;
+  }
+
+  /**
+   * Main game loop using RequestAnimationFrame
+   *
+   * Calculates delta time, updates game state, renders current frame,
+   * and schedules the next frame. Stops automatically when running is false.
+   *
+   * @param {number} timestamp - High-resolution timestamp from RAF
+   */
+  loop(timestamp) {
+    if (!this.running) return;
+
+    // Calculate delta time in seconds
+    const deltaTime = (timestamp - this.lastTime) / 1000;
+    this.lastTime = timestamp;
+
+    // Update game state (logic)
+    this.update(deltaTime);
+
+    // Render current state (visuals)
+    this.render();
+
+    // Continue loop
+    requestAnimationFrame((t) => this.loop(t));
+  }
+
+  /**
+   * Updates game state based on elapsed time
+   *
+   * Delegates to GameState.update() which handles all game logic updates.
+   * Delta time ensures frame-independent behavior.
+   *
+   * @param {number} deltaTime - Time elapsed since last frame (in seconds)
+   */
+  update(deltaTime) {
+    // Update all game systems
+    this.state.update(deltaTime);
+  }
+
+  /**
+   * Renders the current game state to the canvas
+   *
+   * Delegates to CanvasRenderer.render() which reads from state but never
+   * modifies it, maintaining strict separation of concerns.
+   */
+  render() {
+    // Render grid to canvas
+    this.renderer.render(this.state);
+  }
+
+  /**
+   * Starts the game loop
+   *
+   * Sets running flag, initializes lastTime, and begins the RAF loop.
+   * Safe to call multiple times - subsequent calls have no effect.
+   */
+  start() {
+    this.running = true;
+    this.lastTime = performance.now();
+    requestAnimationFrame((t) => this.loop(t));
+  }
+
+  /**
+   * Stops the game loop
+   *
+   * Sets running flag to false, which will halt the loop after the current
+   * frame completes. Does not reset state - use this for pause functionality.
+   */
+  stop() {
+    this.running = false;
+  }
+}
+
+// Export for use in other modules (if using module system)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Game;
+}
