@@ -1,4 +1,6 @@
-# MineQuest - Project Overview
+# LiMineZZsweeperIE - Project Overview
+
+_Made with love for Lizzie_ ✨
 
 > **When to Read This**: First session, strategic planning, or when you need to understand the "why" behind decisions
 > **Related Docs**: [GAME_DESIGN.md](GAME_DESIGN.md) for mechanics, [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
@@ -6,7 +8,7 @@
 
 ## 🎮 Game Concept
 
-**MineQuest** is a web-based minesweeper roguelike that combines classic minesweeper mechanics with roguelike progression, power-ups, and quest-based objectives.
+**LiMineZZsweeperIE** is a web-based minesweeper roguelike that combines classic minesweeper mechanics with roguelike progression, power-ups, and quest-based objectives.
 
 ### Unique Selling Points
 - **Quest-based objectives**: Different goals each run (rescue missions, treasure hunts, speed runs)

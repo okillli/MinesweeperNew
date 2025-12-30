@@ -1,4 +1,6 @@
-# MineQuest - Development Progress
+# LiMineZZsweeperIE - Development Progress
+
+_Made with love for Lizzie_ ✨
 
 ## Phase 1: Core Proof of Fun ✅ COMPLETE (WITH FIXES)
 
@@ -29,6 +31,7 @@
   - Persistent state (gems, unlocks, achievements)
   - Helper methods for resources
   - **Hover state tracking** (currently hovered cell coordinates)
+  - **Keyboard cursor state** (position and visibility for keyboard navigation)
 
 - ✅ **src/core/EventBus.js** - Event communication system
   - Pub/sub pattern
@@ -43,6 +46,7 @@
   - Flag rendering (orange triangle)
   - Centered grid layout
   - **Hover feedback highlights** (context-aware borders and overlays)
+  - **Keyboard cursor rendering** (gold border, WCAG AA compliant)
 
 #### Entry Point
 - ✅ **src/main.js** - Wiring and input handling
@@ -50,22 +54,24 @@
   - MVP test setup (10x10 grid, 15 mines)
   - Click handlers (left-click reveal, right-click flag)
   - **Touch handlers** (tap to reveal, long-press to flag)
+  - **Keyboard handlers** (arrow keys, Space/Enter, F, C)
   - **Hover tracking** (mousemove, mouseleave handlers)
+  - **Input mode switching** (keyboard/mouse/touch auto-detection)
   - Coordinate conversion (canvas → grid)
   - Chording support
-  - Win/lose detection
+  - Win/lose detection with proper delays
   - Event listener cleanup (AbortController)
 
 ### What Works
 
 **Core Minesweeper Mechanics** ✅
-- Reveal cells (left-click)
-- Flag cells (right-click)
+- Reveal cells (left-click, tap, or Space/Enter)
+- Flag cells (right-click, long-press, or F key)
 - Auto-cascade zeros (recursive reveal)
-- Chording (click numbered cell to reveal surrounding when flags match)
+- Chording (click numbered cell or press C to reveal surrounding when flags match)
 - Mine detection
 - Win condition (all non-mine cells revealed)
-- Lose condition (reveal a mine)
+- Lose condition (reveal a mine with proper visual feedback)
 
 **Rendering** ✅
 - 10x10 grid displays centered on canvas
@@ -103,12 +109,14 @@ python -m http.server 8000
 6. ✅ Game loop only renders on playing screen
 
 **Test Cases**:
-- ✅ Reveal cell (left-click)
-- ✅ Flag cell (right-click)
+- ✅ Reveal cell (left-click, tap, Space/Enter)
+- ✅ Flag cell (right-click, long-press, F key)
 - ✅ Cascade reveal (click zero cell)
-- ✅ Chord (flag mines around number, then click number)
+- ✅ Chord (flag mines around number, then click number or press C)
 - ✅ Win condition (reveal all safe cells)
-- ✅ Lose condition (reveal mine)
+- ✅ Lose condition (reveal mine with visual delay)
+- ✅ Keyboard navigation (arrow keys move cursor)
+- ✅ Input mode switching (keyboard/mouse/touch seamless)
 
 **Console Logs**:
 - Cell reveals logged with coordinates
@@ -127,13 +135,89 @@ python -m http.server 8000
 7. `7d38d8d` - Consolidate and cross-reference all documentation
 8. `2fbd720` - **Phase 1 final fixes - production ready** ✅
 
+---
+
+## Phase 2: Roguelike Resource Systems ✅ IMPLEMENTED (TESTING IN PROGRESS)
+
+**Date Started**: 2025-12-30
+**Status**: Implementation complete, ready for testing
+
+### Implemented Features
+
+**Resources & Economy** ✅
+- ✅ **HP system** - Players start with 3 HP, -1 per mine hit, game over at 0 HP
+- ✅ **Coin generation** - +10 coins per safe cell revealed (including cascades)
+- ✅ **Mana system** - +5 mana per cell revealed, +10 per flag placed (capped at 100)
+- ✅ **Reactive HUD** - Real-time updates for HP, coins, mana display
+
+### Implementation Details
+
+**HP Damage System**:
+- Mine hits now cause damage instead of instant game over
+- Players can survive up to 3 mine hits
+- Chording can cause multiple HP damage if multiple mines revealed
+- Console logs show HP status after each hit
+- Game over only triggers when HP reaches 0
+
+**Coin Tracking**:
+- Awards +10 coins per safe cell revealed
+- Properly counts cascade reveals (tracks grid.revealed before/after)
+- Chord operations award coins for safe cells only
+- Works across all input methods (mouse, touch, keyboard)
+
+**Mana Generation**:
+- Awards +5 mana per cell revealed
+- Awards +10 mana when placing flag (not on removal)
+- Mana capped at maxMana (100)
+- Works across all input methods
+
+**HUD Reactivity**:
+- `updateHUD()` called after every resource change
+- 16 total call sites verified
+- HP displays as "3/3" format
+- Mana displays as "0/100" format
+- No performance issues (efficient DOM updates)
+
+### Files Modified
+
+- **[src/main.js](src/main.js)** - All resource tracking logic added:
+  - Mouse handlers: cell reveal, chord, flag (lines ~486-637)
+  - Touch handlers: tap reveal, tap chord, long-press flag (lines ~713-950)
+  - Keyboard handlers: Space reveal, C chord, F flag (lines ~1157-1310)
+  - updateHUD() function updated (lines 96-102)
+
+### Testing Status
+
+**Server Running**: http://localhost:8000
+
+**Manual Testing Required** (from PLAN_phase2-resources.md):
+- [ ] TC1: HP damage system (3 HP → 2 → 1 → 0 game over)
+- [ ] TC2: Coin from reveal (+10 per cell)
+- [ ] TC3: Coin from cascade (+10 × cells revealed)
+- [ ] TC4: Mana from reveal (+5 per cell)
+- [ ] TC5: Mana from flag (+10 per flag placed)
+- [ ] TC6: Mana cap (stops at 100)
+- [ ] TC7: HUD updates immediately
+- [ ] TC8: Chording with mines (damage per mine)
+- [ ] TC9: No rewards for mine hits
+- [ ] TC10: Mobile touch input works
+- [ ] TC11: Keyboard controls work
+
+**Expected Behavior**:
+- Start with HP: 3/3, Coins: 0, Mana: 0/100
+- Reveal safe cell: +10 coins, +5 mana
+- Reveal 10-cell cascade: +100 coins, +50 mana
+- Place flag: +10 mana
+- Hit mine: -1 HP, game continues if HP > 0
+- Hit 3 mines: Game over
+
 ### What's NOT Implemented Yet (Phase 2+)
 
 **Resources & Economy**:
-- ❌ HP system (damage tracking)
-- ❌ Coin generation (+10 per cell)
-- ❌ Mana system (ability fuel)
-- ❌ HUD display (showing HP/coins/mana)
+- ✅ HP system (damage tracking) - DONE
+- ✅ Coin generation (+10 per cell) - DONE
+- ✅ Mana system (ability fuel) - DONE
+- ✅ HUD display (showing HP/coins/mana) - DONE
 
 **Items & Shop**:
 - ❌ Item system (20 items)

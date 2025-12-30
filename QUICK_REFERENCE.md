@@ -1,4 +1,6 @@
-# MineQuest - Quick Reference Guide
+# LiMineZZsweeperIE - Quick Reference Guide
+
+_Made with love for Lizzie_ ✨
 
 > **⭐ START HERE for new sessions**
 >

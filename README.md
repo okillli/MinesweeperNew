@@ -1,9 +1,11 @@
-# 🎮 MineQuest
+# 🎮 LiMineZZsweeperIE
 
 > **When to Read This**: First-time users, public-facing documentation, or sharing the project
 > **Read Time**: ~3 minutes
 
 A modern, web-based minesweeper roguelike with quest-based objectives, power-ups, and progression.
+
+_Made with love for Lizzie_ ✨
 
 ## 📚 Documentation Guide
 
@@ -46,15 +48,31 @@ A modern, web-based minesweeper roguelike with quest-based objectives, power-ups
 - **Quest-Based Gameplay**: Different objectives each run (treasure hunts, speed runs, perfect clears)
 - **Roguelike Progression**: Collect items, build synergies, unlock new content
 - **Character Classes**: 5 unique classes with different playstyles
+- **Fully Accessible**: Keyboard, mouse, and touch controls (WCAG 2.1 Level AA)
 - **Mobile-Friendly**: Touch controls optimized for mobile browsers
 - **No Installation**: Runs directly in your browser
 
 ## 🎲 How to Play
 
 ### Basic Controls
-- **Desktop**: Left-click to reveal, right-click to flag
-- **Mobile**: Tap to reveal, long-press to flag
-- **Chord**: Click a revealed number to auto-reveal surrounding cells (if flags match)
+
+**Mouse:**
+- Left-click to reveal cells
+- Right-click to flag cells
+- Click revealed numbers to chord (auto-reveal surrounding cells if flags match)
+
+**Keyboard:**
+- Arrow keys (↑ ↓ ← →) to navigate
+- Space or Enter to reveal
+- F to toggle flag
+- C or Shift+Space to chord
+
+**Touch (Mobile/Tablet):**
+- Tap to reveal cells
+- Long-press (500ms) to flag cells
+- Tap revealed numbers to chord
+
+All input methods work seamlessly together - switch between them anytime!
 
 ### Resources
 - **HP**: Start with 3 HP. Hitting a mine costs 1 HP. 0 HP = game over

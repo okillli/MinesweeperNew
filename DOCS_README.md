@@ -18,7 +18,7 @@
 
 ---
 
-## 📋 Active Documentation (12 Files)
+## 📋 Active Documentation (18 Files)
 
 ### Core Reference
 - **[README.md](README.md)** - Project overview, features, quick start
@@ -27,6 +27,8 @@
 
 ### Process & Workflow
 - **[CHANGE_PROTOCOL.md](CHANGE_PROTOCOL.md)** - How to make changes (Definition of Done)
+- **[PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md)** - ⭐ Quick check before ANY change (2 min)
+- **[IMPACT_ANALYSIS_CHECKLIST.md](IMPACT_ANALYSIS_CHECKLIST.md)** - Deep analysis for complex changes (15 min)
 - **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session coordination
 - **[AUTOMATION_FRAMEWORK.md](AUTOMATION_FRAMEWORK.md)** - Testing & automation strategy
 
@@ -34,6 +36,8 @@
 - **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Vision, principles, design decisions
 - **[GAME_DESIGN.md](GAME_DESIGN.md)** - Game mechanics, items, balance
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Code structure, patterns, examples
+- **[DEPENDENCIES.md](DEPENDENCIES.md)** - ⭐ Dependency mapping and impact analysis
+- **[DEPENDENCY_IMPACT_SYSTEM.md](DEPENDENCY_IMPACT_SYSTEM.md)** - ⭐ System overview and workflows
 
 ### Planning & Status
 - **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap, phases, tasks
@@ -60,6 +64,10 @@ archive/
 
 | I want to... | Read this |
 |--------------|-----------|
+| **Make a change** | [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md) ⭐ (2 min) |
+| **Plan complex change** | [IMPACT_ANALYSIS_CHECKLIST.md](IMPACT_ANALYSIS_CHECKLIST.md) (15 min) |
+| **Understand dependencies** | [DEPENDENCIES.md](DEPENDENCIES.md) ⭐ |
+| **Learn the system** | [DEPENDENCY_IMPACT_SYSTEM.md](DEPENDENCY_IMPACT_SYSTEM.md) ⭐ |
 | Start coding | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) + [CHANGE_PROTOCOL.md](CHANGE_PROTOCOL.md) |
 | Understand architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | See current status | [PROGRESS.md](PROGRESS.md) |
@@ -73,11 +81,18 @@ archive/
 
 ## ✅ Documentation Health
 
-**Current State**: Clean and organized
-- **12 active docs** in root (all current and used)
+**Current State**: Clean and organized ⭐ **NEW: Dependency & Impact Analysis System**
+- **18 active docs** in root (all current and used)
+- **NEW: 6 dependency analysis documents** - Complete system for tracking changes
 - **Historical docs** properly archived
 - **No duplicates** or obsolete files in root
 - **Clear structure** and cross-references
+
+**Recent Addition** (2025-12-30):
+- Comprehensive dependency and impact analysis system
+- Pre-change checklists and workflows
+- Automated analysis tools
+- Inline dependency documentation in all core files
 
 **Maintenance**: Review monthly, archive obsolete docs, keep root clean
 

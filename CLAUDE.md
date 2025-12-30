@@ -23,10 +23,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 4. **This file** - Review relevant architecture section
 
 ### Implementing a Feature
-1. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Understand mechanics
-2. **[ARCHITECTURE.md](ARCHITECTURE.md)** - See code patterns
-3. **This file** - Check critical patterns section
-4. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Constants & values
+1. **[PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md)** - Quick check before coding (2 min)
+2. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Understand mechanics
+3. **[ARCHITECTURE.md](ARCHITECTURE.md)** - See code patterns
+4. **[DEPENDENCIES.md](DEPENDENCIES.md)** - Check component relationships
+5. **This file** - Check critical patterns section
+6. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Constants & values
 
 ### Multi-Session Coordination
 1. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Read session protocols
@@ -245,11 +247,17 @@ Currently in **Phase 1: Core Proof of Fun**
 5. **Playtest** - Validate core loop is fun
 
 ### Before Writing Code
-1. Check [DEVELOPMENT.md](DEVELOPMENT.md) for current phase
-2. Review [ARCHITECTURE.md](ARCHITECTURE.md) for patterns
-3. Read [GAME_DESIGN.md](GAME_DESIGN.md) for mechanics/balance
-4. Check [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for constants
-5. Reference existing code examples in architecture docs
+1. **⭐ [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md)** - Quick check (2 min, REQUIRED)
+2. Check [DEVELOPMENT.md](DEVELOPMENT.md) for current phase
+3. Review [ARCHITECTURE.md](ARCHITECTURE.md) for patterns
+4. Check [DEPENDENCIES.md](DEPENDENCIES.md) for component relationships
+5. Read [GAME_DESIGN.md](GAME_DESIGN.md) for mechanics/balance
+6. Check [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for constants
+7. Reference existing code examples in architecture docs
+
+**For Complex/Critical Changes:**
+- Use [IMPACT_ANALYSIS_CHECKLIST.md](IMPACT_ANALYSIS_CHECKLIST.md) (15 min)
+- Run `node analyze-dependencies.js` to verify impact
 
 ### Code Organization Rules
 - **Data files** (`src/data/`): Pure data, no logic
@@ -326,8 +334,14 @@ Currently in **Phase 1: Core Proof of Fun**
 2. **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - High-level concept and rules
 3. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete mechanics and content
 4. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical patterns and code structure
-5. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap and task tracking
-6. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session coordination
+5. **[DEPENDENCIES.md](DEPENDENCIES.md)** - ⭐ Dependency mapping and impact analysis
+6. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap and task tracking
+7. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session coordination
+
+### Change Management (NEW)
+- **[PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md)** - ⭐ Use before EVERY change (2 min)
+- **[IMPACT_ANALYSIS_CHECKLIST.md](IMPACT_ANALYSIS_CHECKLIST.md)** - For complex changes (15 min)
+- **[DEPENDENCY_IMPACT_SYSTEM.md](DEPENDENCY_IMPACT_SYSTEM.md)** - System overview
 
 ---
 
@@ -338,6 +352,8 @@ Currently in **Phase 1: Core Proof of Fun**
 - **Overview**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - Vision & principles
 - **Design**: [GAME_DESIGN.md](GAME_DESIGN.md) - Game mechanics
 - **Code**: [ARCHITECTURE.md](ARCHITECTURE.md) - Technical structure
+- **Dependencies**: [DEPENDENCIES.md](DEPENDENCIES.md) - ⭐ Dependency mapping
+- **Before Change**: [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md) - ⭐ Required check
 - **Tasks**: [DEVELOPMENT.md](DEVELOPMENT.md) - Roadmap
 - **Workflow**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) - Session protocols
 

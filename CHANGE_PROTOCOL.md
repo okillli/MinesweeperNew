@@ -1,10 +1,15 @@
 # Change Protocol & Definition of Done
 
 > **When to Read This**: Before making any code changes, before committing, or when unsure about process
-> **Related Docs**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) for multi-session workflow
+> **Related Docs**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) for multi-session workflow, [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md) for quick checks
 > **Read Time**: ~5 minutes
 
 **Purpose**: Simple, practical guidelines for making changes without overcomplicating the process.
+
+**⭐ NEW: Dependency & Impact Analysis System**
+- Use [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md) before EVERY change (2 min)
+- Use [IMPACT_ANALYSIS_CHECKLIST.md](IMPACT_ANALYSIS_CHECKLIST.md) for complex changes (15 min)
+- See [DEPENDENCY_IMPACT_SYSTEM.md](DEPENDENCY_IMPACT_SYSTEM.md) for complete system overview
 
 ---
 
@@ -19,7 +24,22 @@
 
 ## Change Workflow
 
-### 0. Analysis & Research (MANDATORY for Non-Trivial Changes)
+### 0. Pre-Change Check (MANDATORY for ALL Changes)
+
+**⚠️ CRITICAL: Never skip this step. It prevents bugs and saves time.**
+
+**Quick Check** (2 minutes) - [PRE_CHANGE_CHECKLIST.md](PRE_CHANGE_CHECKLIST.md)
+- Answer 5 critical questions
+- Check component-specific checklist
+- Identify red flags (→ use deep analysis if found)
+
+**Deep Analysis** (15 minutes) - [IMPACT_ANALYSIS_CHECKLIST.md](IMPACT_ANALYSIS_CHECKLIST.md)
+- Use for CRITICAL components (Grid.js, GameState.js)
+- Use when red flags appear
+- Complete 10-phase analysis process
+- Document findings
+
+### 0b. Analysis & Research (MANDATORY for Non-Trivial Changes)
 
 **⚠️ CRITICAL: Never blindly implement requests. Always analyze first.**
 
