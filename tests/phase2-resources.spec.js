@@ -44,7 +44,18 @@ test.describe('Phase 2: Resource Systems', () => {
     await page.goto('/');
     await page.click('text=Start Run');
 
-    // Wait for game to be ready - canvas exists but may have visibility issues
+    // Wait for quest screen and select first quest (force click for mobile viewports)
+    await page.waitForSelector('#quest-screen.active', { timeout: 5000 });
+    await page.locator('.quest-card:first-child').scrollIntoViewIfNeeded();
+    await page.click('.quest-card:first-child', { force: true });
+
+    // Wait for character screen and select first character (Explorer)
+    await page.waitForSelector('#character-screen.active', { timeout: 5000 });
+    await page.locator('.character-card:first-child').scrollIntoViewIfNeeded();
+    await page.click('.character-card:first-child', { force: true });
+
+    // Wait for game to be ready - canvas exists and game screen is active
+    await page.waitForSelector('#game-screen.active', { timeout: 5000 });
     await page.waitForSelector('#game-canvas', { state: 'attached', timeout: 10000 });
 
     // Extra wait for game initialization and canvas sizing
@@ -52,17 +63,18 @@ test.describe('Phase 2: Resource Systems', () => {
   });
 
   test('TC1: HP System - Damage and Game Over', async ({ page }) => {
-    // Verify starting HP
+    // Verify starting HP (Explorer character starts with 3/3 HP)
     const hpDisplay = page.locator('#hp-display');
-    await expect(hpDisplay).toHaveText('1/1');
+    await expect(hpDisplay).toHaveText('3/3');
 
     const canvas = page.locator('#game-canvas');
 
-    // Click cells systematically until we hit a mine
+    // Track HP as we hit mines
+    let currentHpValue = 3;
     let mineHit = false;
     let attempts = 0;
 
-    while (!mineHit && attempts < 64) {
+    while (currentHpValue > 0 && attempts < 64) {
       const cellX = attempts % 8;
       const cellY = Math.floor(attempts / 8);
       const pos = await getCellPosition(canvas, cellX, cellY);
@@ -70,13 +82,22 @@ test.describe('Phase 2: Resource Systems', () => {
       await canvas.click({ force: true, position: pos });
       await page.waitForTimeout(100);
 
-      // Check if HP decreased (meaning we hit a mine)
+      // Check current HP
       const currentHp = await hpDisplay.textContent();
-      if (currentHp === '0/1') {
-        mineHit = true;
-        // With 1 HP, hitting a mine should trigger game over
+      const hpMatch = currentHp.match(/^(\d+)\/(\d+)$/);
+      if (hpMatch) {
+        const newHp = parseInt(hpMatch[1], 10);
+        if (newHp < currentHpValue) {
+          mineHit = true;
+          currentHpValue = newHp;
+        }
+      }
+
+      // Check if game over (HP reached 0)
+      if (currentHpValue === 0) {
         await page.waitForSelector('#gameover-overlay:not(.hidden)', { timeout: 5000 });
         await expect(page.locator('#gameover-overlay')).toBeVisible();
+        break;
       }
       attempts++;
     }
@@ -165,8 +186,8 @@ test.describe('Phase 2: Resource Systems', () => {
     const coinsDisplay = page.locator('#coins-display');
     const manaDisplay = page.locator('#mana-display');
 
-    // Note starting values
-    await expect(hpDisplay).toHaveText('1/1');
+    // Note starting values (Explorer character starts with 3/3 HP)
+    await expect(hpDisplay).toHaveText('3/3');
     await expect(coinsDisplay).toHaveText('0');
     await expect(manaDisplay).toHaveText('0/100');
 
@@ -230,8 +251,8 @@ test.describe('Phase 2: Resource Systems', () => {
     const coinsDisplay = page.locator('#coins-display');
     const manaDisplay = page.locator('#mana-display');
 
-    // Initial state
-    await expect(hpDisplay).toHaveText('1/1');
+    // Initial state (Explorer character starts with 3/3 HP)
+    await expect(hpDisplay).toHaveText('3/3');
     await expect(coinsDisplay).toHaveText('0');
     await expect(manaDisplay).toHaveText('0/100');
 
@@ -258,6 +279,19 @@ test.describe('Phase 2: Input Methods', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.click('text=Start Run');
+
+    // Wait for quest screen and select first quest
+    await page.waitForSelector('#quest-screen.active', { timeout: 5000 });
+    await page.locator('.quest-card:first-child').scrollIntoViewIfNeeded();
+    await page.click('.quest-card:first-child', { force: true });
+
+    // Wait for character screen and select first character (Explorer)
+    await page.waitForSelector('#character-screen.active', { timeout: 5000 });
+    await page.locator('.character-card:first-child').scrollIntoViewIfNeeded();
+    await page.click('.character-card:first-child', { force: true });
+
+    // Wait for game screen
+    await page.waitForSelector('#game-screen.active', { timeout: 5000 });
     await page.waitForSelector('#game-canvas', { state: 'attached', timeout: 10000 });
     await page.waitForTimeout(500);
   });

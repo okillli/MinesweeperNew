@@ -11,8 +11,8 @@
 | 1: Core | Playable minesweeper | Complete |
 | 2A: Resources | HP, coins, mana | Complete |
 | 2B: Items | 20 items, shop, multi-board | Complete |
-| 3: Progression | Quests, characters, unlocks | Next |
-| 4: Polish | Animations, deploy | Planned |
+| 3: Progression | Quests, characters, unlocks | Complete |
+| 4: Polish | Animations, deploy | Next |
 
 ---
 
@@ -60,42 +60,38 @@
   - [x] Perfect board tracking (+50 coins bonus)
   - [x] Shield protection system
 
----
+### Phase 3: Progression
 
-## Next: Phase 3: Progression
+- [x] Quest system (5 quests)
+  - [x] Classic Clear: Complete all 6 boards
+  - [x] Treasure Hunter: Collect 500 coins
+  - [x] Boss Slayer: Defeat the boss board
+  - [x] Perfectionist: Complete 3 boards without damage
+  - [x] Speed Demon: Clear all boards in under 10 minutes
+  - [x] Quest selection UI
+  - [x] Quest reward system (gems)
 
-**Goal**: Meta-progression, quests, character classes
+- [x] Character classes (5 classes)
+  - [x] Explorer (default, balanced)
+  - [x] Mage (-25% ability cost, +50 starting mana)
+  - [x] Tank (+2 max HP)
+  - [x] Scout (start with Mine Detector)
+  - [x] Gambler (2x coins, 1 HP)
+  - [x] Character selection UI
 
-- [ ] Quest system (5 quests)
-  - [ ] Classic Clear: Complete all 6 boards
-  - [ ] Treasure Hunter: Collect 500 coins
-  - [ ] Boss Slayer: Defeat the boss board
-  - [ ] Quest selection UI
-  - [ ] Quest reward system
+- [x] Gem currency & unlocks
+  - [x] Gem earning from quest completion
+  - [x] Character unlock system
+  - [x] Quest unlock system
 
-- [ ] Character classes (5 classes)
-  - [ ] Explorer (default)
-  - [ ] Mage (-25% ability cost)
-  - [ ] Tank (+2 max HP)
-  - [ ] Scout (start with Mine Detector)
-  - [ ] Character selection UI
-
-- [ ] Gem currency & unlocks
-  - [ ] Gem earning from quest completion
-  - [ ] Item unlock shop
-  - [ ] Character unlock system
-
-- [ ] Save/load (localStorage)
-  - [ ] Persistent stats tracking
-  - [ ] Settings persistence
-  - [ ] Unlock state persistence
-
-- [ ] Boss board mechanics
-  - [ ] Special boss abilities/hazards
+- [x] Save/load (localStorage)
+  - [x] Persistent stats tracking
+  - [x] Settings persistence
+  - [x] Unlock state persistence
 
 ---
 
-## Planned: Phase 4: Polish & Launch
+## Next: Phase 4: Polish & Launch
 
 **Goal**: Juice, optimization, deploy
 
@@ -148,4 +144,4 @@
 
 ---
 
-**Version**: 0.4.0 | **Last Updated**: 2025-12-30
+**Version**: 0.5.0 | **Last Updated**: 2025-12-30

@@ -13,10 +13,10 @@ _Made with love for Lizzie_
 | Phase 1: Core Minesweeper | Complete | 2025-12-30 |
 | Phase 2A: Resources | Complete | 2025-12-30 |
 | Phase 2B: Items & Shop | Complete | 2025-12-30 |
-| Phase 3: Progression | Next | — |
-| Phase 4: Polish | Planned | — |
+| Phase 3: Progression | Complete | 2025-12-30 |
+| Phase 4: Polish | Next | — |
 
-**Version**: 0.4.0
+**Version**: 0.5.0
 
 ---
 
@@ -52,23 +52,34 @@ _Made with love for Lizzie_
 - Touch (tap, long-press, haptic)
 - Keyboard (arrows, Space, F, C)
 - Seamless mode switching
+- **NEW**: Input mode toggle (FAB button to switch tap action between reveal/flag)
+- Configurable button position (left/right for handedness)
+
+### Progression System (NEW)
+- 5 quests with objectives and gem rewards
+- 5 character classes with unique passives
+- Quest selection screen
+- Character selection screen
+- Gem currency for unlocking content
+- Save/load system (localStorage)
 
 ### UI/UX
 - Menu navigation
 - Settings screen
 - Shop screen
+- Quest selection screen
+- Character selection screen
 - Game over overlay
 - Victory screen
 - Real-time HUD updates
 
 ---
 
-## Next Up: Phase 3
+## Next Up: Phase 4
 
-1. Quest system (objectives, rewards)
-2. Character selection (Explorer, Mage, etc.)
-3. Unlock progression (gems → items)
-4. Save/load system
+1. Animations (reveal, damage, effects)
+2. Tutorial/onboarding
+3. Deploy to GitHub Pages
 
 > See [DEVELOPMENT.md](DEVELOPMENT.md) for full roadmap
 
@@ -78,14 +89,17 @@ _Made with love for Lizzie_
 
 | File | Purpose |
 |------|---------|
-| `src/main.js` | Entry point, input handlers (~1500 lines) |
+| `src/main.js` | Entry point, input handlers (~2000 lines) |
 | `src/entities/Grid.js` | Minesweeper logic |
 | `src/core/GameState.js` | Central state |
 | `src/rendering/CanvasRenderer.js` | Grid rendering |
 | `src/data/items.js` | Item definitions (20 items) |
 | `src/data/boards.js` | Board configurations |
+| `src/data/quests.js` | Quest definitions (5 quests) |
+| `src/data/characters.js` | Character definitions (5 classes) |
 | `src/systems/ItemSystem.js` | Item effect processing |
 | `src/systems/ShopSystem.js` | Shop generation & purchases |
+| `src/systems/SaveSystem.js` | localStorage persistence |
 
 ---
 

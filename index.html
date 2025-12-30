@@ -63,6 +63,7 @@
         <div id="quest-screen" class="screen">
             <div class="screen-content">
                 <h2>Choose Your Quest</h2>
+                <p class="screen-subtitle">Select a challenge to begin your run</p>
                 <div id="quest-list" class="quest-list">
                     <!-- Quests will be populated by JavaScript -->
                 </div>
@@ -74,6 +75,7 @@
         <div id="character-screen" class="screen">
             <div class="screen-content">
                 <h2>Choose Your Character</h2>
+                <p class="screen-subtitle">Each character has unique abilities</p>
                 <div id="character-list" class="character-list">
                     <!-- Characters will be populated by JavaScript -->
                 </div>
@@ -88,6 +90,7 @@
                 Minesweeper game board. Use arrow keys to move cursor.
                 Press Space or Enter to reveal a cell. Press F to flag a cell.
                 On touch devices: tap to reveal, long-press to flag.
+                Use the mode toggle button to switch tap action between reveal and flag.
             </div>
 
             <!-- Canvas for grid -->
@@ -100,6 +103,33 @@
             <div id="abilities-bar" class="abilities-bar hidden" role="toolbar" aria-label="Active abilities">
                 <div id="ability-slots" class="ability-slots">
                     <!-- Ability buttons will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Input Mode Toggle (Mobile FAB) -->
+            <button id="input-mode-toggle"
+                    class="input-mode-toggle"
+                    role="switch"
+                    aria-checked="false"
+                    aria-label="Tap mode: Currently in reveal mode. Tap to switch to flag mode."
+                    title="Switch tap action (Reveal/Flag)">
+                <span class="mode-icon" aria-hidden="true">⛏️</span>
+                <span class="mode-label">REVEAL</span>
+            </button>
+
+            <!-- Debug Overlay (Press D to toggle) -->
+            <div id="debug-overlay" class="debug-overlay hidden">
+                <div class="debug-title">Debug Info (Press D to close)</div>
+                <div class="debug-content">
+                    <p>Grid: <span id="debug-grid-size">-</span></p>
+                    <p>Total Cells: <span id="debug-total-cells">-</span></p>
+                    <p>Config Mines: <span id="debug-config-mines">-</span></p>
+                    <p>Actual Mines: <span id="debug-actual-mines">-</span></p>
+                    <p>Revealed: <span id="debug-revealed">-</span></p>
+                    <p>Flagged: <span id="debug-flagged">-</span></p>
+                    <p class="debug-separator">--- Verification ---</p>
+                    <p>Numbers Valid: <span id="debug-numbers-valid">-</span></p>
+                    <p>Cell Array: <span id="debug-cell-array">-</span></p>
                 </div>
             </div>
         </div>
@@ -186,25 +216,126 @@
                 <h2>Settings</h2>
 
                 <div class="settings-list">
-                    <div class="setting-item">
-                        <label for="starting-hp">Starting HP</label>
-                        <select id="starting-hp">
-                            <option value="1" selected>1 HP (Hard)</option>
-                            <option value="2">2 HP (Medium)</option>
-                            <option value="3">3 HP (Normal)</option>
-                            <option value="5">5 HP (Easy)</option>
-                        </select>
+                    <!-- Difficulty Settings Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Difficulty</h3>
+
+                        <div class="setting-item">
+                            <label for="difficulty">Board Difficulty</label>
+                            <select id="difficulty">
+                                <option value="easy">Easy (Smaller boards)</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="hard">Hard (Larger boards)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom difficulty options (shown when Custom is selected) -->
+                        <div id="custom-difficulty-options" class="custom-options hidden">
+                            <!-- Mode toggle: Scale vs Custom Dimensions -->
+                            <div class="setting-item">
+                                <label for="use-custom-dimensions">Use Exact Dimensions</label>
+                                <input type="checkbox" id="use-custom-dimensions">
+                            </div>
+
+                            <!-- Scaling Mode (shown when NOT using custom dimensions) -->
+                            <div id="scaling-mode-options">
+                                <div class="setting-item slider-item">
+                                    <label for="board-size-scale">Board Size Scale</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="board-size-scale" min="50" max="150" value="100" step="5">
+                                        <span id="board-size-value" class="slider-value">100%</span>
+                                    </div>
+                                </div>
+                                <div class="setting-item slider-item">
+                                    <label for="mine-density-scale">Mine Density Scale</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="mine-density-scale" min="50" max="150" value="100" step="5">
+                                        <span id="mine-density-value" class="slider-value">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Dimensions Mode (shown when using custom dimensions) -->
+                            <div id="custom-dimensions-options" class="hidden">
+                                <div class="setting-item number-item">
+                                    <label for="custom-width">Grid Width</label>
+                                    <input type="number" id="custom-width" min="6" max="30" value="10" class="number-input">
+                                </div>
+                                <div class="setting-item number-item">
+                                    <label for="custom-height">Grid Height</label>
+                                    <input type="number" id="custom-height" min="6" max="30" value="10" class="number-input">
+                                </div>
+                                <div class="setting-item number-item">
+                                    <label for="custom-mines">Number of Mines</label>
+                                    <input type="number" id="custom-mines" min="5" max="891" value="15" class="number-input">
+                                </div>
+                                <p class="custom-hint" id="mines-hint">Max mines: 91 (for 10×10 grid)</p>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <label for="starting-board">Starting Board</label>
+                            <select id="starting-board">
+                                <option value="1" selected>Board 1 (Tutorial)</option>
+                                <option value="2">Board 2 (Easy)</option>
+                                <option value="3">Board 3 (Normal)</option>
+                                <option value="4">Board 4 (Hard)</option>
+                                <option value="5">Board 5 (Very Hard)</option>
+                                <option value="6">Board 6 (Boss)</option>
+                            </select>
+                        </div>
+
+                        <!-- Preview of current settings -->
+                        <div class="difficulty-preview" id="difficulty-preview">
+                            <p class="preview-title">Board 1 Preview:</p>
+                            <p class="preview-stats" id="preview-stats">8×8 grid, 10 mines</p>
+                        </div>
                     </div>
-                    <div class="setting-item">
-                        <label for="sound-toggle">Sound Effects</label>
-                        <input type="checkbox" id="sound-toggle" checked>
+
+                    <!-- Game Settings Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Game</h3>
+
+                        <div class="setting-item">
+                            <label for="starting-hp">Starting HP</label>
+                            <select id="starting-hp">
+                                <option value="1" selected>1 HP (Hard)</option>
+                                <option value="2">2 HP (Medium)</option>
+                                <option value="3">3 HP (Normal)</option>
+                                <option value="5">5 HP (Easy)</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-item">
+                            <label for="mode-button-position">Mode Button Position</label>
+                            <select id="mode-button-position">
+                                <option value="right" selected>Right (Default)</option>
+                                <option value="left">Left (Left-handed)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="setting-item">
-                        <label for="music-toggle">Music</label>
-                        <input type="checkbox" id="music-toggle" checked>
+
+                    <!-- Audio Settings Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Audio</h3>
+
+                        <div class="setting-item">
+                            <label for="sound-toggle">Sound Effects</label>
+                            <input type="checkbox" id="sound-toggle" checked>
+                        </div>
+                        <div class="setting-item">
+                            <label for="music-toggle">Music</label>
+                            <input type="checkbox" id="music-toggle" checked>
+                        </div>
                     </div>
-                    <div class="setting-item">
-                        <button id="clear-save-button" class="btn btn-danger">Clear Save Data</button>
+
+                    <!-- Data Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Data</h3>
+                        <div class="setting-item">
+                            <button id="clear-save-button" class="btn btn-danger">Clear Save Data</button>
+                        </div>
                     </div>
                 </div>
 
@@ -218,6 +349,8 @@
     <!-- Data Definitions -->
     <script src="src/data/items.js"></script>
     <script src="src/data/boards.js"></script>
+    <script src="src/data/quests.js"></script>
+    <script src="src/data/characters.js"></script>
 
     <!-- Entities -->
     <script src="src/entities/Cell.js"></script>
@@ -226,6 +359,12 @@
     <!-- Systems -->
     <script src="src/systems/ItemSystem.js"></script>
     <script src="src/systems/ShopSystem.js"></script>
+    <script src="src/systems/SaveSystem.js"></script>
+
+    <!-- Visual Effects -->
+    <script src="src/systems/ParticleSystem.js"></script>
+    <script src="src/systems/FloatingTextSystem.js"></script>
+    <script src="src/systems/EffectsManager.js"></script>
 
     <!-- Rendering -->
     <script src="src/rendering/CanvasRenderer.js"></script>

@@ -73,23 +73,44 @@ Dependency Flow: Foundation → Business Logic → Systems → Orchestration →
 ### boards.js
 **Location**: `src/data/boards.js`
 
-**PURPOSE**: Defines board configurations for the 6-board progression (size, mines, coin multiplier)
+**PURPOSE**: Defines board configurations and difficulty scaling for the 6-board progression
 
 **UPSTREAM DEPENDENCIES (what this imports):**
 - None (pure data definitions)
 
 **DOWNSTREAM DEPENDENCIES (what imports this):**
-- `GameState.js` - Uses getBoardConfig() for board generation
+- `GameState.js` - Uses `getScaledBoardConfig()` for board generation with difficulty settings
+- `main.js` - Uses `getScaledBoardConfig()` for difficulty preview in settings
+
+**KEY EXPORTS**:
+- `BOARDS` - Array of 6 board configurations
+- `DIFFICULTY_PRESETS` - Easy/Normal/Hard scaling presets
+- `getBoardConfig(boardNumber)` - Get raw board config by number
+- `getScaledBoardConfig(boardNumber, settings)` - Get board config with difficulty scaling applied
+- `validateCustomBoard(width, height, mines)` - Validate custom board dimensions
+- `getTotalBoards()` - Returns total number of boards (6)
+- `isBossBoard(boardNumber)` - Check if board is the boss board
 
 **CHANGE RISK**: **MEDIUM**
 - Board config changes affect game balance
 - Adding boards requires UI updates for board counter
+- Scaling algorithm changes affect all difficulty settings
 
-**SIDE EFFECTS**: None (pure data)
+**SIDE EFFECTS**: None (pure data and calculations)
+
+**SETTINGS DEPENDENCIES**:
+The `getScaledBoardConfig()` function uses these settings from `GameState.persistent.settings`:
+- `difficulty` - 'easy', 'normal', 'hard', or 'custom'
+- `boardSizeScale` - 50-150% (used when difficulty='custom' and !useCustomDimensions)
+- `mineDensityScale` - 50-150% (used when difficulty='custom' and !useCustomDimensions)
+- `useCustomDimensions` - If true, use exact dimensions instead of scaling
+- `customWidth` - Custom grid width 6-30 (used when useCustomDimensions=true)
+- `customHeight` - Custom grid height 6-30 (used when useCustomDimensions=true)
+- `customMines` - Custom mine count (used when useCustomDimensions=true)
 
 **TESTING IMPACT**:
-- Direct: Board config tests
-- Indirect: Game progression tests
+- Direct: Board config tests, scaling algorithm tests
+- Indirect: Game progression tests, difficulty preview tests
 
 ---
 
@@ -688,5 +709,5 @@ When adding new systems (Phase 2+), follow these principles:
 
 ---
 
-**Last Updated**: 2025-12-30 (Updated for Phase 2B: Items & Shop)
+**Last Updated**: 2025-12-30 (Updated for Board Size Settings feature)
 **Next Review**: When adding new systems (Phase 3+)

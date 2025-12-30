@@ -69,7 +69,9 @@ Vanilla JavaScript (ES6+) | Canvas + DOM | localStorage | No build step
 **Design for mobile FIRST. Desktop is an enhancement.**
 
 - Touch: Tap reveal, long-press (500ms) flag
+- **Mode Toggle**: FAB button to switch tap action (reveal ↔ flag)
 - Targets: Minimum 44×44px (prefer 60×60px)
+- Button position configurable (right/left for handedness)
 - Test on mobile BEFORE desktop
 - Never require hover
 

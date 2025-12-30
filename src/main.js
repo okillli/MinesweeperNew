@@ -28,6 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Game handles the update-render loop and owns GameState and CanvasRenderer
   const game = new Game(canvas);
 
+  // Create the Effects Manager for visual feedback
+  // Handles particles, floating text, screen shake, and damage flash
+  const effects = new EffectsManager(document.getElementById('game-screen'));
+  game.setEffectsManager(effects);
+
   /**
    * Updates canvas size to fit available space responsively
    * Called on init and window resize
@@ -129,6 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
       updateHUD();
       // Add playing class to canvas for cursor feedback
       canvas.classList.add('playing');
+      // Show input mode toggle and update its state
+      updateInputModeToggleVisibility();
+      updateInputModeToggle();
       // Update canvas size for responsive layout
       // Use requestAnimationFrame to ensure DOM has updated
       requestAnimationFrame(() => {
@@ -138,6 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
       hud.classList.add('hidden');
       // Remove playing class from canvas
       canvas.classList.remove('playing');
+      // Hide input mode toggle
+      updateInputModeToggleVisibility();
+      // Remove canvas mode tints
+      canvas.classList.remove('reveal-mode-active', 'flag-mode-active');
     }
 
     console.log(`Switched to screen: ${screenId} (state: ${game.state.currentScreen})`);
@@ -176,6 +188,374 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update abilities bar
     updateAbilitiesBar();
+  }
+
+  /**
+   * Helper to get grid layout for effects positioning
+   * @returns {Object|null} Grid layout from renderer
+   */
+  function getGridLayout() {
+    const grid = game.state.grid;
+    if (!grid) return null;
+    return game.renderer.calculateGridLayout(grid);
+  }
+
+  /**
+   * Triggers HUD stat animation
+   * @param {string} elementId - ID of the stat element
+   * @param {string} animClass - CSS animation class to add
+   */
+  function animateStatChange(elementId, animClass) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.classList.remove(animClass);
+      void element.offsetWidth; // Force reflow
+      element.classList.add(animClass);
+      setTimeout(() => element.classList.remove(animClass), 300);
+    }
+  }
+
+  // ============================================================================
+  // INPUT MODE TOGGLE (Mobile FAB)
+  // ============================================================================
+
+  const inputModeToggle = document.getElementById('input-mode-toggle');
+  const modeIcon = inputModeToggle.querySelector('.mode-icon');
+  const modeLabel = inputModeToggle.querySelector('.mode-label');
+
+  /**
+   * Updates the input mode toggle button visual state
+   */
+  function updateInputModeToggle() {
+    const isRevealMode = game.state.inputMode === 'reveal';
+
+    // Update button classes
+    inputModeToggle.classList.toggle('flag-mode', !isRevealMode);
+
+    // Update icon and label
+    modeIcon.textContent = isRevealMode ? '⛏️' : '🚩';
+    modeLabel.textContent = isRevealMode ? 'REVEAL' : 'FLAG';
+
+    // Update aria attributes
+    inputModeToggle.setAttribute('aria-checked', !isRevealMode);
+    inputModeToggle.setAttribute('aria-label',
+      `Tap mode: Currently in ${isRevealMode ? 'reveal' : 'flag'} mode. Tap to switch to ${isRevealMode ? 'flag' : 'reveal'} mode.`
+    );
+
+    // Update canvas tint
+    canvas.classList.toggle('reveal-mode-active', isRevealMode);
+    canvas.classList.toggle('flag-mode-active', !isRevealMode);
+
+    console.log(`Input mode: ${game.state.inputMode}`);
+  }
+
+  /**
+   * Toggles between reveal and flag input modes
+   */
+  function toggleInputMode() {
+    game.state.inputMode = game.state.inputMode === 'reveal' ? 'flag' : 'reveal';
+    updateInputModeToggle();
+
+    // Haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+  }
+
+  /**
+   * Updates the position of the mode toggle button based on settings
+   */
+  function updateModeButtonPosition() {
+    const position = game.state.persistent.settings.modeButtonPosition || 'right';
+    inputModeToggle.classList.toggle('position-left', position === 'left');
+  }
+
+  /**
+   * Shows or hides the input mode toggle based on game state
+   */
+  function updateInputModeToggleVisibility() {
+    const shouldShow = game.state.currentScreen === 'PLAYING' && !game.state.isGameOver;
+    inputModeToggle.classList.toggle('visible', shouldShow);
+  }
+
+  // Input mode toggle click handler
+  inputModeToggle.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleInputMode();
+  }, { signal });
+
+  // Prevent touch events from bubbling to canvas
+  inputModeToggle.addEventListener('touchstart', (event) => {
+    event.stopPropagation();
+  }, { passive: true, signal });
+
+  inputModeToggle.addEventListener('touchend', (event) => {
+    event.stopPropagation();
+  }, { passive: true, signal });
+
+  // ============================================================================
+  // QUEST SELECTION UI
+  // ============================================================================
+
+  /**
+   * Populates the quest selection screen with available quests
+   */
+  function populateQuestUI() {
+    const container = document.getElementById('quest-list');
+    container.innerHTML = '';
+
+    const unlockedIds = game.state.persistent.unlockedQuests;
+
+    Object.values(QUESTS).forEach(quest => {
+      const isUnlocked = unlockedIds.includes(quest.id);
+      const element = createQuestCardElement(quest, isUnlocked);
+      container.appendChild(element);
+    });
+  }
+
+  /**
+   * Creates a quest card element
+   * @param {Object} quest - Quest definition
+   * @param {boolean} isUnlocked - Whether quest is unlocked
+   * @returns {HTMLElement} Quest card element
+   */
+  function createQuestCardElement(quest, isUnlocked) {
+    const card = document.createElement('div');
+    card.className = `quest-card quest-${quest.difficulty}`;
+
+    if (!isUnlocked) {
+      card.classList.add('locked');
+    }
+
+    // Create difficulty stars
+    const stars = '★'.repeat(quest.difficultyStars) + '☆'.repeat(5 - quest.difficultyStars);
+
+    card.innerHTML = `
+      <div class="quest-header">
+        <span class="quest-name">${quest.name}</span>
+        <span class="quest-difficulty">${stars}</span>
+      </div>
+      <div class="quest-description">${quest.description}</div>
+      <div class="quest-objective">${quest.objective.description}</div>
+      <div class="quest-footer">
+        <span class="quest-reward">+${quest.rewards.gems} gems</span>
+        ${!isUnlocked ? `<span class="quest-cost">${quest.unlockCost} gems to unlock</span>` : ''}
+      </div>
+    `;
+
+    // Add click handler
+    if (isUnlocked) {
+      card.addEventListener('click', () => selectQuest(quest.id));
+    } else {
+      card.addEventListener('click', () => attemptUnlockQuest(quest));
+    }
+
+    return card;
+  }
+
+  /**
+   * Attempts to unlock a quest with gems
+   * @param {Object} quest - Quest to unlock
+   */
+  function attemptUnlockQuest(quest) {
+    const gems = game.state.persistent.gems;
+
+    if (gems < quest.unlockCost) {
+      console.log(`Not enough gems to unlock ${quest.name}. Need ${quest.unlockCost}, have ${gems}`);
+      return;
+    }
+
+    if (confirm(`Unlock "${quest.name}" for ${quest.unlockCost} gems?`)) {
+      game.state.persistent.gems -= quest.unlockCost;
+      game.state.persistent.unlockedQuests.push(quest.id);
+      SaveSystem.save(game.state);
+      populateQuestUI();
+      updateMenuStats();
+      console.log(`Unlocked quest: ${quest.name}`);
+    }
+  }
+
+  /**
+   * Selects a quest and proceeds to character selection
+   * @param {string} questId - Quest ID to select
+   */
+  function selectQuest(questId) {
+    const quest = QUESTS[questId];
+    if (!quest) return;
+
+    game.state.currentRun.quest = quest;
+    console.log(`Selected quest: ${quest.name}`);
+
+    populateCharacterUI();
+    showScreen('character-screen');
+  }
+
+  // ============================================================================
+  // CHARACTER SELECTION UI
+  // ============================================================================
+
+  /**
+   * Populates the character selection screen with available characters
+   */
+  function populateCharacterUI() {
+    const container = document.getElementById('character-list');
+    container.innerHTML = '';
+
+    const unlockedIds = game.state.persistent.unlockedCharacters;
+
+    Object.values(CHARACTERS).forEach(char => {
+      const isUnlocked = unlockedIds.includes(char.id);
+      const element = createCharacterCardElement(char, isUnlocked);
+      container.appendChild(element);
+    });
+  }
+
+  /**
+   * Creates a character card element
+   * @param {Object} char - Character definition
+   * @param {boolean} isUnlocked - Whether character is unlocked
+   * @returns {HTMLElement} Character card element
+   */
+  function createCharacterCardElement(char, isUnlocked) {
+    const card = document.createElement('div');
+    card.className = `character-card`;
+
+    if (!isUnlocked) {
+      card.classList.add('locked');
+    }
+
+    // Get type color
+    const typeColor = getCharacterTypeColor(char.type);
+
+    card.innerHTML = `
+      <div class="character-header">
+        <span class="character-name">${char.name}</span>
+        <span class="character-type" style="color: ${typeColor}">${char.type}</span>
+      </div>
+      <div class="character-description">${char.description}</div>
+      <div class="character-stats">
+        <span class="char-stat">HP: ${char.startingHp}/${char.maxHp}</span>
+        <span class="char-stat">Mana: ${char.startingMana}/${char.maxMana}</span>
+      </div>
+      <div class="character-passive">
+        <span class="passive-name">${char.passive.name}:</span>
+        <span class="passive-desc">${char.passive.description}</span>
+      </div>
+      <div class="character-footer">
+        ${!isUnlocked ? `<span class="character-cost">${char.unlockCost} gems to unlock</span>` : ''}
+      </div>
+    `;
+
+    // Add click handler
+    if (isUnlocked) {
+      card.addEventListener('click', () => selectCharacter(char.id));
+    } else {
+      card.addEventListener('click', () => attemptUnlockCharacter(char));
+    }
+
+    return card;
+  }
+
+  /**
+   * Attempts to unlock a character with gems
+   * @param {Object} char - Character to unlock
+   */
+  function attemptUnlockCharacter(char) {
+    const gems = game.state.persistent.gems;
+
+    if (gems < char.unlockCost) {
+      console.log(`Not enough gems to unlock ${char.name}. Need ${char.unlockCost}, have ${gems}`);
+      return;
+    }
+
+    if (confirm(`Unlock "${char.name}" for ${char.unlockCost} gems?`)) {
+      game.state.persistent.gems -= char.unlockCost;
+      game.state.persistent.unlockedCharacters.push(char.id);
+      SaveSystem.save(game.state);
+      populateCharacterUI();
+      updateMenuStats();
+      console.log(`Unlocked character: ${char.name}`);
+    }
+  }
+
+  /**
+   * Selects a character and starts the run
+   * Uses board difficulty settings from persistent.settings
+   * @param {string} charId - Character ID to select
+   */
+  function selectCharacter(charId) {
+    const char = CHARACTERS[charId];
+    if (!char) return;
+
+    game.state.currentRun.character = char;
+    console.log(`Selected character: ${char.name}`);
+
+    // Apply character stats
+    game.state.currentRun.hp = char.startingHp;
+    game.state.currentRun.maxHp = char.maxHp;
+    game.state.currentRun.mana = char.startingMana;
+    game.state.currentRun.maxMana = char.maxMana;
+
+    // Get starting board from settings (default to 1)
+    const startingBoard = game.state.persistent.settings.startingBoard || 1;
+
+    // Reset other run state - set board number to (startingBoard - 1)
+    // so generateNextBoard() increments to the correct starting board
+    game.state.currentRun.coins = 0;
+    game.state.currentRun.boardNumber = startingBoard - 1;
+    game.state.currentRun.coinMultiplier = 1.0;
+    game.state.currentRun.perfectBoardTracker = true;
+    game.state.currentRun.shieldActive = false;
+    game.state.currentRun.highlightedMines = [];
+    game.state.currentRun.safeRevealStreak = 0;
+    game.state.currentRun.manaCostMultiplier = 1.0;
+    game.state.currentRun.characterCoinMult = 1.0;
+
+    // Clear items
+    game.state.currentRun.items = {
+      passive: [],
+      active: [],
+      consumables: []
+    };
+
+    // Reset run stats
+    game.state.currentRun.stats = {
+      cellsRevealed: 0,
+      minesHit: 0,
+      coinsEarned: 0,
+      manaUsed: 0,
+      itemsPurchased: 0,
+      startTime: Date.now(),
+      perfectBoards: 0
+    };
+
+    // Apply character passive
+    applyCharacterPassive(char, game.state);
+
+    // Generate first board using difficulty settings
+    const boardConfig = game.state.generateNextBoard();
+
+    // Reset input mode to default for new run
+    game.state.inputMode = 'reveal';
+
+    // Focus canvas for keyboard navigation
+    canvas.tabIndex = 0;
+    canvas.focus();
+
+    // Transition to game screen
+    showScreen('game-screen');
+
+    console.log(`Starting run with ${char.name} on Board ${startingBoard}: ${boardConfig.name} (${boardConfig.width}x${boardConfig.height}, ${boardConfig.mines} mines)`);
+  }
+
+  /**
+   * Updates the main menu stats display
+   */
+  function updateMenuStats() {
+    document.getElementById('menu-gems').textContent = game.state.persistent.gems;
+    document.getElementById('menu-runs').textContent = game.state.persistent.stats.totalRuns;
+    document.getElementById('menu-wins').textContent = game.state.persistent.stats.totalWins;
   }
 
   // ============================================================================
@@ -495,6 +875,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set game over flag to prevent further clicks
     game.state.isGameOver = true;
 
+    // Hide input mode toggle
+    updateInputModeToggleVisibility();
+
     const grid = game.state.grid;
 
     // Step 1: Mine explosion already shown (mine was revealed before calling this)
@@ -538,8 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Handles "Start Run" button click
-   * Creates first board and goes directly to game screen
-   * TODO: Later this will go to quest selection screen
+   * Goes to quest selection screen to begin the run flow
    */
   document.getElementById('start-button').addEventListener('click', () => {
     console.log('Start Run clicked');
@@ -547,51 +929,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset game over flag
     game.state.isGameOver = false;
 
-    // Initialize run state
-    const startingHp = getStartingHP();
-    game.state.currentRun.boardNumber = 0; // Will be incremented to 1 by generateNextBoard
-    game.state.currentRun.hp = startingHp;
-    game.state.currentRun.maxHp = startingHp;
-    game.state.currentRun.mana = 0;
-    game.state.currentRun.maxMana = 100;
-    game.state.currentRun.coins = 0;
-
-    // Reset board modifiers
-    game.state.currentRun.coinMultiplier = 1.0;
-    game.state.currentRun.perfectBoardTracker = true;
-    game.state.currentRun.shieldActive = false;
-    game.state.currentRun.highlightedMines = [];
-    game.state.currentRun.safeRevealStreak = 0;
-
-    // Clear items
-    game.state.currentRun.items = {
-      passive: [],
-      active: [],
-      consumables: []
-    };
-
-    // Reset run stats
-    game.state.currentRun.stats = {
-      cellsRevealed: 0,
-      minesHit: 0,
-      coinsEarned: 0,
-      manaUsed: 0,
-      itemsPurchased: 0,
-      startTime: Date.now(),
-      perfectBoards: 0
-    };
-
-    // Generate first board using the proper board system
-    const boardConfig = game.state.generateNextBoard();
-
-    // Focus canvas for keyboard navigation
-    canvas.tabIndex = 0;
-    canvas.focus();
-
-    // Transition to game screen
-    showScreen('game-screen');
-
-    console.log(`Starting Board 1: ${boardConfig.name} (${boardConfig.width}x${boardConfig.height}, ${boardConfig.mines} mines)`);
+    // Populate quest UI and show quest selection
+    populateQuestUI();
+    showScreen('quest-screen');
   });
 
   /**
@@ -646,9 +986,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Game Over overlay "New Game" button
+   * Goes to quest selection to start a fresh run
    */
   document.getElementById('gameover-newgame-button').addEventListener('click', () => {
-    // Hide the game over overlay (game screen is already visible beneath)
+    // Hide the game over overlay
     const overlay = document.getElementById('gameover-overlay');
     if (overlay) {
       overlay.classList.add('hidden');
@@ -657,50 +998,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear board state and reset flags
     game.state.clearBoard();
 
-    // Create a new test grid (must happen BEFORE centerCursor)
-    const testGrid = new Grid(10, 10, 15);
-    game.state.grid = testGrid;
-
-    // Center keyboard cursor on new grid (grid must exist first!)
-    game.state.centerCursor();
-
     // Unfreeze renderer
     game.renderer.unfreeze();
 
     // Restart game loop
     game.start();
 
-    // Focus canvas for keyboard navigation
-    canvas.tabIndex = 0;
-    canvas.focus();
+    // Reset game over flag
+    game.state.isGameOver = false;
 
-    // Initialize run state
-    const startingHp = getStartingHP();
-    game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = startingHp;
-    game.state.currentRun.maxHp = startingHp;
-    game.state.currentRun.mana = 0;
-    game.state.currentRun.maxMana = 100;
-    game.state.currentRun.coins = 0;
+    // Update menu stats (gems may have changed)
+    updateMenuStats();
 
-    // Reset run stats
-    game.state.currentRun.stats = {
-      cellsRevealed: 0,
-      minesHit: 0,
-      coinsEarned: 0,
-      manaUsed: 0,
-      itemsPurchased: 0,
-      startTime: Date.now(),
-      perfectBoards: 0
-    };
+    // Go to quest selection for new run
+    populateQuestUI();
+    showScreen('quest-screen');
 
-    // Update HUD with reset values
-    updateHUD();
-
-    // Show game screen (critical - without this, user stays on whatever screen was active)
-    showScreen('game-screen');
-
-    console.log('New game started from game over overlay');
+    console.log('New game - going to quest selection');
   });
 
   /**
@@ -767,6 +1081,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sound-toggle').checked = settings.soundEnabled;
     document.getElementById('music-toggle').checked = settings.musicEnabled;
 
+    // Load difficulty settings
+    document.getElementById('difficulty').value = settings.difficulty || 'normal';
+    document.getElementById('board-size-scale').value = settings.boardSizeScale || 100;
+    document.getElementById('mine-density-scale').value = settings.mineDensityScale || 100;
+    document.getElementById('starting-board').value = settings.startingBoard || 1;
+
+    // Load custom dimension settings
+    document.getElementById('use-custom-dimensions').checked = settings.useCustomDimensions || false;
+    document.getElementById('custom-width').value = settings.customWidth || 10;
+    document.getElementById('custom-height').value = settings.customHeight || 10;
+    document.getElementById('custom-mines').value = settings.customMines || 15;
+
+    // Load mode button position
+    document.getElementById('mode-button-position').value = settings.modeButtonPosition || 'right';
+    updateModeButtonPosition();
+
+    // Update slider value displays
+    document.getElementById('board-size-value').textContent = `${settings.boardSizeScale || 100}%`;
+    document.getElementById('mine-density-value').textContent = `${settings.mineDensityScale || 100}%`;
+
+    // Show/hide custom options based on difficulty
+    updateCustomOptionsVisibility();
+
+    // Update custom dimensions mode visibility
+    updateCustomDimensionsVisibility();
+
+    // Update mines max hint
+    updateMinesHint();
+
+    // Update difficulty preview
+    updateDifficultyPreview();
+
     console.log('Settings loaded:', settings);
   }
 
@@ -783,7 +1129,113 @@ document.addEventListener('DOMContentLoaded', () => {
     settings.soundEnabled = document.getElementById('sound-toggle').checked;
     settings.musicEnabled = document.getElementById('music-toggle').checked;
 
+    // Save difficulty settings
+    settings.difficulty = document.getElementById('difficulty').value;
+    settings.boardSizeScale = parseInt(document.getElementById('board-size-scale').value, 10);
+    settings.mineDensityScale = parseInt(document.getElementById('mine-density-scale').value, 10);
+    settings.startingBoard = parseInt(document.getElementById('starting-board').value, 10);
+
+    // Save custom dimension settings
+    settings.useCustomDimensions = document.getElementById('use-custom-dimensions').checked;
+    settings.customWidth = parseInt(document.getElementById('custom-width').value, 10) || 10;
+    settings.customHeight = parseInt(document.getElementById('custom-height').value, 10) || 10;
+    settings.customMines = parseInt(document.getElementById('custom-mines').value, 10) || 15;
+
+    // Save mode button position
+    settings.modeButtonPosition = document.getElementById('mode-button-position').value;
+
+    // Save to localStorage
+    if (typeof SaveSystem !== 'undefined') {
+      SaveSystem.save(game.state);
+    }
+
     console.log('Settings saved:', settings);
+  }
+
+  /**
+   * Show/hide custom difficulty options based on difficulty selection
+   */
+  function updateCustomOptionsVisibility() {
+    const difficulty = document.getElementById('difficulty').value;
+    const customOptions = document.getElementById('custom-difficulty-options');
+
+    if (difficulty === 'custom') {
+      customOptions.classList.remove('hidden');
+    } else {
+      customOptions.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Show/hide scaling vs custom dimensions based on toggle
+   */
+  function updateCustomDimensionsVisibility() {
+    const useCustomDimensions = document.getElementById('use-custom-dimensions').checked;
+    const scalingOptions = document.getElementById('scaling-mode-options');
+    const customDimensionsOptions = document.getElementById('custom-dimensions-options');
+
+    if (useCustomDimensions) {
+      scalingOptions.classList.add('hidden');
+      customDimensionsOptions.classList.remove('hidden');
+    } else {
+      scalingOptions.classList.remove('hidden');
+      customDimensionsOptions.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Update the mines hint to show max mines for current grid size
+   */
+  function updateMinesHint() {
+    const width = parseInt(document.getElementById('custom-width').value, 10) || 10;
+    const height = parseInt(document.getElementById('custom-height').value, 10) || 10;
+    const totalCells = width * height;
+    const maxMines = totalCells - 9;
+
+    const minesInput = document.getElementById('custom-mines');
+    minesInput.max = maxMines;
+
+    // Clamp current value if needed
+    const currentMines = parseInt(minesInput.value, 10) || 15;
+    if (currentMines > maxMines) {
+      minesInput.value = maxMines;
+    }
+
+    const hintElement = document.getElementById('mines-hint');
+    hintElement.textContent = `Max mines: ${maxMines} (for ${width}×${height} grid)`;
+  }
+
+  /**
+   * Update the difficulty preview to show current board 1 settings
+   */
+  function updateDifficultyPreview() {
+    const startingBoard = parseInt(document.getElementById('starting-board').value, 10);
+    const useCustomDimensions = document.getElementById('use-custom-dimensions').checked;
+
+    const settings = {
+      difficulty: document.getElementById('difficulty').value,
+      boardSizeScale: parseInt(document.getElementById('board-size-scale').value, 10),
+      mineDensityScale: parseInt(document.getElementById('mine-density-scale').value, 10),
+      useCustomDimensions: useCustomDimensions,
+      customWidth: parseInt(document.getElementById('custom-width').value, 10) || 10,
+      customHeight: parseInt(document.getElementById('custom-height').value, 10) || 10,
+      customMines: parseInt(document.getElementById('custom-mines').value, 10) || 15
+    };
+
+    // Get scaled config for the starting board
+    const config = getScaledBoardConfig(startingBoard, settings);
+
+    if (config) {
+      const previewTitle = document.querySelector('.preview-title');
+      const previewStats = document.getElementById('preview-stats');
+
+      if (settings.difficulty === 'custom' && useCustomDimensions) {
+        previewTitle.textContent = `Custom Board Preview:`;
+      } else {
+        previewTitle.textContent = `${config.name} (Board ${startingBoard}) Preview:`;
+      }
+      previewStats.textContent = `${config.width}×${config.height} grid, ${config.mines} mines`;
+    }
   }
 
   /**
@@ -809,19 +1261,119 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /**
+   * Difficulty dropdown change handler
+   */
+  document.getElementById('difficulty').addEventListener('change', () => {
+    updateCustomOptionsVisibility();
+    updateDifficultyPreview();
+    saveSettings();
+    console.log(`Difficulty changed to: ${game.state.persistent.settings.difficulty}`);
+  });
+
+  /**
+   * Board size scale slider change handler
+   */
+  document.getElementById('board-size-scale').addEventListener('input', () => {
+    const value = document.getElementById('board-size-scale').value;
+    document.getElementById('board-size-value').textContent = `${value}%`;
+    updateDifficultyPreview();
+    saveSettings();
+  });
+
+  /**
+   * Mine density scale slider change handler
+   */
+  document.getElementById('mine-density-scale').addEventListener('input', () => {
+    const value = document.getElementById('mine-density-scale').value;
+    document.getElementById('mine-density-value').textContent = `${value}%`;
+    updateDifficultyPreview();
+    saveSettings();
+  });
+
+  /**
+   * Starting board dropdown change handler
+   */
+  document.getElementById('starting-board').addEventListener('change', () => {
+    updateDifficultyPreview();
+    saveSettings();
+    console.log(`Starting board changed to: ${game.state.persistent.settings.startingBoard}`);
+  });
+
+  /**
+   * Mode button position dropdown change handler
+   */
+  document.getElementById('mode-button-position').addEventListener('change', () => {
+    saveSettings(); // Save first so settings object is updated
+    updateModeButtonPosition(); // Then apply the new position
+    console.log(`Mode button position changed to: ${game.state.persistent.settings.modeButtonPosition}`);
+  });
+
+  /**
+   * Use custom dimensions toggle handler
+   */
+  document.getElementById('use-custom-dimensions').addEventListener('change', () => {
+    updateCustomDimensionsVisibility();
+    updateDifficultyPreview();
+    saveSettings();
+    console.log(`Use custom dimensions: ${game.state.persistent.settings.useCustomDimensions}`);
+  });
+
+  /**
+   * Custom width input handler
+   */
+  document.getElementById('custom-width').addEventListener('input', () => {
+    updateMinesHint();
+    updateDifficultyPreview();
+    saveSettings();
+  });
+
+  /**
+   * Custom height input handler
+   */
+  document.getElementById('custom-height').addEventListener('input', () => {
+    updateMinesHint();
+    updateDifficultyPreview();
+    saveSettings();
+  });
+
+  /**
+   * Custom mines input handler
+   */
+  document.getElementById('custom-mines').addEventListener('input', () => {
+    updateDifficultyPreview();
+    saveSettings();
+  });
+
+  /**
    * Clear save data button
    */
   document.getElementById('clear-save-button').addEventListener('click', () => {
     if (confirm('Are you sure you want to clear all save data? This cannot be undone.')) {
+      SaveSystem.clear();
       game.state.reset();
       loadSettings(); // Reload UI with default settings
+      updateMenuStats();
       console.log('Save data cleared');
       alert('Save data has been cleared!');
     }
   });
 
+  // ============================================================================
+  // INITIALIZATION
+  // ============================================================================
+
+  // Load saved data on startup
+  const savedData = SaveSystem.load();
+  if (savedData) {
+    SaveSystem.applyToGameState(game.state, savedData);
+    console.log('Loaded saved game data');
+  }
+
   // Initialize settings UI
   loadSettings();
+
+  // Update menu stats display
+  updateMenuStats();
 
   // Initialize to menu screen
   showScreen('menu-screen');
@@ -889,7 +1441,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Award resources for revealed cells
         if (result.data.cellsRevealed && result.data.cellsRevealed > 0) {
           const baseCoins = result.data.cellsRevealed * 10;
-          const coins = Math.floor(ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins) * game.state.currentRun.coinMultiplier);
+          const charCoinMult = game.state.currentRun.characterCoinMult || 1.0;
+          const coins = Math.floor(ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins) * game.state.currentRun.coinMultiplier * charCoinMult);
           const mana = result.data.cellsRevealed * 5;
           game.state.addCoins(coins);
           game.state.addMana(mana);
@@ -907,6 +1460,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const cell = grid.getCell(x, y);
     if (!cell) return;
+
+    // Check input mode for click action
+    // In flag mode, click toggles flag on unrevealed cells
+    if (game.state.inputMode === 'flag' && !cell.isRevealed) {
+      const success = grid.toggleFlag(x, y);
+
+      if (success) {
+        const updatedCell = grid.getCell(x, y);
+        console.log(`${updatedCell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y}) via click (flag mode)`);
+        console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
+
+        // Award mana for placing flag (+10)
+        if (updatedCell.isFlagged) {
+          game.state.addMana(10);
+          updateHUD();
+          console.log('Flag placed! +10 mana');
+        }
+      }
+      return;
+    }
 
     // If cell is already revealed, try to chord
     if (cell.isRevealed) {
@@ -979,6 +1552,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
+          // Visual effects: Mine explosion + damage feedback
+          const layout = getGridLayout();
+          effects.mineExplosion(x, y, layout);
+          effects.damage(1, x, y, layout);
+          animateStatChange('hp-display', 'hp-change');
+
           // Damage system - lose 1 HP per mine
           game.state.takeDamage(1);
           updateHUD();
@@ -1008,12 +1587,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Award coins with multipliers (+10 per cell base)
         const baseCoins = cellsRevealed * 10;
         const modifiedCoins = ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins);
-        const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier);
+        const charCoinMult = game.state.currentRun.characterCoinMult || 1.0;
+        const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier * charCoinMult);
         game.state.addCoins(coinsEarned);
 
         // Award mana (+5 per cell)
         const manaEarned = cellsRevealed * 5;
         game.state.addMana(manaEarned);
+
+        // Visual effects: Coin and mana gain
+        const layout = getGridLayout();
+        effects.coinGain(coinsEarned, x, y, layout);
+        effects.manaGain(manaEarned, x, y, layout);
+        animateStatChange('coins-display', 'coin-change');
+        animateStatChange('mana-display', 'mana-change');
 
         // Update HUD
         updateHUD();
@@ -1328,7 +1915,38 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Execute tap action (same as left-click)
+    // Check input mode for tap action
+    // In flag mode, tap toggles flag on unrevealed cells
+    if (game.state.inputMode === 'flag' && !cell.isRevealed) {
+      const success = grid.toggleFlag(x, y);
+
+      if (success) {
+        const updatedCell = grid.getCell(x, y);
+        console.log(`${updatedCell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y}) via tap (flag mode)`);
+        console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
+
+        // Award mana for placing flag (+10)
+        if (updatedCell.isFlagged) {
+          game.state.addMana(10);
+          updateHUD();
+          console.log('Flag placed! +10 mana');
+        }
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate(30);
+        }
+      }
+
+      // Mark as handled and clean up
+      touchHandled = true;
+      setTimeout(() => { touchHandled = false; }, 300);
+      touchStartPos = null;
+      event.preventDefault();
+      return;
+    }
+
+    // Execute tap action (reveal mode or revealed cell)
     // If cell is already revealed, try to chord
     if (cell.isRevealed) {
       const chordedCells = grid.chord(x, y);
@@ -1401,6 +2019,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
+          // Visual effects: Mine explosion + damage feedback
+          const layout = getGridLayout();
+          effects.mineExplosion(x, y, layout);
+          effects.damage(1, x, y, layout);
+          animateStatChange('hp-display', 'hp-change');
+
           // Damage system - lose 1 HP per mine
           game.state.takeDamage(1);
           updateHUD();
@@ -1431,12 +2055,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Award coins with multipliers (+10 per cell base)
         const baseCoins = cellsRevealed * 10;
         const modifiedCoins = ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins);
-        const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier);
+        const charCoinMult = game.state.currentRun.characterCoinMult || 1.0;
+        const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier * charCoinMult);
         game.state.addCoins(coinsEarned);
 
         // Award mana (+5 per cell)
         const manaEarned = cellsRevealed * 5;
         game.state.addMana(manaEarned);
+
+        // Visual effects: Coin and mana gain
+        const layout = getGridLayout();
+        effects.coinGain(coinsEarned, x, y, layout);
+        effects.manaGain(manaEarned, x, y, layout);
+        animateStatChange('coins-display', 'coin-change');
+        animateStatChange('mana-display', 'mana-change');
 
         // Update HUD
         updateHUD();
@@ -1639,12 +2271,104 @@ document.addEventListener('DOMContentLoaded', () => {
       // C = Chord
       performChordAtCursor();
       handled = true;
+    } else if (key === 'd' || key === 'D') {
+      // D = Toggle debug overlay
+      toggleDebugOverlay();
+      handled = true;
     }
 
     // Prevent default browser behavior for handled keys
     if (handled) {
       event.preventDefault();
     }
+  }
+
+  // ============================================================================
+  // DEBUG OVERLAY
+  // ============================================================================
+
+  /**
+   * Toggle the debug overlay visibility
+   */
+  function toggleDebugOverlay() {
+    const overlay = document.getElementById('debug-overlay');
+    if (!overlay) return;
+
+    if (overlay.classList.contains('hidden')) {
+      overlay.classList.remove('hidden');
+      updateDebugOverlay();
+    } else {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Update the debug overlay with current grid statistics
+   */
+  function updateDebugOverlay() {
+    const grid = game.state.grid;
+    if (!grid) return;
+
+    // Count actual mines and verify numbers
+    let actualMines = 0;
+    let numberErrors = 0;
+
+    for (let y = 0; y < grid.height; y++) {
+      for (let x = 0; x < grid.width; x++) {
+        const cell = grid.cells[y][x];
+
+        if (cell.isMine) {
+          actualMines++;
+        } else {
+          // Verify number calculation
+          let expectedNumber = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = x + dx;
+              const ny = y + dy;
+              if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height) {
+                if (grid.cells[ny][nx].isMine) {
+                  expectedNumber++;
+                }
+              }
+            }
+          }
+          if (cell.number !== expectedNumber) {
+            numberErrors++;
+            console.error(`Number error at (${x},${y}): stored=${cell.number}, expected=${expectedNumber}`);
+          }
+        }
+      }
+    }
+
+    // Update display elements
+    const setDebugValue = (id, value, isError = false) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = value;
+        el.className = isError ? 'debug-error' : (value === 'OK' ? 'debug-success' : '');
+      }
+    };
+
+    setDebugValue('debug-grid-size', `${grid.width}x${grid.height}`);
+    setDebugValue('debug-total-cells', grid.width * grid.height);
+    setDebugValue('debug-config-mines', grid.mineCount);
+    setDebugValue('debug-actual-mines', actualMines, actualMines !== grid.mineCount);
+    setDebugValue('debug-revealed', grid.revealed);
+    setDebugValue('debug-flagged', grid.flagged);
+    setDebugValue('debug-numbers-valid', numberErrors === 0 ? 'OK' : `${numberErrors} errors`, numberErrors > 0);
+    setDebugValue('debug-cell-array', `${grid.cells.length}x${grid.cells[0]?.length || 0}`);
+
+    // Log to console for detailed analysis
+    console.log('=== Debug Grid Analysis ===');
+    console.log(`Grid dimensions: ${grid.width}x${grid.height}`);
+    console.log(`Cell array: ${grid.cells.length} rows x ${grid.cells[0]?.length || 0} cols`);
+    console.log(`Configured mines: ${grid.mineCount}`);
+    console.log(`Actual mines: ${actualMines}`);
+    console.log(`Mine count match: ${actualMines === grid.mineCount ? 'YES' : 'NO - MISMATCH!'}`);
+    console.log(`Number calculation errors: ${numberErrors}`);
+    console.log('===========================');
   }
 
   /**
@@ -1665,6 +2389,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle mine hit (damage system)
     if (revealed.isMine) {
+      // Visual effects: Mine explosion + damage feedback
+      const layout = getGridLayout();
+      effects.mineExplosion(x, y, layout);
+      effects.damage(1, x, y, layout);
+      animateStatChange('hp-display', 'hp-change');
+
       // Damage system - lose 1 HP per mine
       game.state.takeDamage(1);
       updateHUD();
@@ -1697,6 +2427,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const manaEarned = cellsRevealed * 5;
       game.state.addMana(manaEarned);
 
+      // Visual effects: Coin and mana gain
+      const layout = getGridLayout();
+      effects.coinGain(coinsEarned, x, y, layout);
+      effects.manaGain(manaEarned, x, y, layout);
+      animateStatChange('coins-display', 'coin-change');
+      animateStatChange('mana-display', 'mana-change');
+
       // Update HUD
       updateHUD();
 
@@ -1726,6 +2463,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (success) {
       const updatedCell = game.state.grid.getCell(x, y);
       if (updatedCell && updatedCell.isFlagged) {
+        // Visual effects: Flag placement
+        const layout = getGridLayout();
+        effects.flagPlaced(x, y, layout);
+
         game.state.addMana(10);
         updateHUD();
         console.log('Flag placed! +10 mana');

@@ -67,6 +67,10 @@ class GameState {
       visible: false  // Show cursor highlight (true when using keyboard)
     };
 
+    // Input mode state - controls what tap does on mobile
+    // 'reveal' = tap reveals cells (default), 'flag' = tap places flags
+    this.inputMode = 'reveal';
+
     // Run state - data for the current run (resets each run)
     this.currentRun = {
       quest: null,           // Current quest object from quests.js
@@ -86,6 +90,10 @@ class GameState {
       shieldActive: false,   // True if Shield Token is protecting from next hit
       highlightedMines: [],  // Array of {x,y} for Mine Detector highlighting
       safeRevealStreak: 0,   // Count of safe reveals for Fortify Armor
+
+      // Character passive multipliers
+      manaCostMultiplier: 1.0,    // Mana cost multiplier (Mage: 0.75)
+      characterCoinMult: 1.0,     // Character coin multiplier (Gambler: 2.0)
 
       items: {
         passive: [],         // Array of passive item objects
@@ -113,7 +121,18 @@ class GameState {
       settings: {
         startingHp: 1,       // Starting HP for new runs (default 1)
         soundEnabled: true,  // Sound effects toggle
-        musicEnabled: true   // Music toggle
+        musicEnabled: true,  // Music toggle
+        modeButtonPosition: 'right', // 'right' or 'left' - position of input mode toggle
+        // Board difficulty settings
+        difficulty: 'normal',     // 'easy', 'normal', 'hard', 'custom'
+        boardSizeScale: 100,      // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
+        mineDensityScale: 100,    // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
+        startingBoard: 1,         // Which board to start from (1-6)
+        // Custom dimensions (used when difficulty='custom' and useCustomDimensions=true)
+        useCustomDimensions: false,  // If true, use exact dimensions instead of scaling
+        customWidth: 10,             // Custom grid width (6-30)
+        customHeight: 10,            // Custom grid height (6-30)
+        customMines: 15              // Custom mine count (5 to totalCells-9)
       },
       unlockedItems: [
         // MVP Starter Pool (10 items total)
@@ -195,6 +214,8 @@ class GameState {
     this.currentRun.shieldActive = false;
     this.currentRun.highlightedMines = [];
     this.currentRun.safeRevealStreak = 0;
+    this.currentRun.manaCostMultiplier = 1.0;
+    this.currentRun.characterCoinMult = 1.0;
 
     // Clear items
     this.currentRun.items = {
@@ -226,21 +247,21 @@ class GameState {
 
   /**
    * Generate the next board in the run
-   * Increments board number and creates a new grid based on BOARDS config
+   * Increments board number and creates a new grid based on BOARDS config with difficulty scaling
    * @returns {Object|null} Board config or null if run complete
    */
   generateNextBoard() {
     // Increment board number (1-6)
     this.currentRun.boardNumber++;
 
-    // Get board configuration
-    const config = getBoardConfig(this.currentRun.boardNumber);
+    // Get board configuration with difficulty scaling applied
+    const config = getScaledBoardConfig(this.currentRun.boardNumber, this.persistent.settings);
     if (!config) {
       // Run complete - all 6 boards cleared
       return null;
     }
 
-    // Create new grid
+    // Create new grid with scaled dimensions
     this.grid = new Grid(config.width, config.height, config.mines);
 
     // Set board modifiers
@@ -310,8 +331,10 @@ class GameState {
     // Transition to game over screen
     this.currentScreen = 'GAME_OVER';
 
-    // Save to localStorage would happen here
-    // TODO: Call SaveSystem.save(this) when SaveSystem is implemented
+    // Save to localStorage
+    if (typeof SaveSystem !== 'undefined') {
+      SaveSystem.save(this);
+    }
 
     // Return summary data for game over screen
     return {
@@ -493,6 +516,7 @@ class GameState {
     this.isGameOver = false;
     this.hoverCell = null;
     this.cursor = { x: 0, y: 0, visible: false };
+    this.inputMode = 'reveal'; // Reset input mode to default
 
     // Reset run state
     this.currentRun = {
@@ -509,6 +533,8 @@ class GameState {
       shieldActive: false,
       highlightedMines: [],
       safeRevealStreak: 0,
+      manaCostMultiplier: 1.0,
+      characterCoinMult: 1.0,
       items: { passive: [], active: [], consumables: [] },
       stats: {
         cellsRevealed: 0,
@@ -530,7 +556,18 @@ class GameState {
       settings: {
         startingHp: 1,       // Starting HP for new runs (default 1)
         soundEnabled: true,  // Sound effects toggle
-        musicEnabled: true   // Music toggle
+        musicEnabled: true,  // Music toggle
+        modeButtonPosition: 'right', // 'right' or 'left' - position of input mode toggle
+        // Board difficulty settings
+        difficulty: 'normal',     // 'easy', 'normal', 'hard', 'custom'
+        boardSizeScale: 100,      // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
+        mineDensityScale: 100,    // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
+        startingBoard: 1,         // Which board to start from (1-6)
+        // Custom dimensions (used when difficulty='custom' and useCustomDimensions=true)
+        useCustomDimensions: false,  // If true, use exact dimensions instead of scaling
+        customWidth: 10,             // Custom grid width (6-30)
+        customHeight: 10,            // Custom grid height (6-30)
+        customMines: 15              // Custom mine count (5 to totalCells-9)
       },
       unlockedItems: [
         // MVP Starter Pool (10 items total)

@@ -68,6 +68,12 @@ class Game {
     this.renderer = new CanvasRenderer(canvas);
 
     /**
+     * Effects manager - handles visual effects (particles, floating text, screen shake)
+     * @type {EffectsManager|null}
+     */
+    this.effects = null;
+
+    /**
      * Last timestamp from RAF, used for delta time calculation
      * @type {number}
      */
@@ -78,6 +84,17 @@ class Game {
      * @type {boolean}
      */
     this.running = false;
+  }
+
+  /**
+   * Sets the effects manager for visual effects
+   * @param {EffectsManager} effectsManager
+   */
+  setEffectsManager(effectsManager) {
+    this.effects = effectsManager;
+    if (this.effects) {
+      this.effects.setCanvas(this.renderer.canvas);
+    }
   }
 
   /**
@@ -131,6 +148,11 @@ class Game {
   update(deltaTime) {
     // Update all game systems
     this.state.update(deltaTime);
+
+    // Update visual effects
+    if (this.effects) {
+      this.effects.update(deltaTime);
+    }
   }
 
   /**
@@ -142,6 +164,11 @@ class Game {
   render() {
     // Render grid to canvas
     this.renderer.render(this.state);
+
+    // Render visual effects on top of grid
+    if (this.effects && !this.renderer.frozen) {
+      this.effects.render(this.renderer.ctx);
+    }
   }
 
   /**

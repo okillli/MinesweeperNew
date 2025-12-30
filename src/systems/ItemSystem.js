@@ -128,7 +128,7 @@ class ItemSystem {
   }
 
   /**
-   * Get the mana cost for an ability (may be modified by passives)
+   * Get the mana cost for an ability (may be modified by character passive)
    * @param {GameState} gameState - Current game state
    * @param {string} itemId - Active item ID
    * @returns {number} Mana cost
@@ -139,8 +139,10 @@ class ItemSystem {
 
     let cost = def.manaCost;
 
-    // Check for Mage character (-25% ability cost) - future implementation
-    // For now, return base cost
+    // Apply character mana cost multiplier (e.g., Mage: 0.75 = -25% cost)
+    const multiplier = gameState.currentRun.manaCostMultiplier || 1.0;
+    cost = Math.floor(cost * multiplier);
+
     return cost;
   }
 
