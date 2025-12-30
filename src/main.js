@@ -106,8 +106,37 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
 
   /**
+   * Updates the game over screen with contextual information
+   * @param {Object} summary - Summary data from GameState.endRun()
+   */
+  function updateGameOverScreen(summary) {
+    const { victory, gemsEarned, boardNumber, stats } = summary;
+
+    // Update title with victory/defeat styling
+    const title = document.getElementById('gameover-title');
+    title.textContent = victory ? 'Victory!' : 'Game Over';
+    title.className = victory ? 'victory' : 'defeat';
+
+    // Update message with context
+    const message = document.getElementById('gameover-message');
+    if (victory) {
+      message.innerHTML = 'You completed the quest! Excellent work!';
+    } else {
+      message.innerHTML = `You were defeated on <strong>Board ${boardNumber}</strong>`;
+    }
+
+    // Update stats
+    document.getElementById('stat-boards').textContent = boardNumber;
+    document.getElementById('stat-cells').textContent = stats.cellsRevealed;
+    document.getElementById('stat-coins').textContent = stats.coinsEarned;
+    document.getElementById('stat-damage').textContent = stats.minesHit;
+    document.getElementById('gems-earned').textContent = gemsEarned;
+  }
+
+  /**
    * Handles game over when a mine is hit
    * - Reveals all mines on the grid
+   * - Stops game loop and freezes canvas
    * - Updates game over screen with stats
    * - Transitions to game over screen after a delay
    */
@@ -116,30 +145,28 @@ document.addEventListener('DOMContentLoaded', () => {
     game.state.isGameOver = true;
 
     const grid = game.state.grid;
-    const run = game.state.currentRun;
 
     // Reveal all mines on the grid
     if (grid) {
       grid.revealAllMines();
     }
 
-    // Update game over screen title and message
-    document.getElementById('gameover-title').textContent = 'Game Over!';
-    document.getElementById('gameover-message').textContent = 'You hit a mine!';
+    // Stop the game loop - final frame stays on canvas
+    game.stop();
 
-    // Update stats display
-    document.getElementById('stat-boards').textContent = run.boardNumber;
-    document.getElementById('stat-cells').textContent = run.stats.cellsRevealed;
-    document.getElementById('stat-coins').textContent = run.stats.coinsEarned;
-    document.getElementById('stat-damage').textContent = run.stats.minesHit;
+    // Freeze canvas rendering - preserve final state
+    game.renderer.freeze();
 
-    // No gems earned on failure
-    document.getElementById('gems-earned').textContent = '0';
+    // Transition state and get summary
+    const summary = game.state.endRun(false); // false = defeat
 
-    // Transition to game over screen after a short delay (let player see the mines)
+    // Update game over UI with summary
+    updateGameOverScreen(summary);
+
+    // Show game over overlay (after brief delay for impact)
     setTimeout(() => {
       showScreen('gameover-screen');
-    }, 1500);
+    }, 300);
   }
 
   // ============================================================================
@@ -251,8 +278,14 @@ document.addEventListener('DOMContentLoaded', () => {
    * Game Over screen "New Game" button
    */
   document.getElementById('gameover-newgame-button').addEventListener('click', () => {
-    // Reset game over flag
-    game.state.isGameOver = false;
+    // Clear board state and reset flags
+    game.state.clearBoard();
+
+    // Unfreeze renderer
+    game.renderer.unfreeze();
+
+    // Restart game loop
+    game.start();
 
     // Create a new test grid
     const testGrid = new Grid(10, 10, 15);
@@ -294,6 +327,15 @@ document.addEventListener('DOMContentLoaded', () => {
    * Game Over screen "Return to Menu" button
    */
   document.getElementById('gameover-menu-button').addEventListener('click', () => {
+    // Clear board state
+    game.state.clearBoard();
+
+    // Unfreeze renderer
+    game.renderer.unfreeze();
+
+    // Restart game loop (needed for menu animations if any)
+    game.start();
+
     showScreen('menu-screen');
   });
 

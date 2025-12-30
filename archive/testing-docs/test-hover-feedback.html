@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hover Feedback Automated Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #4a90e2;
+            margin-bottom: 10px;
+        }
+
+        .test-container {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #0f0f1e;
+            border-left: 4px solid #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .test-item.running {
+            border-left-color: #f4a261;
+            animation: pulse 1s infinite;
+        }
+
+        .test-item.pass {
+            border-left-color: #2ecc71;
+        }
+
+        .test-item.fail {
+            border-left-color: #e63946;
+        }
+
+        .test-name {
+            flex: 1;
+        }
+
+        .test-status {
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 4px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .test-status.pending {
+            background: #666;
+            color: #ccc;
+        }
+
+        .test-status.running {
+            background: #f4a261;
+            color: #000;
+        }
+
+        .test-status.pass {
+            background: #2ecc71;
+            color: #000;
+        }
+
+        .test-status.fail {
+            background: #e63946;
+            color: #fff;
+        }
+
+        .summary {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .summary.all-pass {
+            background: #1e4d2b;
+            border: 2px solid #2ecc71;
+        }
+
+        .summary.has-fail {
+            background: #4d1e1e;
+            border: 2px solid #e63946;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .test-details {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .error-details {
+            color: #e63946;
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 5px;
+            background: rgba(230, 57, 70, 0.1);
+            border-radius: 4px;
+        }
+
+        #test-canvas {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+        }
+
+        button {
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #357abd;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Hover Feedback System - Automated Tests</h1>
+
+    <div style="margin-bottom: 20px;">
+        <button id="run-tests" onclick="runAllTests()">▶ Run All Tests</button>
+        <button id="rerun-failed" onclick="rerunFailedTests()" disabled>🔄 Re-run Failed Tests</button>
+    </div>
+
+    <div class="test-container">
+        <h2>Test Suite Progress</h2>
+        <div id="test-results"></div>
+    </div>
+
+    <div id="summary-container"></div>
+
+    <!-- Hidden canvas for testing -->
+    <canvas id="test-canvas" width="600" height="600"></canvas>
+
+    <!-- Load game scripts -->
+    <script src="src/entities/Cell.js"></script>
+    <script src="src/entities/Grid.js"></script>
+    <script src="src/core/GameState.js"></script>
+    <script src="src/core/EventBus.js"></script>
+    <script src="src/rendering/CanvasRenderer.js"></script>
+    <script src="src/core/Game.js"></script>
+
+    <script>
+        // Test framework
+        const tests = [];
+        let testResults = [];
+        let currentTestIndex = 0;
+
+        // Helper function to add a test
+        function test(name, fn) {
+            tests.push({ name, fn });
+        }
+
+        // Helper to assert
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        // Helper to assert equality
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(message || `Expected ${expected}, got ${actual}`);
+            }
+        }
+
+        // Helper to assert object equality
+        function assertObjectEqual(actual, expected, message) {
+            const actualStr = JSON.stringify(actual);
+            const expectedStr = JSON.stringify(expected);
+            if (actualStr !== expectedStr) {
+                throw new Error(message || `Expected ${expectedStr}, got ${actualStr}`);
+            }
+        }
+
+        // Helper to assert null
+        function assertNull(value, message) {
+            if (value !== null) {
+                throw new Error(message || `Expected null, got ${value}`);
+            }
+        }
+
+        // Helper to assert not null
+        function assertNotNull(value, message) {
+            if (value === null) {
+                throw new Error(message || 'Expected non-null value');
+            }
+        }
+
+        // ============================================================================
+        // TEST DEFINITIONS
+        // ============================================================================
+
+        test('GameState has hoverCell property initialized to null', () => {
+            const gameState = new GameState();
+            assertNull(gameState.hoverCell, 'hoverCell should be null initially');
+        });
+
+        test('GameState.hoverCell can be set to coordinates', () => {
+            const gameState = new GameState();
+            gameState.hoverCell = { x: 5, y: 3 };
+            assertObjectEqual(gameState.hoverCell, { x: 5, y: 3 });
+        });
+
+        test('GameState.reset() clears hoverCell', () => {
+            const gameState = new GameState();
+            gameState.hoverCell = { x: 5, y: 3 };
+            gameState.reset();
+            assertNull(gameState.hoverCell, 'hoverCell should be null after reset');
+        });
+
+        test('CanvasRenderer has renderHoverHighlight method', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            assert(typeof renderer.renderHoverHighlight === 'function',
+                   'renderHoverHighlight should be a function');
+        });
+
+        test('CanvasRenderer.renderHoverHighlight handles null cell gracefully', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(10, 10, 15);
+
+            // Should not throw when cell is out of bounds
+            renderer.renderHoverHighlight(grid, { x: 99, y: 99 });
+            assert(true, 'Should handle invalid coordinates without error');
+        });
+
+        test('CanvasRenderer.render calls renderHoverHighlight when hoverCell is set', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const gameState = new GameState();
+            const grid = new Grid(10, 10, 15);
+
+            gameState.grid = grid;
+            gameState.currentScreen = 'PLAYING';
+            gameState.hoverCell = { x: 5, y: 5 };
+
+            // Mock renderHoverHighlight to check if it's called
+            let highlightCalled = false;
+            const originalRenderHoverHighlight = renderer.renderHoverHighlight;
+            renderer.renderHoverHighlight = function() {
+                highlightCalled = true;
+                originalRenderHoverHighlight.apply(this, arguments);
+            };
+
+            renderer.render(gameState);
+
+            assert(highlightCalled, 'renderHoverHighlight should be called when hoverCell is set');
+        });
+
+        test('CanvasRenderer.render does not call renderHoverHighlight when hoverCell is null', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const gameState = new GameState();
+            const grid = new Grid(10, 10, 15);
+
+            gameState.grid = grid;
+            gameState.currentScreen = 'PLAYING';
+            gameState.hoverCell = null;
+
+            // Mock renderHoverHighlight to check if it's NOT called
+            let highlightCalled = false;
+            renderer.renderHoverHighlight = function() {
+                highlightCalled = true;
+            };
+
+            renderer.render(gameState);
+
+            assert(!highlightCalled, 'renderHoverHighlight should not be called when hoverCell is null');
+        });
+
+        test('Hover highlight renders on unrevealed cell without errors', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(10, 10, 15);
+            const cell = grid.getCell(5, 5);
+
+            // Ensure cell is unrevealed
+            assert(!cell.isRevealed, 'Cell should be unrevealed');
+            assert(!cell.isFlagged, 'Cell should not be flagged');
+
+            // Should render without error
+            renderer.renderHoverHighlight(grid, { x: 5, y: 5 });
+            assert(true, 'Should render unrevealed cell highlight without error');
+        });
+
+        test('Hover highlight renders on revealed cell without errors', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(10, 10, 15);
+
+            // Reveal a cell
+            grid.revealCell(5, 5);
+            const cell = grid.getCell(5, 5);
+            assert(cell.isRevealed, 'Cell should be revealed');
+
+            // Should render without error
+            renderer.renderHoverHighlight(grid, { x: 5, y: 5 });
+            assert(true, 'Should render revealed cell highlight without error');
+        });
+
+        test('Hover highlight renders on flagged cell without errors', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(10, 10, 15);
+
+            // Flag a cell
+            grid.toggleFlag(5, 5);
+            const cell = grid.getCell(5, 5);
+            assert(cell.isFlagged, 'Cell should be flagged');
+
+            // Should render without error
+            renderer.renderHoverHighlight(grid, { x: 5, y: 5 });
+            assert(true, 'Should render flagged cell highlight without error');
+        });
+
+        test('Canvas context state is valid after hover highlight rendering', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(10, 10, 15);
+
+            renderer.renderHoverHighlight(grid, { x: 5, y: 5 });
+
+            // Check that context is still usable
+            assert(renderer.ctx !== null, 'Context should still be valid');
+            assert(typeof renderer.ctx.fillRect === 'function', 'Context methods should work');
+        });
+
+        test('Hover coordinates can be updated multiple times', () => {
+            const gameState = new GameState();
+
+            gameState.hoverCell = { x: 1, y: 1 };
+            assertObjectEqual(gameState.hoverCell, { x: 1, y: 1 });
+
+            gameState.hoverCell = { x: 5, y: 5 };
+            assertObjectEqual(gameState.hoverCell, { x: 5, y: 5 });
+
+            gameState.hoverCell = { x: 9, y: 9 };
+            assertObjectEqual(gameState.hoverCell, { x: 9, y: 9 });
+
+            gameState.hoverCell = null;
+            assertNull(gameState.hoverCell);
+        });
+
+        test('Hover state persists across render calls', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const gameState = new GameState();
+            const grid = new Grid(10, 10, 15);
+
+            gameState.grid = grid;
+            gameState.currentScreen = 'PLAYING';
+            gameState.hoverCell = { x: 3, y: 3 };
+
+            // Render multiple times
+            renderer.render(gameState);
+            renderer.render(gameState);
+            renderer.render(gameState);
+
+            // hoverCell should still be set
+            assertObjectEqual(gameState.hoverCell, { x: 3, y: 3 });
+        });
+
+        test('Hover rendering does not modify grid state', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(10, 10, 15);
+
+            const revealedBefore = grid.revealed;
+            const flaggedBefore = grid.flagged;
+
+            // Render hover on multiple cells
+            renderer.renderHoverHighlight(grid, { x: 0, y: 0 });
+            renderer.renderHoverHighlight(grid, { x: 5, y: 5 });
+            renderer.renderHoverHighlight(grid, { x: 9, y: 9 });
+
+            assertEqual(grid.revealed, revealedBefore, 'Revealed count should not change');
+            assertEqual(grid.flagged, flaggedBefore, 'Flagged count should not change');
+        });
+
+        test('Hover rendering works on all valid grid coordinates', () => {
+            const canvas = document.getElementById('test-canvas');
+            const renderer = new CanvasRenderer(canvas);
+            const grid = new Grid(8, 8, 10);
+
+            // Test all cells
+            for (let y = 0; y < grid.height; y++) {
+                for (let x = 0; x < grid.width; x++) {
+                    renderer.renderHoverHighlight(grid, { x, y });
+                }
+            }
+
+            assert(true, 'Should render all grid cells without error');
+        });
+
+        test('Integration: Full game state with hover', () => {
+            const canvas = document.getElementById('test-canvas');
+            const game = new Game(canvas);
+
+            // Set up a test game
+            game.state.currentScreen = 'PLAYING';
+            game.state.grid = new Grid(10, 10, 15);
+            game.state.hoverCell = { x: 5, y: 5 };
+
+            // Should render without error
+            game.renderer.render(game.state);
+
+            assert(true, 'Full game state should render with hover');
+        });
+
+        // ============================================================================
+        // TEST RUNNER
+        // ============================================================================
+
+        function updateTestDisplay() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+
+            testResults.forEach((result, index) => {
+                const testDiv = document.createElement('div');
+                testDiv.className = `test-item ${result.status}`;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'test-name';
+                nameSpan.textContent = `${index + 1}. ${result.name}`;
+
+                const statusSpan = document.createElement('span');
+                statusSpan.className = `test-status ${result.status}`;
+                statusSpan.textContent = result.status.toUpperCase();
+
+                testDiv.appendChild(nameSpan);
+                testDiv.appendChild(statusSpan);
+
+                if (result.error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-details';
+                    errorDiv.textContent = `❌ ${result.error}`;
+                    testDiv.appendChild(errorDiv);
+                }
+
+                if (result.duration) {
+                    const durationDiv = document.createElement('div');
+                    durationDiv.className = 'test-details';
+                    durationDiv.textContent = `⏱️ ${result.duration}ms`;
+                    testDiv.appendChild(durationDiv);
+                }
+
+                resultsDiv.appendChild(testDiv);
+            });
+        }
+
+        function updateSummary() {
+            const summaryContainer = document.getElementById('summary-container');
+            const passed = testResults.filter(r => r.status === 'pass').length;
+            const failed = testResults.filter(r => r.status === 'fail').length;
+            const total = testResults.length;
+
+            const allPass = failed === 0 && passed === total;
+
+            summaryContainer.innerHTML = `
+                <div class="summary ${allPass ? 'all-pass' : 'has-fail'}">
+                    <strong>Test Summary:</strong> ${passed}/${total} passed
+                    ${failed > 0 ? `, ${failed} failed ❌` : ' ✅'}
+                    <br>
+                    <span style="font-size: 14px; color: #aaa;">
+                        ${allPass ? '🎉 All tests passed!' : '⚠️ Some tests failed - check details above'}
+                    </span>
+                </div>
+            `;
+
+            // Enable/disable re-run failed button
+            document.getElementById('rerun-failed').disabled = (failed === 0);
+        }
+
+        async function runTest(test, index) {
+            testResults[index] = { name: test.name, status: 'running' };
+            updateTestDisplay();
+
+            const startTime = performance.now();
+
+            try {
+                await test.fn();
+                const duration = Math.round(performance.now() - startTime);
+                testResults[index] = { name: test.name, status: 'pass', duration };
+            } catch (error) {
+                const duration = Math.round(performance.now() - startTime);
+                testResults[index] = {
+                    name: test.name,
+                    status: 'fail',
+                    error: error.message,
+                    duration
+                };
+            }
+
+            updateTestDisplay();
+        }
+
+        async function runAllTests() {
+            document.getElementById('run-tests').disabled = true;
+            testResults = tests.map(t => ({ name: t.name, status: 'pending' }));
+            updateTestDisplay();
+
+            for (let i = 0; i < tests.length; i++) {
+                await runTest(tests[i], i);
+                // Small delay between tests for visual feedback
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            updateSummary();
+            document.getElementById('run-tests').disabled = false;
+        }
+
+        async function rerunFailedTests() {
+            document.getElementById('rerun-failed').disabled = true;
+
+            for (let i = 0; i < tests.length; i++) {
+                if (testResults[i].status === 'fail') {
+                    await runTest(tests[i], i);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            updateSummary();
+        }
+
+        // Initialize display
+        testResults = tests.map(t => ({ name: t.name, status: 'pending' }));
+        updateTestDisplay();
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>
