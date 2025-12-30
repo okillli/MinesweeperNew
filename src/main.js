@@ -4,12 +4,10 @@
  * Responsibilities:
  * - Initialize the game when DOM is ready
  * - Wire up the Game instance with canvas element
+ * - Set up menu button handlers and screen transitions
  * - Set up input handlers (click, right-click) for player interaction
  * - Convert canvas coordinates to grid coordinates
  * - Trigger grid actions and re-render
- *
- * For MVP: This creates a simple test grid to validate core minesweeper mechanics
- * before implementing the full game flow with quests, shops, etc.
  */
 
 // Wait for DOM to be fully loaded before initializing
@@ -31,38 +29,194 @@ document.addEventListener('DOMContentLoaded', () => {
   // Game handles the update-render loop and owns GameState and CanvasRenderer
   const game = new Game(canvas);
 
-  // ============================================================================
-  // MVP TEST SETUP
-  // ============================================================================
-  // For MVP testing, we bypass the menu/quest/character flow and jump straight
-  // to a playable grid. This lets us validate core minesweeper mechanics:
-  // - Cell revealing with auto-cascade for zeros
-  // - Flagging
-  // - Chording (click revealed number with correct flags to auto-reveal adjacent)
-  //
-  // TODO: Replace this with proper game flow once menu/quest systems are ready
-
-  // Create a test grid (10x10 with 15 mines - same as Board 2 config)
-  const testGrid = new Grid(10, 10, 15);
-
-  // Set the grid in game state
-  game.state.grid = testGrid;
-
-  // Set the screen to PLAYING so the renderer knows to draw the grid
-  game.state.currentScreen = 'PLAYING';
-
-  // Start the game loop
-  // This begins the RAF loop which will continuously render the grid
+  // Start the game loop immediately
+  // The loop runs continuously, but only renders when on PLAYING screen
   game.start();
 
-  console.log('MineQuest MVP initialized - 10x10 grid with 15 mines');
-  console.log('Left-click: Reveal cell');
-  console.log('Right-click: Toggle flag');
-  console.log('Left-click revealed number: Chord (auto-reveal if flags match)');
+  console.log('MineQuest initialized');
 
   // ============================================================================
-  // INPUT HANDLERS
+  // SCREEN TRANSITION SYSTEM
   // ============================================================================
+
+  /**
+   * Shows a specific screen by hiding all others and revealing the target
+   * @param {string} screenId - The ID of the screen to show (without '#')
+   */
+  function showScreen(screenId) {
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(screen => {
+      screen.classList.remove('active');
+    });
+
+    // Show target screen
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+      targetScreen.classList.add('active');
+    }
+
+    // Update game state screen
+    // Map HTML screen IDs to game state screen constants
+    const screenMap = {
+      'menu-screen': 'MENU',
+      'quest-screen': 'QUEST',
+      'character-screen': 'CHARACTER',
+      'game-screen': 'PLAYING',
+      'shop-screen': 'SHOP',
+      'gameover-screen': 'GAME_OVER',
+      'collection-screen': 'COLLECTION',
+      'settings-screen': 'SETTINGS'
+    };
+
+    game.state.currentScreen = screenMap[screenId] || 'MENU';
+
+    // Show/hide HUD based on screen
+    const hud = document.getElementById('hud');
+    if (game.state.currentScreen === 'PLAYING') {
+      hud.classList.remove('hidden');
+      updateHUD();
+    } else {
+      hud.classList.add('hidden');
+    }
+
+    console.log(`Switched to screen: ${screenId} (state: ${game.state.currentScreen})`);
+  }
+
+  /**
+   * Updates the HUD display with current game state
+   */
+  function updateHUD() {
+    const run = game.state.currentRun;
+    document.getElementById('hp-display').textContent = run.hp;
+    document.getElementById('mana-display').textContent = `${run.mana}/${run.maxMana}`;
+    document.getElementById('coins-display').textContent = run.coins;
+    document.getElementById('board-display').textContent = `${run.boardNumber}/6`;
+  }
+
+  // ============================================================================
+  // MENU BUTTON HANDLERS
+  // ============================================================================
+
+  /**
+   * Handles "Start Run" button click
+   * For MVP: Creates a test grid and goes directly to game screen
+   * TODO: Later this will go to quest selection screen
+   */
+  document.getElementById('start-button').addEventListener('click', () => {
+    console.log('Start Run clicked');
+
+    // TODO: In full game, this would transition to quest-screen
+    // For MVP, we skip quest/character selection and start a test game
+
+    // Create a test grid (10x10 with 15 mines - same as Board 2 config)
+    const testGrid = new Grid(10, 10, 15);
+
+    // Set the grid in game state
+    game.state.grid = testGrid;
+
+    // Initialize run state for testing
+    game.state.currentRun.boardNumber = 1;
+    game.state.currentRun.hp = 3;
+    game.state.currentRun.maxHp = 3;
+    game.state.currentRun.mana = 0;
+    game.state.currentRun.maxMana = 100;
+    game.state.currentRun.coins = 0;
+
+    // Transition to game screen
+    showScreen('game-screen');
+
+    console.log('Test grid created - 10x10 with 15 mines');
+  });
+
+  /**
+   * Handles "Collection" button click
+   */
+  document.getElementById('collection-button').addEventListener('click', () => {
+    console.log('Collection clicked');
+    showScreen('collection-screen');
+    // TODO: Populate collection screen with unlocked items/characters/achievements
+  });
+
+  /**
+   * Handles "Settings" button click
+   */
+  document.getElementById('settings-button').addEventListener('click', () => {
+    console.log('Settings clicked');
+    showScreen('settings-screen');
+  });
+
+  // ============================================================================
+  // BACK BUTTON HANDLERS
+  // ============================================================================
+
+  /**
+   * Quest screen back button
+   */
+  document.getElementById('quest-back-button').addEventListener('click', () => {
+    showScreen('menu-screen');
+  });
+
+  /**
+   * Character screen back button
+   */
+  document.getElementById('character-back-button').addEventListener('click', () => {
+    showScreen('quest-screen');
+  });
+
+  /**
+   * Collection screen back button
+   */
+  document.getElementById('collection-back-button').addEventListener('click', () => {
+    showScreen('menu-screen');
+  });
+
+  /**
+   * Settings screen back button
+   */
+  document.getElementById('settings-back-button').addEventListener('click', () => {
+    showScreen('menu-screen');
+  });
+
+  /**
+   * Game Over screen "Return to Menu" button
+   */
+  document.getElementById('gameover-menu-button').addEventListener('click', () => {
+    showScreen('menu-screen');
+  });
+
+  /**
+   * Shop "Continue" button
+   */
+  document.getElementById('shop-continue-button').addEventListener('click', () => {
+    console.log('Shop continue clicked');
+    // TODO: Generate next board or transition to game over if run complete
+    showScreen('game-screen');
+  });
+
+  // ============================================================================
+  // SETTINGS HANDLERS
+  // ============================================================================
+
+  /**
+   * Clear save data button
+   */
+  document.getElementById('clear-save-button').addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear all save data? This cannot be undone.')) {
+      game.state.reset();
+      console.log('Save data cleared');
+      alert('Save data has been cleared!');
+    }
+  });
+
+  // Initialize to menu screen
+  showScreen('menu-screen');
+
+  // ============================================================================
+  // INPUT HANDLERS (CANVAS INTERACTION)
+  // ============================================================================
+  // Note: Game loop runs continuously, but CanvasRenderer only draws the grid
+  // when game.state.currentScreen === 'PLAYING'. This allows the game to handle
+  // input only when appropriate.
 
   /**
    * Converts canvas pixel coordinates to grid cell coordinates
@@ -113,6 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
    * @param {MouseEvent} event - The click event
    */
   function handleLeftClick(event) {
+    // Only handle clicks when on playing screen
+    if (game.state.currentScreen !== 'PLAYING') return;
+
     const grid = game.state.grid;
     if (!grid) return;
 
@@ -195,6 +352,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prevent the browser's default context menu from appearing
     event.preventDefault();
 
+    // Only handle clicks when on playing screen
+    if (game.state.currentScreen !== 'PLAYING') return;
+
     const grid = game.state.grid;
     if (!grid) return;
 
@@ -227,20 +387,18 @@ document.addEventListener('DOMContentLoaded', () => {
   canvas.addEventListener('contextmenu', handleRightClick);
 
   // ============================================================================
-  // FUTURE ENHANCEMENTS
+  // TODO - Future Enhancements
   // ============================================================================
-  // When moving beyond MVP, this file will need to:
-  //
-  // 1. Remove the test grid setup
-  // 2. Add menu button handlers (start, collection, settings)
-  // 3. Add screen transition logic (menu -> quest -> character -> playing)
-  // 4. Add proper game over / victory handlers
-  // 5. Add shop screen transition when board is complete
-  // 6. Add HP/mana/coins UI updates
-  // 7. Add event bus listeners for game events
-  // 8. Add mobile touch handlers (tap = reveal, long-press = flag)
-  // 9. Add keyboard shortcuts (space = flag, etc.)
-  // 10. Add save/load on page unload/load
-  //
-  // For now, we focus on validating that core minesweeper mechanics work correctly.
+  // - Implement quest selection screen with quest data
+  // - Implement character selection screen with character data
+  // - Add proper game over / victory handlers with transition to game over screen
+  // - Add shop screen transition when board is complete
+  // - Wire up HP/damage system (call game.state.takeDamage() when hitting mine)
+  // - Wire up mana/coin earning system
+  // - Add event bus listeners for game events
+  // - Add mobile touch handlers (tap = reveal, long-press = flag)
+  // - Add keyboard shortcuts (space = flag, etc.)
+  // - Add save/load on page unload/load
+  // - Populate collection screen with actual data
+  // - Wire up settings toggles to actually control sound/music
 });

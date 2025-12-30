@@ -53,9 +53,29 @@ class GameState {
     // Persistent state - saved to localStorage
     this.persistent = {
       gems: 0,               // Total gems (meta-currency)
-      unlockedItems: [],     // Array of unlocked item IDs (strings)
+      unlockedItems: [
+        // MVP Starter Pool (10 items total)
+        // Common Passives (5)
+        'shield_generator',      // +1 Max HP
+        'coin_magnet',           // +50% coins from cells
+        'mana_crystal',          // +50 Max Mana
+        'flag_efficiency',       // +15 mana per flagged mine
+        'lucky_charm',           // +15% chance for better shop items
+        // Common Actives (2)
+        'scan_area',             // Reveal 3x3 area safely (50 mana)
+        'mine_detector',         // Highlight 3 random mines (75 mana)
+        // Consumables (3)
+        'health_potion',         // Heal 1 HP
+        'vision_scroll',         // Reveal 5 random safe cells
+        'shield_token'           // Next mine hit does no damage
+      ],
       unlockedCharacters: ['explorer'], // Array of unlocked character IDs (Explorer starts unlocked)
-      unlockedQuests: [],    // Array of unlocked quest IDs (strings)
+      unlockedQuests: [
+        // MVP Starter Quests (3)
+        'classic_clear',         // Objective: Clear all 5 boards
+        'treasure_hunter',       // Objective: Collect 500 coins
+        'boss_slayer'            // Objective: Defeat the boss board
+      ],
       achievements: [],      // Array of achievement IDs (strings)
 
       stats: {
@@ -359,9 +379,29 @@ class GameState {
     // Reset persistent state
     this.persistent = {
       gems: 0,
-      unlockedItems: [],
+      unlockedItems: [
+        // MVP Starter Pool (10 items total)
+        // Common Passives (5)
+        'shield_generator',      // +1 Max HP
+        'coin_magnet',           // +50% coins from cells
+        'mana_crystal',          // +50 Max Mana
+        'flag_efficiency',       // +15 mana per flagged mine
+        'lucky_charm',           // +15% chance for better shop items
+        // Common Actives (2)
+        'scan_area',             // Reveal 3x3 area safely (50 mana)
+        'mine_detector',         // Highlight 3 random mines (75 mana)
+        // Consumables (3)
+        'health_potion',         // Heal 1 HP
+        'vision_scroll',         // Reveal 5 random safe cells
+        'shield_token'           // Next mine hit does no damage
+      ],
       unlockedCharacters: ['explorer'],
-      unlockedQuests: [],
+      unlockedQuests: [
+        // MVP Starter Quests (3)
+        'classic_clear',         // Objective: Clear all 5 boards
+        'treasure_hunter',       // Objective: Collect 500 coins
+        'boss_slayer'            // Objective: Defeat the boss board
+      ],
       achievements: [],
       stats: {
         totalRuns: 0,
