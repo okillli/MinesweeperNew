@@ -1,0 +1,36 @@
+{
+  "name": "limineZZsweeperIE",
+  "version": "1.0.0",
+  "description": "LiMineZZsweeperIE - A strategic minesweeper roguelike made for Lizzie",
+  "private": true,
+  "scripts": {
+    "deps": "madge --image dependency-graph.png src/",
+    "deps:list": "madge --list src/",
+    "deps:circular": "madge --circular src/",
+    "deps:orphans": "madge --orphans src/",
+    "deps:depends": "madge --depends",
+    "analyze": "npm run deps:circular && npm run deps:orphans && npm run deps",
+    "serve": "python -m http.server 8000",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:chrome": "playwright test --project=chromium",
+    "test:phase2": "playwright test tests/phase2-resources.spec.js",
+    "test:debug": "playwright test --debug",
+    "report": "playwright show-report",
+    "help": "echo \"Available commands:\\n  npm run deps - Generate dependency graph\\n  npm run deps:list - List all dependencies\\n  npm run deps:circular - Check for circular dependencies\\n  npm run deps:orphans - Find orphaned modules\\n  npm run analyze - Run full dependency analysis\\n  npm run serve - Start local dev server\\n  npm test - Run all Playwright tests\\n  npm run test:phase2 - Run Phase 2 tests only\""
+  },
+  "devDependencies": {
+    "madge": "^8.0.0",
+    "@playwright/test": "^1.40.0"
+  },
+  "keywords": [
+    "minesweeper",
+    "roguelike",
+    "game",
+    "browser-game",
+    "vanilla-js"
+  ],
+  "author": "",
+  "license": "ISC"
+}

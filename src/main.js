@@ -44,10 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Future phases will expand usage for animations, sounds, achievements
   const events = new EventBus();
 
-  // Test Mode Configuration
-  // Set to true to start with 1 HP for easier game over testing
-  // Set to false for normal gameplay (3 HP)
-  const TEST_MODE = false;
+  // Helper function to get starting HP from settings
+  function getStartingHP() {
+    return game.state.persistent.settings.startingHp;
+  }
 
   // ============================================================================
   // SCREEN TRANSITION SYSTEM
@@ -254,9 +254,10 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.focus();
 
     // Initialize run state for testing
+    const startingHp = getStartingHP();
     game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = TEST_MODE ? 1 : 3;
-    game.state.currentRun.maxHp = TEST_MODE ? 1 : 3;
+    game.state.currentRun.hp = startingHp;
+    game.state.currentRun.maxHp = startingHp;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
@@ -292,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   document.getElementById('settings-button').addEventListener('click', () => {
     console.log('Settings clicked');
+    loadSettings(); // Ensure UI reflects current settings
     showScreen('settings-screen');
   });
 
@@ -358,9 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.focus();
 
     // Initialize run state
+    const startingHp = getStartingHP();
     game.state.currentRun.boardNumber = 1;
-    game.state.currentRun.hp = TEST_MODE ? 1 : 3;
-    game.state.currentRun.maxHp = TEST_MODE ? 1 : 3;
+    game.state.currentRun.hp = startingHp;
+    game.state.currentRun.maxHp = startingHp;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
@@ -421,15 +424,73 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
 
   /**
+   * Load settings from GameState and update UI
+   */
+  function loadSettings() {
+    const settings = game.state.persistent.settings;
+
+    // Load HP setting
+    document.getElementById('starting-hp').value = settings.startingHp;
+
+    // Load audio settings
+    document.getElementById('sound-toggle').checked = settings.soundEnabled;
+    document.getElementById('music-toggle').checked = settings.musicEnabled;
+
+    console.log('Settings loaded:', settings);
+  }
+
+  /**
+   * Save settings from UI to GameState
+   */
+  function saveSettings() {
+    const settings = game.state.persistent.settings;
+
+    // Save HP setting
+    settings.startingHp = parseInt(document.getElementById('starting-hp').value, 10);
+
+    // Save audio settings
+    settings.soundEnabled = document.getElementById('sound-toggle').checked;
+    settings.musicEnabled = document.getElementById('music-toggle').checked;
+
+    console.log('Settings saved:', settings);
+  }
+
+  /**
+   * Starting HP dropdown change handler
+   */
+  document.getElementById('starting-hp').addEventListener('change', () => {
+    saveSettings();
+    console.log(`Starting HP changed to: ${game.state.persistent.settings.startingHp}`);
+  });
+
+  /**
+   * Sound toggle change handler
+   */
+  document.getElementById('sound-toggle').addEventListener('change', () => {
+    saveSettings();
+  });
+
+  /**
+   * Music toggle change handler
+   */
+  document.getElementById('music-toggle').addEventListener('change', () => {
+    saveSettings();
+  });
+
+  /**
    * Clear save data button
    */
   document.getElementById('clear-save-button').addEventListener('click', () => {
     if (confirm('Are you sure you want to clear all save data? This cannot be undone.')) {
       game.state.reset();
+      loadSettings(); // Reload UI with default settings
       console.log('Save data cleared');
       alert('Save data has been cleared!');
     }
   });
+
+  // Initialize settings UI
+  loadSettings();
 
   // Initialize to menu screen
   showScreen('menu-screen');

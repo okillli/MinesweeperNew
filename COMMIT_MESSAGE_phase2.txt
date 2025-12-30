@@ -1,0 +1,38 @@
+feat: Implement Phase 2 resource systems (HP, Coins, Mana)
+
+Added core resource tracking to enable roguelike gameplay loop:
+
+- HP System: Players start with 3 HP, take -1 HP per mine hit, game over at 0 HP (replaces instant death)
+- Coin Generation: +10 coins per safe cell revealed (including cascade reveals)
+- Mana System: +5 mana per cell revealed, +10 mana per flag placed (capped at 100)
+- HUD Updates: Real-time display updates for all resource changes
+
+Resource tracking works across all input methods:
+- Mouse: Left-click reveal, right-click flag
+- Touch: Tap reveal, long-press flag
+- Keyboard: Space reveal, F flag, C chord
+
+Implementation:
+- Followed Analysis → Research → Plan → Implement workflow
+- Used 3 parallel agents for implementation
+- HP damage replaces instant game over (players can survive 3 mine hits)
+- Cascade counting tracks grid.revealed before/after for accurate rewards
+- Flag mana bonus only on placement (not removal)
+- updateHUD() called after every resource change (16 call sites)
+
+Changes:
+- src/main.js: Added resource tracking to all event handlers (mouse, touch, keyboard)
+- src/main.js: Updated game over logic to trigger only at 0 HP
+- src/main.js: Integrated updateHUD() calls for reactive display
+- PROGRESS.md: Added Phase 2 section with implementation details
+- SESSION_SUMMARY_phase2-implementation.md: Complete session documentation
+
+Testing:
+- Code validation passed (warnings only, intentional)
+- Manual testing in progress
+- Server running at http://localhost:8000
+- All test cases defined in PLAN_phase2-resources.md
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
