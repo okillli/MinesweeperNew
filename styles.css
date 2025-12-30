@@ -1,0 +1,540 @@
+/* ===========================
+   CSS Reset & Base Styles
+   =========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #eee;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ===========================
+   Layout
+   =========================== */
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ===========================
+   HUD (Top Bar)
+   =========================== */
+
+.hud {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+}
+
+.hud.hidden {
+    display: none;
+}
+
+.hud-left,
+.hud-right {
+    display: flex;
+    gap: 20px;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.stat-label {
+    font-weight: bold;
+    color: #aaa;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #fff;
+    font-size: 1.1em;
+}
+
+/* ===========================
+   Screens
+   =========================== */
+
+.screen {
+    flex: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.screen-content {
+    text-align: center;
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+}
+
+/* ===========================
+   Typography
+   =========================== */
+
+.title {
+    font-size: 3em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #f4a261 0%, #e76f51 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.2em;
+    color: #aaa;
+    margin-bottom: 40px;
+}
+
+h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+h3 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    margin-top: 20px;
+}
+
+/* ===========================
+   Buttons
+   =========================== */
+
+.btn {
+    padding: 15px 30px;
+    font-size: 1.1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #f4a261 0%, #e76f51 100%);
+    color: #1a1a2e;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #eee;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e63946 0%, #c1121f 100%);
+    color: #fff;
+}
+
+/* ===========================
+   Menu Screen
+   =========================== */
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.stats-preview {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.stats-preview p {
+    margin: 5px 0;
+    font-size: 1.1em;
+}
+
+/* ===========================
+   Quest & Character Selection
+   =========================== */
+
+.quest-list,
+.character-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.quest-card,
+.character-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quest-card:hover,
+.character-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #f4a261;
+    transform: translateY(-3px);
+}
+
+.quest-card.locked,
+.character-card.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quest-card h3,
+.character-card h3 {
+    color: #f4a261;
+    margin-bottom: 10px;
+}
+
+.quest-card p,
+.character-card p {
+    color: #ccc;
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+/* ===========================
+   Game Canvas
+   =========================== */
+
+#game-screen {
+    background: #0f0f1e;
+    flex-direction: column;
+}
+
+#game-canvas {
+    flex: 1;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* ===========================
+   Abilities Bar
+   =========================== */
+
+.abilities-bar {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.abilities-bar.hidden {
+    display: none;
+}
+
+.ability-slots {
+    display: flex;
+    gap: 10px;
+}
+
+.ability-button {
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    color: #fff;
+}
+
+.ability-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #f4a261;
+}
+
+.ability-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ability-cost {
+    font-size: 0.8em;
+    color: #64b5f6;
+    margin-top: 3px;
+}
+
+/* ===========================
+   Shop Screen
+   =========================== */
+
+.shop-info {
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.shop-coins {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #f4a261;
+    margin-bottom: 20px;
+}
+
+.shop-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.shop-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shop-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #f4a261;
+    transform: translateY(-3px);
+}
+
+.shop-item.sold-out {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.shop-item h4 {
+    color: #f4a261;
+    margin-bottom: 8px;
+}
+
+.shop-item .rarity {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.rarity.common { color: #fff; }
+.rarity.rare { color: #64b5f6; }
+.rarity.legendary { color: #ffd700; }
+
+.shop-item .description {
+    color: #ccc;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.shop-item .price {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #f4a261;
+}
+
+/* ===========================
+   Game Over Screen
+   =========================== */
+
+.stats-summary {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.stats-summary p {
+    margin: 8px 0;
+    font-size: 1.1em;
+}
+
+.rewards {
+    background: rgba(244, 162, 97, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    border: 2px solid #f4a261;
+    margin-bottom: 30px;
+}
+
+.gems-earned {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #f4a261;
+}
+
+/* ===========================
+   Collection Screen
+   =========================== */
+
+.collection-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tab-button.active {
+    background: #f4a261;
+    border-color: #f4a261;
+    color: #1a1a2e;
+}
+
+.collection-content {
+    min-height: 300px;
+}
+
+/* ===========================
+   Settings Screen
+   =========================== */
+
+.settings-list {
+    max-width: 400px;
+    margin: 0 auto 30px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.setting-item label {
+    font-size: 1.1em;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 50px;
+    height: 25px;
+    cursor: pointer;
+}
+
+/* ===========================
+   Mobile Optimizations
+   =========================== */
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 2em;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        font-size: 1em;
+    }
+
+    .quest-list,
+    .character-list,
+    .shop-items {
+        grid-template-columns: 1fr;
+    }
+
+    .hud {
+        padding: 8px 15px;
+    }
+
+    .stat {
+        font-size: 0.9em;
+    }
+
+    .ability-button {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* ===========================
+   Animations
+   =========================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.screen.active {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ===========================
+   Utility Classes
+   =========================== */
+
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-1 { margin-top: 10px; }
+.mt-2 { margin-top: 20px; }
+.mb-1 { margin-bottom: 10px; }
+.mb-2 { margin-bottom: 20px; }

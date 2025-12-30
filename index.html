@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="MineQuest - A modern minesweeper roguelike with quests and progression">
+    <meta name="theme-color" content="#1a1a2e">
+
+    <title>MineQuest - Minesweeper Roguelike</title>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main Container -->
+    <div id="app">
+        <!-- HUD (Top Bar) -->
+        <div id="hud" class="hud hidden">
+            <div class="hud-left">
+                <div class="stat">
+                    <span class="stat-label">HP:</span>
+                    <span id="hp-display" class="stat-value">3</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Mana:</span>
+                    <span id="mana-display" class="stat-value">0/100</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Coins:</span>
+                    <span id="coins-display" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="hud-right">
+                <div class="stat">
+                    <span class="stat-label">Board:</span>
+                    <span id="board-display" class="stat-value">1/6</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div id="menu-screen" class="screen active">
+            <div class="screen-content">
+                <h1 class="title">MineQuest</h1>
+                <p class="subtitle">A Minesweeper Roguelike</p>
+
+                <div class="menu-buttons">
+                    <button id="start-button" class="btn btn-primary">Start Run</button>
+                    <button id="collection-button" class="btn btn-secondary">Collection</button>
+                    <button id="settings-button" class="btn btn-secondary">Settings</button>
+                </div>
+
+                <div class="stats-preview">
+                    <p>Gems: <span id="menu-gems">0</span></p>
+                    <p>Runs: <span id="menu-runs">0</span></p>
+                    <p>Wins: <span id="menu-wins">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Selection Screen -->
+        <div id="quest-screen" class="screen">
+            <div class="screen-content">
+                <h2>Choose Your Quest</h2>
+                <div id="quest-list" class="quest-list">
+                    <!-- Quests will be populated by JavaScript -->
+                </div>
+                <button id="quest-back-button" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Character Selection Screen -->
+        <div id="character-screen" class="screen">
+            <div class="screen-content">
+                <h2>Choose Your Character</h2>
+                <div id="character-list" class="character-list">
+                    <!-- Characters will be populated by JavaScript -->
+                </div>
+                <button id="character-back-button" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <!-- Canvas for grid -->
+            <canvas id="game-canvas"></canvas>
+
+            <!-- Active Abilities Bar -->
+            <div id="abilities-bar" class="abilities-bar hidden">
+                <div id="ability-slots" class="ability-slots">
+                    <!-- Ability buttons will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Screen -->
+        <div id="shop-screen" class="screen">
+            <div class="screen-content">
+                <h2>Shop</h2>
+                <p class="shop-info">Choose your upgrades wisely!</p>
+                <p class="shop-coins">Coins: <span id="shop-coins-display">0</span></p>
+
+                <div id="shop-items" class="shop-items">
+                    <!-- Shop items will be populated by JavaScript -->
+                </div>
+
+                <button id="shop-continue-button" class="btn btn-primary">Continue</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen">
+            <div class="screen-content">
+                <h2 id="gameover-title">Victory!</h2>
+                <p id="gameover-message">You completed the quest!</p>
+
+                <div class="stats-summary">
+                    <h3>Run Statistics</h3>
+                    <p>Boards Cleared: <span id="stat-boards">0</span></p>
+                    <p>Cells Revealed: <span id="stat-cells">0</span></p>
+                    <p>Coins Earned: <span id="stat-coins">0</span></p>
+                    <p>Damage Taken: <span id="stat-damage">0</span></p>
+                </div>
+
+                <div class="rewards">
+                    <h3>Rewards</h3>
+                    <p class="gems-earned">+<span id="gems-earned">0</span> Gems</p>
+                </div>
+
+                <button id="gameover-menu-button" class="btn btn-primary">Return to Menu</button>
+            </div>
+        </div>
+
+        <!-- Collection Screen -->
+        <div id="collection-screen" class="screen">
+            <div class="screen-content">
+                <h2>Collection</h2>
+
+                <div class="collection-tabs">
+                    <button class="tab-button active" data-tab="items">Items</button>
+                    <button class="tab-button" data-tab="characters">Characters</button>
+                    <button class="tab-button" data-tab="achievements">Achievements</button>
+                </div>
+
+                <div id="collection-content" class="collection-content">
+                    <!-- Collection items will be populated by JavaScript -->
+                </div>
+
+                <button id="collection-back-button" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <div class="screen-content">
+                <h2>Settings</h2>
+
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <label for="sound-toggle">Sound Effects</label>
+                        <input type="checkbox" id="sound-toggle" checked>
+                    </div>
+                    <div class="setting-item">
+                        <label for="music-toggle">Music</label>
+                        <input type="checkbox" id="music-toggle" checked>
+                    </div>
+                    <div class="setting-item">
+                        <button id="clear-save-button" class="btn btn-danger">Clear Save Data</button>
+                    </div>
+                </div>
+
+                <button id="settings-back-button" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load game scripts -->
+    <!-- Data -->
+    <script src="src/data/constants.js"></script>
+    <script src="src/data/items.js"></script>
+    <script src="src/data/quests.js"></script>
+    <script src="src/data/characters.js"></script>
+
+    <!-- Utils -->
+    <script src="src/utils/random.js"></script>
+    <script src="src/utils/storage.js"></script>
+    <script src="src/utils/math.js"></script>
+    <script src="src/utils/helpers.js"></script>
+
+    <!-- Entities -->
+    <script src="src/entities/Cell.js"></script>
+    <script src="src/entities/Grid.js"></script>
+    <script src="src/entities/Item.js"></script>
+    <script src="src/entities/Character.js"></script>
+
+    <!-- Systems -->
+    <script src="src/systems/GridSystem.js"></script>
+    <script src="src/systems/ShopSystem.js"></script>
+    <script src="src/systems/ItemSystem.js"></script>
+    <script src="src/systems/QuestSystem.js"></script>
+    <script src="src/systems/ProgressionSystem.js"></script>
+    <script src="src/systems/SaveSystem.js"></script>
+
+    <!-- Rendering -->
+    <script src="src/rendering/CanvasRenderer.js"></script>
+    <script src="src/rendering/UIRenderer.js"></script>
+    <script src="src/rendering/effects.js"></script>
+
+    <!-- Core -->
+    <script src="src/core/EventBus.js"></script>
+    <script src="src/core/StateMachine.js"></script>
+    <script src="src/core/GameState.js"></script>
+    <script src="src/core/Game.js"></script>
+
+    <!-- Main entry point -->
+    <script src="src/main.js"></script>
+</body>
+</html>
