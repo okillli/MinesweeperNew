@@ -21,8 +21,9 @@
     "help": "echo \"Available commands:\\n  npm run deps - Generate dependency graph\\n  npm run deps:list - List all dependencies\\n  npm run deps:circular - Check for circular dependencies\\n  npm run deps:orphans - Find orphaned modules\\n  npm run analyze - Run full dependency analysis\\n  npm run serve - Start local dev server\\n  npm test - Run all Playwright tests\\n  npm run test:phase2 - Run Phase 2 tests only\""
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "madge": "^8.0.0",
-    "@playwright/test": "^1.40.0"
+    "serve": "^14.2.5"
   },
   "keywords": [
     "minesweeper",

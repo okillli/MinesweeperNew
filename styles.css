@@ -386,13 +386,21 @@ h3 {
 #game-screen {
     background: #0f0f1e;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 #game-canvas {
-    flex: 1;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     cursor: default;
+    /* Remove flex: 1 - let JS control size for proper DPR scaling */
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    /* Prevent canvas from being stretched by CSS */
+    object-fit: contain;
+    touch-action: none; /* Prevent browser touch gestures on canvas */
 }
 
 /* Cursor feedback when playing */
@@ -523,6 +531,105 @@ h3 {
     color: #f4a261;
 }
 
+/* Shop item new structure */
+.shop-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.shop-item-name {
+    font-weight: bold;
+    color: #f4a261;
+    font-size: 1.1em;
+}
+
+.shop-item-rarity {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.rarity-common { color: #ccc; }
+.rarity-rare { color: #64b5f6; background: rgba(100, 181, 246, 0.2); }
+.rarity-legendary { color: #ffd700; background: rgba(255, 215, 0, 0.2); }
+
+.shop-item-type {
+    font-size: 0.8em;
+    color: #888;
+    text-transform: capitalize;
+    margin-bottom: 8px;
+}
+
+.shop-item-description {
+    color: #ccc;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    min-height: 40px;
+}
+
+.shop-item-mana {
+    color: #64b5f6;
+    font-size: 0.85em;
+    margin-bottom: 8px;
+}
+
+.shop-item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shop-item-cost {
+    font-weight: bold;
+    color: #f4a261;
+}
+
+.shop-buy-btn {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+.shop-buy-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.shop-item.disabled {
+    opacity: 0.6;
+}
+
+.shop-item.disabled:hover {
+    transform: none;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ability types */
+.ability-active {
+    border-color: #64b5f6;
+}
+
+.ability-consumable {
+    border-color: #2ecc71;
+}
+
+.ability-type {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    color: #2ecc71;
+}
+
+/* Targeting mode */
+#game-canvas.targeting {
+    cursor: crosshair;
+}
+
 /* ===========================
    Game Over Message Box Content
    =========================== */
@@ -596,6 +703,23 @@ h3 {
     }
     .logo-mine,
     .logo-sweeper {
+        animation: none;
+    }
+    /* Disable all transform animations */
+    .btn:hover {
+        transform: none;
+    }
+    .quest-card:hover,
+    .character-card:hover,
+    .shop-item:hover {
+        transform: none;
+    }
+    /* Disable screen fade-in */
+    .screen.active {
+        animation: none;
+    }
+    /* Disable HP pulse */
+    #hp-display.hp-critical {
         animation: none;
     }
 }
@@ -678,7 +802,8 @@ h3 {
 }
 
 .tab-button {
-    padding: 10px 20px;
+    padding: 12px 24px;
+    min-height: 44px; /* WCAG minimum touch target */
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: #eee;
@@ -724,16 +849,88 @@ h3 {
     font-size: 1.1em;
 }
 
+/* Select element styling for touch-friendly interaction */
+.setting-item select {
+    padding: 10px 15px;
+    min-height: 44px; /* WCAG minimum touch target */
+    font-size: 1em;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23eee' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 35px;
+}
+
+.setting-item select:focus {
+    outline: none;
+    border-color: #f4a261;
+}
+
+.setting-item select option {
+    background: #1a1a2e;
+    color: #eee;
+}
+
 .setting-item input[type="checkbox"] {
     width: 50px;
-    height: 25px;
+    height: 44px; /* WCAG minimum touch target */
+    min-width: 44px;
     cursor: pointer;
+}
+
+/* Custom toggle switch appearance */
+.setting-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 22px;
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.setting-item input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    top: 50%;
+    left: 4px;
+    transform: translateY(-50%);
+    transition: left 0.3s ease;
+}
+
+.setting-item input[type="checkbox"]:checked {
+    background: #f4a261;
+}
+
+.setting-item input[type="checkbox"]:checked::before {
+    left: 26px;
 }
 
 /* ===========================
    Mobile Optimizations
    =========================== */
 
+/* Tablet breakpoint */
+@media (max-width: 1024px) {
+    h2 {
+        font-size: 1.75em;
+    }
+
+    h3 {
+        font-size: 1.3em;
+    }
+}
+
+/* Small tablet / large phone breakpoint */
 @media (max-width: 768px) {
     .title {
         font-size: 2em;
@@ -747,6 +944,7 @@ h3 {
     .btn {
         padding: 12px 25px;
         font-size: 1em;
+        min-height: 44px; /* Ensure touch target minimum */
     }
 
     .quest-list,
@@ -766,6 +964,14 @@ h3 {
     .ability-button {
         width: 50px;
         height: 50px;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    h3 {
+        font-size: 1.2em;
     }
 
     /* Game over overlay mobile optimizations */
@@ -807,6 +1013,153 @@ h3 {
     .gameover-actions .btn {
         width: 100%;
     }
+
+    /* Collection tabs */
+    .collection-tabs {
+        flex-wrap: wrap;
+    }
+}
+
+/* Small phone breakpoint */
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.6em;
+        letter-spacing: 0;
+    }
+
+    .logo-mine,
+    .logo-sweeper {
+        font-size: 1.1em;
+        letter-spacing: 1px;
+    }
+
+    .logo-lizzie {
+        font-size: 0.45em;
+    }
+
+    .subtitle {
+        font-size: 1em;
+        margin-bottom: 25px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.95em;
+        min-height: 44px; /* Ensure touch target minimum on small screens */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hud {
+        padding: 6px 10px;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .hud-left,
+    .hud-right {
+        gap: 10px;
+    }
+
+    .stat {
+        font-size: 0.8em;
+    }
+
+    .stat-label {
+        display: none; /* Hide labels on very small screens */
+    }
+
+    .screen-content {
+        padding: 15px 10px;
+    }
+
+    h2 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+    }
+
+    h3 {
+        font-size: 1.1em;
+    }
+
+    .ability-button {
+        width: 44px;
+        height: 44px;
+    }
+
+    .abilities-bar {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    #gameover-title {
+        font-size: 1.6em;
+    }
+
+    #gameover-message {
+        font-size: 1em;
+    }
+}
+
+/* Very small phone breakpoint */
+@media (max-width: 360px) {
+    .title {
+        font-size: 1.4em;
+    }
+
+    .hud {
+        padding: 5px 8px;
+    }
+
+    .stat {
+        font-size: 0.75em;
+    }
+
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hud {
+        padding: 5px 15px;
+    }
+
+    .stat {
+        font-size: 0.85em;
+    }
+
+    .screen-content {
+        padding: 10px;
+    }
+
+    .title {
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        margin-bottom: 15px;
+    }
+
+    .menu-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .abilities-bar {
+        padding: 8px;
+    }
+
+    .ability-button {
+        width: 44px;
+        height: 44px;
+    }
 }
 
 /* ===========================
@@ -844,3 +1197,59 @@ h3 {
 .mt-2 { margin-top: 20px; }
 .mb-1 { margin-bottom: 10px; }
 .mb-2 { margin-bottom: 20px; }
+
+/* Screen reader only - visually hidden but accessible */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ===========================
+   Focus Visible Styles (Accessibility)
+   =========================== */
+
+/* Keyboard focus indicator for buttons */
+.btn:focus-visible {
+    outline: 3px solid #f4a261;
+    outline-offset: 2px;
+}
+
+/* Focus for tab buttons */
+.tab-button:focus-visible {
+    outline: 3px solid #f4a261;
+    outline-offset: 2px;
+}
+
+/* Focus for ability buttons */
+.ability-button:focus-visible {
+    outline: 3px solid #FFD700;
+    outline-offset: 2px;
+}
+
+/* Focus for canvas (keyboard navigation active) */
+#game-canvas:focus-visible {
+    outline: 3px solid #FFD700;
+    outline-offset: 2px;
+}
+
+/* Focus for form elements */
+input:focus-visible,
+select:focus-visible {
+    outline: 3px solid #f4a261;
+    outline-offset: 2px;
+}
+
+/* Focus for cards */
+.quest-card:focus-visible,
+.character-card:focus-visible,
+.shop-item:focus-visible {
+    outline: 3px solid #f4a261;
+    outline-offset: 2px;
+}

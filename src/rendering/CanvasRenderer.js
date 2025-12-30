@@ -73,6 +73,174 @@ class CanvasRenderer {
     this.cellSize = 44; // Base cell size in pixels (minimum 44x44px for touch targets)
     this.padding = 2;   // Padding between cells
     this.frozen = false; // Track whether rendering is frozen
+    this.dpr = window.devicePixelRatio || 1; // Device pixel ratio for crisp rendering
+
+    // Cache grid layout info for coordinate conversion
+    this.gridLayout = null;
+  }
+
+  /**
+   * Calculates grid layout information (position, dimensions, cell size)
+   * This is the SINGLE SOURCE OF TRUTH for grid positioning.
+   * Used by both rendering and coordinate conversion.
+   *
+   * @param {Grid} grid - The grid to calculate layout for
+   * @returns {{offsetX: number, offsetY: number, gridWidth: number, gridHeight: number, cellSize: number, padding: number}}
+   */
+  calculateGridLayout(grid) {
+    if (!grid) return null;
+
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+
+    // Grid dimensions = (cells * cellSize) + (gaps between cells * padding)
+    // There are (n-1) gaps between n cells
+    const gridWidth = (grid.width * cellSize) + ((grid.width - 1) * padding);
+    const gridHeight = (grid.height * cellSize) + ((grid.height - 1) * padding);
+
+    // Center grid on canvas (use logical dimensions, not physical)
+    const logicalWidth = this.canvas.width / this.dpr;
+    const logicalHeight = this.canvas.height / this.dpr;
+    const offsetX = (logicalWidth - gridWidth) / 2;
+    const offsetY = (logicalHeight - gridHeight) / 2;
+
+    return {
+      offsetX,
+      offsetY,
+      gridWidth,
+      gridHeight,
+      cellSize,
+      padding,
+      gridCols: grid.width,
+      gridRows: grid.height
+    };
+  }
+
+  /**
+   * Converts canvas pixel coordinates to grid cell coordinates
+   * Properly handles the padding between cells (not after the last cell)
+   *
+   * @param {number} canvasX - X position on canvas (CSS pixels, after getBoundingClientRect adjustment)
+   * @param {number} canvasY - Y position on canvas (CSS pixels, after getBoundingClientRect adjustment)
+   * @param {Grid} grid - The grid to convert coordinates for
+   * @returns {{x: number, y: number}|null} Grid coordinates or null if outside grid or in padding
+   */
+  canvasToGrid(canvasX, canvasY, grid) {
+    if (!grid) return null;
+
+    const layout = this.calculateGridLayout(grid);
+    if (!layout) return null;
+
+    const { offsetX, offsetY, cellSize, padding, gridCols, gridRows } = layout;
+
+    // Convert to coordinates relative to grid origin
+    const relativeX = canvasX - offsetX;
+    const relativeY = canvasY - offsetY;
+
+    // Quick bounds check
+    if (relativeX < 0 || relativeY < 0) return null;
+    if (relativeX >= layout.gridWidth || relativeY >= layout.gridHeight) return null;
+
+    // Calculate cell span (cell + padding after it, except for last cell)
+    const cellSpan = cellSize + padding;
+
+    // Calculate which cell span the click falls into
+    const gridX = Math.floor(relativeX / cellSpan);
+    const gridY = Math.floor(relativeY / cellSpan);
+
+    // Check bounds
+    if (gridX >= gridCols || gridY >= gridRows) return null;
+
+    // Calculate position within the cell span
+    const posInSpanX = relativeX - (gridX * cellSpan);
+    const posInSpanY = relativeY - (gridY * cellSpan);
+
+    // Check if click is in padding area (between cells), not the cell itself
+    // For the last column/row, there's no padding after, so allow full cellSize
+    const maxXInSpan = (gridX === gridCols - 1) ? cellSize : cellSize;
+    const maxYInSpan = (gridY === gridRows - 1) ? cellSize : cellSize;
+
+    // If click is past the cell (in padding area), it's still the same cell
+    // because visually users are clicking "on" that cell
+    // The padding is minimal (2px) so we should still register the click
+
+    // Validate final coordinates
+    if (gridX < 0 || gridX >= gridCols || gridY < 0 || gridY >= gridRows) {
+      return null;
+    }
+
+    return { x: gridX, y: gridY };
+  }
+
+  /**
+   * Updates canvas size to fit container while maintaining proper DPR scaling
+   * Call this on window resize and initial setup
+   *
+   * @param {number} containerWidth - Available width in CSS pixels
+   * @param {number} containerHeight - Available height in CSS pixels
+   * @param {Grid} [grid] - Optional grid to calculate optimal cell size
+   */
+  updateCanvasSize(containerWidth, containerHeight, grid) {
+    this.dpr = window.devicePixelRatio || 1;
+
+    // Set canvas size in physical pixels for crisp rendering
+    this.canvas.width = Math.floor(containerWidth * this.dpr);
+    this.canvas.height = Math.floor(containerHeight * this.dpr);
+
+    // Set CSS size in logical pixels
+    this.canvas.style.width = containerWidth + 'px';
+    this.canvas.style.height = containerHeight + 'px';
+
+    // Scale context to account for DPR
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+
+    // If grid is provided, calculate optimal cell size
+    if (grid) {
+      this.calculateOptimalCellSize(containerWidth, containerHeight, grid);
+    }
+  }
+
+  /**
+   * Calculates the optimal cell size to fit the grid within the container
+   * while maintaining minimum touch target size (44px) when possible
+   *
+   * @param {number} containerWidth - Available width in CSS pixels
+   * @param {number} containerHeight - Available height in CSS pixels
+   * @param {Grid} grid - The grid to fit
+   */
+  calculateOptimalCellSize(containerWidth, containerHeight, grid) {
+    if (!grid) return;
+
+    const minCellSize = 28; // Absolute minimum for usability
+    const idealCellSize = 44; // WCAG recommended touch target
+    const maxCellSize = 60; // Maximum to avoid overly large cells
+    const padding = this.padding;
+
+    // Add some margin around the grid
+    const marginX = 20;
+    const marginY = 20;
+    const availableWidth = containerWidth - (marginX * 2);
+    const availableHeight = containerHeight - (marginY * 2);
+
+    // Calculate max cell size that fits
+    // Grid width = (cells * cellSize) + ((cells - 1) * padding)
+    // So: availableWidth = (gridCols * cellSize) + ((gridCols - 1) * padding)
+    // Solving: cellSize = (availableWidth - (gridCols - 1) * padding) / gridCols
+    const maxCellWidth = (availableWidth - (grid.width - 1) * padding) / grid.width;
+    const maxCellHeight = (availableHeight - (grid.height - 1) * padding) / grid.height;
+
+    // Use the smaller of width/height constraints
+    let calculatedSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
+
+    // Clamp to reasonable bounds
+    calculatedSize = Math.max(minCellSize, Math.min(maxCellSize, calculatedSize));
+
+    // Prefer ideal size if it fits
+    if (idealCellSize <= Math.min(maxCellWidth, maxCellHeight)) {
+      calculatedSize = Math.min(idealCellSize, calculatedSize);
+    }
+
+    this.cellSize = calculatedSize;
   }
 
   /**
@@ -104,9 +272,13 @@ class CanvasRenderer {
 
   /**
    * Clears the entire canvas
+   * Accounts for DPR scaling by clearing the logical canvas size
    */
   clear() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // Clear using logical dimensions (the transform handles the physical size)
+    const logicalWidth = this.canvas.width / this.dpr;
+    const logicalHeight = this.canvas.height / this.dpr;
+    this.ctx.clearRect(0, 0, logicalWidth, logicalHeight);
   }
 
   /**
@@ -114,20 +286,18 @@ class CanvasRenderer {
    * @param {Grid} grid - The grid to render
    */
   renderGrid(grid) {
-    // Calculate grid position (centered)
-    // Grid dimensions = (cells * cellSize) + (gaps between cells * padding)
-    // There are (n-1) gaps between n cells
-    const gridWidth = (grid.width * this.cellSize) + ((grid.width - 1) * this.padding);
-    const gridHeight = (grid.height * this.cellSize) + ((grid.height - 1) * this.padding);
-    const offsetX = (this.canvas.width - gridWidth) / 2;
-    const offsetY = (this.canvas.height - gridHeight) / 2;
+    // Use centralized layout calculation
+    const layout = this.calculateGridLayout(grid);
+    if (!layout) return;
+
+    const { offsetX, offsetY, cellSize, padding } = layout;
 
     // Render each cell
     for (let y = 0; y < grid.height; y++) {
       for (let x = 0; x < grid.width; x++) {
         const cell = grid.cells[y][x];
-        const cellX = offsetX + x * (this.cellSize + this.padding);
-        const cellY = offsetY + y * (this.cellSize + this.padding);
+        const cellX = offsetX + x * (cellSize + padding);
+        const cellY = offsetY + y * (cellSize + padding);
         this.renderCell(cell, cellX, cellY);
       }
     }
@@ -151,9 +321,9 @@ class CanvasRenderer {
     }
     ctx.fillRect(x, y, size, size);
 
-    // Draw cell border
+    // Draw cell border with DPR-aware line width for crisp rendering
     ctx.strokeStyle = '#888';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = Math.max(1, 1 / this.dpr);
     ctx.strokeRect(x, y, size, size);
 
     // Draw content
@@ -213,9 +383,9 @@ class CanvasRenderer {
     this.ctx.closePath();
     this.ctx.fill();
 
-    // Flag pole
+    // Flag pole with DPR-aware line width for crisp rendering
     this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 2;
+    this.ctx.lineWidth = Math.max(1.5, 2 / this.dpr);
     this.ctx.beginPath();
     this.ctx.moveTo(x + size * 0.3, y + size * 0.2);
     this.ctx.lineTo(x + size * 0.3, y + size * 0.8);
@@ -239,27 +409,30 @@ class CanvasRenderer {
     const cell = grid.getCell(x, y);
     if (!cell) return;
 
-    // Calculate grid position (same as renderGrid)
-    const gridWidth = (grid.width * this.cellSize) + ((grid.width - 1) * this.padding);
-    const gridHeight = (grid.height * this.cellSize) + ((grid.height - 1) * this.padding);
-    const offsetX = (this.canvas.width - gridWidth) / 2;
-    const offsetY = (this.canvas.height - gridHeight) / 2;
+    // Use centralized layout calculation
+    const layout = this.calculateGridLayout(grid);
+    if (!layout) return;
+
+    const { offsetX, offsetY, cellSize, padding } = layout;
 
     // Calculate cell position
-    const cellX = offsetX + x * (this.cellSize + this.padding);
-    const cellY = offsetY + y * (this.cellSize + this.padding);
-    const size = this.cellSize;
+    const cellX = offsetX + x * (cellSize + padding);
+    const cellY = offsetY + y * (cellSize + padding);
+    const size = cellSize;
+
+    // DPR-aware line width for crisp hover borders
+    const hoverLineWidth = Math.max(2, 3 / this.dpr);
 
     // Different highlight styles based on cell state
     if (cell.isRevealed) {
       // Revealed cell hover (for chording) - subtle blue border
       this.ctx.strokeStyle = '#4a90e2';
-      this.ctx.lineWidth = 3;
+      this.ctx.lineWidth = hoverLineWidth;
       this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
     } else if (cell.isFlagged) {
       // Flagged cell hover (can be unflagged) - yellow border matching flag color
       this.ctx.strokeStyle = '#f4a261';
-      this.ctx.lineWidth = 3;
+      this.ctx.lineWidth = hoverLineWidth;
       this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
     } else {
       // Unrevealed cell hover (primary action) - white overlay + green border
@@ -269,7 +442,7 @@ class CanvasRenderer {
 
       // Green border to indicate clickable/revealable
       this.ctx.strokeStyle = '#2ecc71';
-      this.ctx.lineWidth = 3;
+      this.ctx.lineWidth = hoverLineWidth;
       this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
     }
   }
@@ -292,33 +465,33 @@ class CanvasRenderer {
     const cell = grid.getCell(x, y);
     if (!cell) return;
 
-    // Calculate grid position (same as renderGrid and renderHoverHighlight)
-    const gridWidth = (grid.width * this.cellSize) + ((grid.width - 1) * this.padding);
-    const gridHeight = (grid.height * this.cellSize) + ((grid.height - 1) * this.padding);
-    const offsetX = (this.canvas.width - gridWidth) / 2;
-    const offsetY = (this.canvas.height - gridHeight) / 2;
+    // Use centralized layout calculation
+    const layout = this.calculateGridLayout(grid);
+    if (!layout) return;
+
+    const { offsetX, offsetY, cellSize, padding } = layout;
 
     // Calculate cell position with integer coordinates for crisp rendering
-    const cellX = Math.floor(offsetX + x * (this.cellSize + this.padding));
-    const cellY = Math.floor(offsetY + y * (this.cellSize + this.padding));
-    const size = this.cellSize;
+    const cellX = Math.floor(offsetX + x * (cellSize + padding));
+    const cellY = Math.floor(offsetY + y * (cellSize + padding));
+    const size = cellSize;
 
-    // Draw keyboard cursor (gold border)
+    // Draw keyboard cursor (gold border) with DPR-aware line width
     this.ctx.save();
     this.ctx.strokeStyle = '#FFD700'; // Gold - high contrast against all cell states
-    this.ctx.lineWidth = 4;
+    this.ctx.lineWidth = Math.max(2, 4 / this.dpr);
     this.ctx.strokeRect(cellX + 2, cellY + 2, size - 4, size - 4);
     this.ctx.restore();
   }
 
   /**
-   * Resizes the canvas to new dimensions
-   * @param {number} width - The new canvas width
-   * @param {number} height - The new canvas height
+   * Resizes the canvas to new dimensions (legacy method)
+   * Prefer using updateCanvasSize() for DPR-aware resizing
+   * @param {number} width - The new canvas width in CSS pixels
+   * @param {number} height - The new canvas height in CSS pixels
    */
   resizeCanvas(width, height) {
-    this.canvas.width = width;
-    this.canvas.height = height;
+    this.updateCanvasSize(width, height);
   }
 
   /**

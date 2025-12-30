@@ -27,19 +27,71 @@ This document maps upstream and downstream dependencies across the LiMineZZsweep
 │     Orchestration Layer             │
 │  Game.js, EventBus.js              │
 ├─────────────────────────────────────┤
+│       Systems Layer                 │
+│  ItemSystem.js, ShopSystem.js      │
+├─────────────────────────────────────┤
 │      Business Logic Layer           │
 │  Grid.js, GameState.js              │
 ├─────────────────────────────────────┤
 │       Foundation Layer              │
-│    Cell.js, (Data files)           │
+│  Cell.js, items.js, boards.js      │
 └─────────────────────────────────────┘
 
-Dependency Flow: Foundation → Business Logic → Orchestration → Entry Point
+Dependency Flow: Foundation → Business Logic → Systems → Orchestration → Entry Point
 ```
 
 ---
 
 ## Core Dependencies (Foundation Layer)
+
+### items.js
+**Location**: `src/data/items.js`
+
+**PURPOSE**: Defines all item data (passives, actives, consumables) and rarity weights
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- None (pure data definitions)
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `ItemSystem.js` - Uses ITEMS for effect lookups
+- `ShopSystem.js` - Uses ITEMS and RARITY_WEIGHTS for shop generation
+- `GameState.js` - Uses for default unlocked items list
+
+**CHANGE RISK**: **HIGH**
+- Item structure changes break ItemSystem and ShopSystem
+- Adding items is safe, modifying existing items needs testing
+- Rarity weight changes affect shop balance
+
+**SIDE EFFECTS**: None (pure data)
+
+**TESTING IMPACT**:
+- Direct: Item data validation tests
+- Indirect: Shop tests, item effect tests
+
+---
+
+### boards.js
+**Location**: `src/data/boards.js`
+
+**PURPOSE**: Defines board configurations for the 6-board progression (size, mines, coin multiplier)
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- None (pure data definitions)
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `GameState.js` - Uses getBoardConfig() for board generation
+
+**CHANGE RISK**: **MEDIUM**
+- Board config changes affect game balance
+- Adding boards requires UI updates for board counter
+
+**SIDE EFFECTS**: None (pure data)
+
+**TESTING IMPACT**:
+- Direct: Board config tests
+- Indirect: Game progression tests
+
+---
 
 ### Cell.js
 **Location**: `src/entities/Cell.js`
@@ -203,6 +255,91 @@ Dependency Flow: Foundation → Business Logic → Orchestration → Entry Point
 - Direct: GameState unit tests (state management, resources, cursor)
 - Indirect: All game flow tests, progression tests
 - Blast Radius: **4+** (affects everything - main.js, Game.js, CanvasRenderer, future systems)
+
+---
+
+## Systems Layer Dependencies
+
+### ItemSystem.js
+**Location**: `src/systems/ItemSystem.js`
+
+**PURPOSE**: Static utility class for item effect processing (passives, actives, consumables)
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- `items.js` - ITEMS object for item definitions
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `main.js` - Calls for ability execution, modifier calculations
+- `GameState.js` - Calls applyPassiveEffects on board start
+- `ShopSystem.js` - Checks item types
+
+**CRITICAL PATHS**:
+1. Cell reveal → main.js → ItemSystem.getModifiedValue() → coin/mana calculation
+2. Ability use → main.js → ItemSystem.useActiveAbility() → grid modification
+3. Board start → GameState → ItemSystem.applyPassiveEffects() → stat modifiers
+
+**CHANGE RISK**: **HIGH**
+- Effect calculations affect game balance
+- Method signature changes break multiple callers
+- Adding new effect types is safe
+
+**KEY METHODS & THEIR CONSUMERS**:
+- `getModifiedValue(gameState, statType, baseValue)` - Called by: main.js (coin/mana calcs)
+- `useActiveAbility(gameState, itemId, x, y)` - Called by: main.js (ability targeting)
+- `useConsumable(gameState, index)` - Called by: main.js (consumable use)
+- `applyPassiveEffects(gameState)` - Called by: GameState.generateNextBoard()
+- `hasPassiveItem(gameState, itemId)` - Called by: main.js (item checks)
+- `getShopRarityBonus(gameState)` - Called by: ShopSystem (Lucky Charm bonus)
+
+**SIDE EFFECTS**:
+- Modifies grid state via reveal/highlight operations
+- Modifies GameState resource values
+- Triggers visual feedback (highlighted mines)
+
+**TESTING IMPACT**:
+- Direct: Item effect tests, ability execution tests
+- Indirect: Resource calculation tests, game balance tests
+- Blast Radius: **3** (main.js, GameState, ShopSystem)
+
+---
+
+### ShopSystem.js
+**Location**: `src/systems/ShopSystem.js`
+
+**PURPOSE**: Static utility class for shop generation and purchase handling
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- `items.js` - ITEMS, RARITY_WEIGHTS for shop generation
+- `ItemSystem.js` - For rarity bonus calculations
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `main.js` - Calls for shop UI population, purchases
+
+**CRITICAL PATHS**:
+1. Board complete → main.js → ShopSystem.generateOfferings() → shop UI
+2. Purchase click → main.js → ShopSystem.purchaseItem() → inventory update
+
+**CHANGE RISK**: **MEDIUM**
+- Shop generation affects game economy
+- Purchase validation changes affect user flow
+- Adding new shop features is safe
+
+**KEY METHODS & THEIR CONSUMERS**:
+- `generateOfferings(gameState, count)` - Called by: main.js (board complete)
+- `purchaseItem(gameState, itemId)` - Called by: main.js (shop buy button)
+- `canPurchase(gameState, itemId)` - Called by: main.js (UI disabled state)
+- `getOfferings()` - Called by: main.js (shop UI render)
+- `rerollShop(gameState)` - Called by: ItemSystem (Lucky Coin consumable)
+
+**SIDE EFFECTS**:
+- Stores current offerings in static state
+- Modifies GameState coins and inventory
+- Removes purchased items from offerings
+
+**TESTING IMPACT**:
+- Direct: Shop generation tests, purchase flow tests
+- Indirect: Economy balance tests, inventory tests
+- Blast Radius: **1** (main.js only)
 
 ---
 
@@ -421,10 +558,14 @@ Use this matrix when planning changes:
 
 | Component | Dependency Count | Change Frequency | Criticality | **Total Risk Score** |
 |-----------|------------------|------------------|-------------|---------------------|
+| items.js | 3 (ItemSys, Shop, State) | Medium | High | **8** |
+| boards.js | 1 (GameState) | Low | Medium | **2** |
 | Cell.js | 1 (Grid) | Low | High | **2** |
 | EventBus.js | 1 (main) | Low | Medium | **1** |
-| Grid.js | 4 (main, Game, Renderer, State) | Medium | Critical | **15** |
-| GameState.js | 3 (main, Game, Renderer) | Medium | Critical | **12** |
+| Grid.js | 5 (main, Game, Renderer, State, ItemSys) | Medium | Critical | **16** |
+| GameState.js | 5 (main, Game, Renderer, ItemSys, Shop) | Medium | Critical | **15** |
+| ItemSystem.js | 3 (main, State, Shop) | Medium | High | **9** |
+| ShopSystem.js | 1 (main) | Medium | Medium | **3** |
 | Game.js | 1 (main) | Low | High | **3** |
 | CanvasRenderer.js | 2 (Game, main props) | Medium | Medium | **4** |
 | main.js | 0 (entry point) | High | High | **0 external** |
@@ -440,31 +581,50 @@ Use this matrix when planning changes:
 ## Quick Reference: Who Imports What?
 
 ```
-Cell.js
+items.js (Foundation)
+  ← ItemSystem.js
+  ← ShopSystem.js
+  ← GameState.js (unlockedItems list)
+
+boards.js (Foundation)
+  ← GameState.js (getBoardConfig)
+
+Cell.js (Foundation)
   ← Grid.js
 
-EventBus.js
+EventBus.js (Foundation)
   ← main.js (minimal usage)
 
-Grid.js
+Grid.js (Business Logic)
   ← main.js (creates, calls methods)
   ← GameState.js (stores reference)
   ← CanvasRenderer.js (reads state)
+  ← ItemSystem.js (ability effects)
   ← Game.js (indirect via GameState)
 
-GameState.js
+GameState.js (Business Logic)
   ← Game.js (creates instance)
   ← main.js (extensive usage)
   ← CanvasRenderer.js (reads for render decisions)
+  ← ItemSystem.js (passive effects)
+  ← ShopSystem.js (purchases)
 
-Game.js
+ItemSystem.js (Systems)
+  ← main.js (modifier calcs, abilities)
+  ← GameState.js (passive effects)
+  ← ShopSystem.js (rarity bonus)
+
+ShopSystem.js (Systems)
+  ← main.js (shop UI, purchases)
+
+Game.js (Orchestration)
   ← main.js (creates instance)
 
-CanvasRenderer.js
+CanvasRenderer.js (Orchestration)
   ← Game.js (creates instance)
   ← main.js (accesses properties)
 
-main.js
+main.js (Entry Point)
   ← index.html (entry point)
 ```
 
@@ -508,9 +668,11 @@ When adding new systems (Phase 2+), follow these principles:
 3. **Keep GameState as the hub**: All persistent state goes through GameState
 4. **Renderers remain pure**: New renderers (UIRenderer, etc.) should never modify state
 
+**Implemented Systems**:
+- `ShopSystem.js` → depends on: ITEMS, RARITY_WEIGHTS, ItemSystem, GameState
+- `ItemSystem.js` → depends on: ITEMS, Grid (for abilities), GameState
+
 **Planned Future Dependencies**:
-- `ShopSystem.js` → depends on: GameState, EventBus
-- `ItemSystem.js` → depends on: GameState, EventBus
 - `QuestSystem.js` → depends on: GameState, EventBus
 - `SaveSystem.js` → depends on: GameState
 - `UIRenderer.js` → depends on: GameState (read-only)
@@ -526,5 +688,5 @@ When adding new systems (Phase 2+), follow these principles:
 
 ---
 
-**Last Updated**: 2025-12-30
-**Next Review**: When adding new systems (Phase 2)
+**Last Updated**: 2025-12-30 (Updated for Phase 2B: Items & Shop)
+**Next Review**: When adding new systems (Phase 3+)

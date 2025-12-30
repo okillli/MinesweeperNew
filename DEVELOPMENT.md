@@ -4,19 +4,19 @@
 
 ---
 
-## 📍 Phase Overview
+## Phase Overview
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| 1: Core | Playable minesweeper | ✅ Complete |
-| 2A: Resources | HP, coins, mana | ✅ Complete |
-| 2B: Items | 20 items, shop, multi-board | 🚧 Next |
-| 3: Progression | Quests, characters, unlocks | ⏳ Planned |
-| 4: Polish | Animations, deploy | ⏳ Planned |
+| 1: Core | Playable minesweeper | Complete |
+| 2A: Resources | HP, coins, mana | Complete |
+| 2B: Items | 20 items, shop, multi-board | Complete |
+| 3: Progression | Quests, characters, unlocks | Next |
+| 4: Polish | Animations, deploy | Planned |
 
 ---
 
-## ✅ Completed
+## Completed
 
 ### Phase 1: Core Minesweeper
 - Project setup & documentation
@@ -32,50 +32,70 @@
 - Color-coded HUD
 - Settings screen
 
+### Phase 2B: Items & Shop
+- [x] Item system
+  - [x] ItemSystem static utility class
+  - [x] 20 item definitions in `src/data/items.js`
+  - [x] Passive effects (stat modifiers, multipliers)
+  - [x] Active abilities (Scan Area, Mine Detector, Safe Column, Auto-Chord)
+  - [x] Consumables (Health Potion, Vision Scroll, Shield Token, etc.)
+
+- [x] Shop system
+  - [x] ShopSystem static utility class
+  - [x] Shop UI (DOM-based)
+  - [x] Item selection & purchase flow
+  - [x] Rarity-based generation (common 60%, rare 30%, legendary 10%)
+  - [x] Lucky Charm rarity bonus
+
+- [x] Multi-board runs
+  - [x] 6 boards (Tutorial, Easy, Normal, Hard, Very Hard, Boss)
+  - [x] Difficulty scaling (8x8 to 16x16, 10 to 50 mines)
+  - [x] Coin multipliers (1.0x to 3.0x)
+  - [x] Shop between boards
+  - [x] Persistent run state
+
+- [x] Win/Lose conditions
+  - [x] Complete 6 boards = victory
+  - [x] Victory summary screen
+  - [x] Perfect board tracking (+50 coins bonus)
+  - [x] Shield protection system
+
 ---
 
-## 🚧 Phase 2B: Items & Shop
-
-**Goal**: Add items, shops, multi-board progression
-
-### Tasks
-- [ ] Item system
-  - [ ] Item class & ItemSystem
-  - [ ] 20 item definitions in `src/data/items.js`
-  - [ ] Passive effects, active abilities, consumables
-
-- [ ] Shop system
-  - [ ] ShopSystem class
-  - [ ] Shop UI (DOM)
-  - [ ] Item selection & purchase
-  - [ ] Rarity-based generation
-
-- [ ] Multi-board runs
-  - [ ] 5 boards + boss
-  - [ ] Difficulty scaling
-  - [ ] Shop between boards
-  - [ ] Persistent run state
-
-- [ ] Win condition
-  - [ ] Complete 5 boards = win
-  - [ ] Victory summary screen
-
----
-
-## ⏳ Phase 3: Progression
+## Next: Phase 3: Progression
 
 **Goal**: Meta-progression, quests, character classes
 
 - [ ] Quest system (5 quests)
+  - [ ] Classic Clear: Complete all 6 boards
+  - [ ] Treasure Hunter: Collect 500 coins
+  - [ ] Boss Slayer: Defeat the boss board
+  - [ ] Quest selection UI
+  - [ ] Quest reward system
+
 - [ ] Character classes (5 classes)
+  - [ ] Explorer (default)
+  - [ ] Mage (-25% ability cost)
+  - [ ] Tank (+2 max HP)
+  - [ ] Scout (start with Mine Detector)
+  - [ ] Character selection UI
+
 - [ ] Gem currency & unlocks
-- [ ] Achievement tracking
+  - [ ] Gem earning from quest completion
+  - [ ] Item unlock shop
+  - [ ] Character unlock system
+
 - [ ] Save/load (localStorage)
+  - [ ] Persistent stats tracking
+  - [ ] Settings persistence
+  - [ ] Unlock state persistence
+
 - [ ] Boss board mechanics
+  - [ ] Special boss abilities/hazards
 
 ---
 
-## ⏳ Phase 4: Polish & Launch
+## Planned: Phase 4: Polish & Launch
 
 **Goal**: Juice, optimization, deploy
 
@@ -88,7 +108,7 @@
 
 ---
 
-## 💡 Future (Post-MVP)
+## Future (Post-MVP)
 
 - PWA support
 - Daily challenges
@@ -99,25 +119,25 @@
 
 ---
 
-## 📊 Targets
+## Targets
 
-| Metric | Target |
-|--------|--------|
-| Total lines | 3,000-5,000 |
-| Files | 20-25 |
-| Bundle size | <100KB |
-| Frame rate | 60 FPS desktop, 30+ mobile |
-| Input latency | <100ms |
+| Metric | Target | Current |
+|--------|--------|---------|
+| Total lines | 3,000-5,000 | ~3,500 |
+| Files | 20-25 | 15 |
+| Bundle size | <100KB | ~50KB |
+| Frame rate | 60 FPS desktop, 30+ mobile | Achieved |
+| Input latency | <100ms | <50ms |
 
 ---
 
-## ✓ Definition of Done
+## Definition of Done
 
 ### Per Feature
-- [ ] Code tested, no console errors
-- [ ] Works on mobile
-- [ ] Documented in code
-- [ ] Committed with descriptive message
+- [x] Code tested, no console errors
+- [x] Works on mobile
+- [x] Documented in code
+- [x] Committed with descriptive message
 
 ### MVP Launch
 - [ ] All phases complete
@@ -128,4 +148,4 @@
 
 ---
 
-**Version**: 0.3.0 | **Last Updated**: 2025-12-30
+**Version**: 0.4.0 | **Last Updated**: 2025-12-30

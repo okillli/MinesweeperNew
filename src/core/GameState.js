@@ -78,6 +78,15 @@ class GameState {
       maxMana: 100,          // Maximum mana (can be modified by items)
       coins: 0,              // Current coins (in-run currency)
 
+      // Board modifiers
+      coinMultiplier: 1.0,   // Coin multiplier from current board
+      perfectBoardTracker: true, // True if no damage taken this board
+
+      // Item effect state
+      shieldActive: false,   // True if Shield Token is protecting from next hit
+      highlightedMines: [],  // Array of {x,y} for Mine Detector highlighting
+      safeRevealStreak: 0,   // Count of safe reveals for Fortify Armor
+
       items: {
         passive: [],         // Array of passive item objects
         active: [],          // Array of active ability objects
@@ -180,6 +189,13 @@ class GameState {
     this.currentRun.maxMana = 100;
     this.currentRun.coins = 0;
 
+    // Reset board modifiers
+    this.currentRun.coinMultiplier = 1.0;
+    this.currentRun.perfectBoardTracker = true;
+    this.currentRun.shieldActive = false;
+    this.currentRun.highlightedMines = [];
+    this.currentRun.safeRevealStreak = 0;
+
     // Clear items
     this.currentRun.items = {
       passive: [],
@@ -210,25 +226,38 @@ class GameState {
 
   /**
    * Generate the next board in the run
-   * Increments board number and creates a new grid
-   * NOTE: Grid generation logic not implemented yet - just increments boardNumber and sets grid to null
+   * Increments board number and creates a new grid based on BOARDS config
+   * @returns {Object|null} Board config or null if run complete
    */
   generateNextBoard() {
     // Increment board number (1-6)
     this.currentRun.boardNumber++;
 
-    // TODO: Implement proper board configuration based on boardNumber
-    // For now, just set grid to null
-    // Later this will create a new Grid instance with proper size/mines based on board config
-    this.grid = null;
+    // Get board configuration
+    const config = getBoardConfig(this.currentRun.boardNumber);
+    if (!config) {
+      // Run complete - all 6 boards cleared
+      return null;
+    }
 
-    // Board configurations will be:
-    // Board 1: 8x8, 10 mines
-    // Board 2: 10x10, 15 mines
-    // Board 3: 12x12, 25 mines
-    // Board 4: 14x14, 35 mines
-    // Board 5: 14x14, 40 mines
-    // Board 6: 16x16, 50 mines (BOSS)
+    // Create new grid
+    this.grid = new Grid(config.width, config.height, config.mines);
+
+    // Set board modifiers
+    this.currentRun.coinMultiplier = config.coinMult;
+    this.currentRun.perfectBoardTracker = true;
+    this.currentRun.highlightedMines = [];
+    this.currentRun.safeRevealStreak = 0;
+
+    // Apply passive item stat modifiers
+    if (typeof ItemSystem !== 'undefined') {
+      ItemSystem.applyPassiveEffects(this);
+    }
+
+    // Center cursor on new grid
+    this.centerCursor();
+
+    return config;
   }
 
   /**
@@ -475,6 +504,11 @@ class GameState {
       mana: 0,
       maxMana: 100,
       coins: 0,
+      coinMultiplier: 1.0,
+      perfectBoardTracker: true,
+      shieldActive: false,
+      highlightedMines: [],
+      safeRevealStreak: 0,
       items: { passive: [], active: [], consumables: [] },
       stats: {
         cellsRevealed: 0,

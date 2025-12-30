@@ -34,7 +34,7 @@ module.exports = defineConfig({
   // Shared settings for all projects
   use: {
     // Base URL for navigation
-    baseURL: 'http://localhost:8000',
+    baseURL: 'http://localhost:5500',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -76,8 +76,8 @@ module.exports = defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: {
-    command: 'python -m http.server 8000',
-    url: 'http://localhost:8000',
+    command: 'npx serve -l 5500',
+    url: 'http://localhost:5500',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

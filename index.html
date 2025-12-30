@@ -13,26 +13,26 @@
 <body>
     <!-- Main Container -->
     <div id="app">
-        <!-- HUD (Top Bar) -->
-        <div id="hud" class="hud hidden">
+        <!-- HUD (Top Bar) - aria-live for dynamic updates -->
+        <div id="hud" class="hud hidden" role="status" aria-live="polite">
             <div class="hud-left">
                 <div class="stat">
-                    <span class="stat-label">HP:</span>
-                    <span id="hp-display" class="stat-value">3</span>
+                    <span class="stat-label" id="hp-label">HP:</span>
+                    <span id="hp-display" class="stat-value" aria-labelledby="hp-label">3</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Mana:</span>
-                    <span id="mana-display" class="stat-value">0/100</span>
+                    <span class="stat-label" id="mana-label">Mana:</span>
+                    <span id="mana-display" class="stat-value" aria-labelledby="mana-label">0/100</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Coins:</span>
-                    <span id="coins-display" class="stat-value">0</span>
+                    <span class="stat-label" id="coins-label">Coins:</span>
+                    <span id="coins-display" class="stat-value" aria-labelledby="coins-label">0</span>
                 </div>
             </div>
             <div class="hud-right">
                 <div class="stat">
-                    <span class="stat-label">Board:</span>
-                    <span id="board-display" class="stat-value">1/6</span>
+                    <span class="stat-label" id="board-label">Board:</span>
+                    <span id="board-display" class="stat-value" aria-labelledby="board-label">1/6</span>
                 </div>
             </div>
         </div>
@@ -83,11 +83,21 @@
 
         <!-- Game Screen -->
         <div id="game-screen" class="screen">
+            <!-- Screen reader instructions (visually hidden) -->
+            <div id="game-instructions" class="sr-only">
+                Minesweeper game board. Use arrow keys to move cursor.
+                Press Space or Enter to reveal a cell. Press F to flag a cell.
+                On touch devices: tap to reveal, long-press to flag.
+            </div>
+
             <!-- Canvas for grid -->
-            <canvas id="game-canvas"></canvas>
+            <canvas id="game-canvas"
+                    role="application"
+                    aria-label="Minesweeper game board"
+                    aria-describedby="game-instructions"></canvas>
 
             <!-- Active Abilities Bar -->
-            <div id="abilities-bar" class="abilities-bar hidden">
+            <div id="abilities-bar" class="abilities-bar hidden" role="toolbar" aria-label="Active abilities">
                 <div id="ability-slots" class="ability-slots">
                     <!-- Ability buttons will be populated by JavaScript -->
                 </div>
@@ -110,12 +120,16 @@
         </div>
 
         <!-- Game Over Overlay (appears on top of game screen) -->
-        <div id="gameover-overlay" class="gameover-overlay hidden">
+        <div id="gameover-overlay" class="gameover-overlay hidden"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="gameover-title"
+             aria-describedby="gameover-message">
             <!-- Semi-transparent message box centered on screen -->
             <div class="gameover-message-box">
                 <h2 id="gameover-title">Game Over</h2>
                 <p id="gameover-message">You were defeated!</p>
-                <p class="gameover-hint">Scroll down for details ↓</p>
+                <p class="gameover-hint" aria-hidden="true">Scroll down for details ↓</p>
             </div>
 
             <!-- Spacer to push stats below the viewport -->
@@ -152,13 +166,13 @@
             <div class="screen-content">
                 <h2>Collection</h2>
 
-                <div class="collection-tabs">
-                    <button class="tab-button active" data-tab="items">Items</button>
-                    <button class="tab-button" data-tab="characters">Characters</button>
-                    <button class="tab-button" data-tab="achievements">Achievements</button>
+                <div class="collection-tabs" role="tablist" aria-label="Collection categories">
+                    <button class="tab-button active" data-tab="items" role="tab" aria-selected="true" aria-controls="collection-content">Items</button>
+                    <button class="tab-button" data-tab="characters" role="tab" aria-selected="false" aria-controls="collection-content">Characters</button>
+                    <button class="tab-button" data-tab="achievements" role="tab" aria-selected="false" aria-controls="collection-content">Achievements</button>
                 </div>
 
-                <div id="collection-content" class="collection-content">
+                <div id="collection-content" class="collection-content" role="tabpanel" aria-label="Collection items">
                     <!-- Collection items will be populated by JavaScript -->
                 </div>
 
@@ -200,11 +214,18 @@
     </div>
 
     <!-- Load game scripts -->
-    <!-- Phase 1 MVP - Core Files Only -->
+
+    <!-- Data Definitions -->
+    <script src="src/data/items.js"></script>
+    <script src="src/data/boards.js"></script>
 
     <!-- Entities -->
     <script src="src/entities/Cell.js"></script>
     <script src="src/entities/Grid.js"></script>
+
+    <!-- Systems -->
+    <script src="src/systems/ItemSystem.js"></script>
+    <script src="src/systems/ShopSystem.js"></script>
 
     <!-- Rendering -->
     <script src="src/rendering/CanvasRenderer.js"></script>

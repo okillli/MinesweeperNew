@@ -24,14 +24,52 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Set canvas size (for MVP, use a fixed size)
-  // Later this will be responsive and adapt to grid size
-  canvas.width = 600;
-  canvas.height = 600;
-
   // Create the main Game instance
   // Game handles the update-render loop and owns GameState and CanvasRenderer
   const game = new Game(canvas);
+
+  /**
+   * Updates canvas size to fit available space responsively
+   * Called on init and window resize
+   */
+  function updateCanvasSize() {
+    const gameScreen = document.getElementById('game-screen');
+    if (!gameScreen) return;
+
+    // Get the available space (account for HUD and abilities bar)
+    const hud = document.getElementById('hud');
+    const abilitiesBar = document.querySelector('.abilities-bar');
+
+    let availableHeight = gameScreen.clientHeight;
+    if (hud && !hud.classList.contains('hidden')) {
+      availableHeight -= hud.offsetHeight;
+    }
+    if (abilitiesBar && !abilitiesBar.classList.contains('hidden')) {
+      availableHeight -= abilitiesBar.offsetHeight;
+    }
+
+    const availableWidth = gameScreen.clientWidth;
+
+    // Use the smaller dimension to ensure the canvas fits
+    const size = Math.min(availableWidth, availableHeight);
+
+    // Update canvas size with DPR support
+    game.renderer.updateCanvasSize(size, size, game.state.grid);
+  }
+
+  // Initial canvas size setup
+  updateCanvasSize();
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    updateCanvasSize();
+  }, { signal });
+
+  // Handle orientation change on mobile
+  window.addEventListener('orientationchange', () => {
+    // Small delay to let the browser finish orientation change
+    setTimeout(updateCanvasSize, 100);
+  }, { signal });
 
   // Start the game loop immediately
   // The loop runs continuously, but only renders when on PLAYING screen
@@ -91,6 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
       updateHUD();
       // Add playing class to canvas for cursor feedback
       canvas.classList.add('playing');
+      // Update canvas size for responsive layout
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        updateCanvasSize();
+      });
     } else {
       hud.classList.add('hidden');
       // Remove playing class from canvas
@@ -130,6 +173,273 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('mana-display').textContent = `${run.mana}/${run.maxMana}`;
     document.getElementById('coins-display').textContent = run.coins;
     document.getElementById('board-display').textContent = `${run.boardNumber}/6`;
+
+    // Update abilities bar
+    updateAbilitiesBar();
+  }
+
+  // ============================================================================
+  // SHOP UI
+  // ============================================================================
+
+  /**
+   * Populates the shop screen with current offerings
+   */
+  function populateShopUI() {
+    const shopItemsContainer = document.getElementById('shop-items');
+    shopItemsContainer.innerHTML = '';
+
+    // Generate shop offerings if not already generated
+    if (ShopSystem.getOfferings().length === 0) {
+      ShopSystem.generateOfferings(game.state);
+    }
+
+    const offerings = ShopSystem.getOfferings();
+
+    offerings.forEach((item) => {
+      const itemElement = createShopItemElement(item);
+      shopItemsContainer.appendChild(itemElement);
+    });
+
+    // Update coins display
+    document.getElementById('shop-coins-display').textContent = game.state.currentRun.coins;
+  }
+
+  /**
+   * Creates a shop item card element
+   * @param {Object} item - Item definition
+   * @returns {HTMLElement} Shop item element
+   */
+  function createShopItemElement(item) {
+    const card = document.createElement('div');
+    card.className = `shop-item shop-item-${item.rarity}`;
+
+    const check = ShopSystem.canPurchase(game.state, item.id);
+    if (!check.canBuy) {
+      card.classList.add('disabled');
+    }
+
+    card.innerHTML = `
+      <div class="shop-item-header">
+        <span class="shop-item-name">${item.name}</span>
+        <span class="shop-item-rarity rarity-${item.rarity}">${item.rarity}</span>
+      </div>
+      <div class="shop-item-type">${item.type}</div>
+      <div class="shop-item-description">${item.description}</div>
+      ${item.manaCost ? `<div class="shop-item-mana">Mana cost: ${item.manaCost}</div>` : ''}
+      <div class="shop-item-footer">
+        <span class="shop-item-cost">${item.cost} coins</span>
+        <button class="btn btn-primary shop-buy-btn" ${!check.canBuy ? 'disabled' : ''}>
+          ${check.canBuy ? 'Buy' : check.reason}
+        </button>
+      </div>
+    `;
+
+    // Add buy handler
+    const buyBtn = card.querySelector('.shop-buy-btn');
+    if (check.canBuy) {
+      buyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const result = ShopSystem.purchaseItem(game.state, item.id);
+        if (result.success) {
+          console.log(result.message);
+          // Refresh shop UI
+          populateShopUI();
+        }
+      });
+    }
+
+    return card;
+  }
+
+  // ============================================================================
+  // ABILITIES BAR
+  // ============================================================================
+
+  /**
+   * Updates the abilities bar with current active items
+   */
+  function updateAbilitiesBar() {
+    const abilitiesBar = document.getElementById('abilities-bar');
+    const slotsContainer = document.getElementById('ability-slots');
+
+    const activeItems = game.state.currentRun.items.active;
+    const consumables = game.state.currentRun.items.consumables;
+
+    // Hide if no items
+    if (activeItems.length === 0 && consumables.length === 0) {
+      abilitiesBar.classList.add('hidden');
+      return;
+    }
+
+    abilitiesBar.classList.remove('hidden');
+    slotsContainer.innerHTML = '';
+
+    // Add active abilities
+    activeItems.forEach((item, index) => {
+      const button = createAbilityButton(item, 'active', index);
+      slotsContainer.appendChild(button);
+    });
+
+    // Add consumables
+    consumables.forEach((item, index) => {
+      const button = createAbilityButton(item, 'consumable', index);
+      slotsContainer.appendChild(button);
+    });
+  }
+
+  /**
+   * Creates an ability button element
+   * @param {Object} item - Item object
+   * @param {string} type - 'active' or 'consumable'
+   * @param {number} index - Index in inventory
+   * @returns {HTMLElement} Button element
+   */
+  function createAbilityButton(item, type, index) {
+    const button = document.createElement('button');
+    button.className = `ability-button ability-${type}`;
+
+    if (type === 'active') {
+      const canUse = ItemSystem.canUseAbility(game.state, item.id);
+      if (!canUse) {
+        button.classList.add('disabled');
+      }
+
+      button.innerHTML = `
+        <span class="ability-name">${item.name}</span>
+        <span class="ability-cost">${item.manaCost}</span>
+      `;
+
+      button.addEventListener('click', () => {
+        if (!ItemSystem.canUseAbility(game.state, item.id)) return;
+
+        // For abilities that need targeting, enter targeting mode
+        const def = ItemSystem.getItem(item.id);
+        if (def && (def.effect.type === 'reveal_area' || def.effect.type === 'reveal_column')) {
+          enterAbilityTargetingMode(item.id);
+        } else {
+          // Execute immediately (auto-chord, etc.)
+          const result = ItemSystem.useActiveAbility(game.state, item.id);
+          if (result.success) {
+            console.log(`Used ${item.name}: ${result.message}`);
+            updateHUD();
+            // Check if any cells were revealed for win condition
+            if (result.data.cellsRevealed && game.state.grid.isComplete()) {
+              handleBoardComplete();
+            }
+          }
+        }
+      });
+    } else {
+      // Consumable
+      button.innerHTML = `
+        <span class="ability-name">${item.name}</span>
+        <span class="ability-type">USE</span>
+      `;
+
+      button.addEventListener('click', () => {
+        const result = ItemSystem.useConsumable(game.state, index);
+        if (result.success) {
+          console.log(`Used ${item.name}: ${result.message}`);
+
+          // Handle reroll shop
+          if (result.data && result.data.triggerReroll) {
+            ShopSystem.rerollShop(game.state);
+            if (game.state.currentScreen === 'SHOP') {
+              populateShopUI();
+            }
+          }
+
+          updateHUD();
+        }
+      });
+    }
+
+    return button;
+  }
+
+  // ============================================================================
+  // ABILITY TARGETING MODE
+  // ============================================================================
+
+  let abilityTargetingMode = null; // { itemId: string } or null
+
+  /**
+   * Enter ability targeting mode
+   * @param {string} itemId - The ability to use
+   */
+  function enterAbilityTargetingMode(itemId) {
+    abilityTargetingMode = { itemId };
+    canvas.classList.add('targeting');
+    console.log(`Targeting mode: select a cell for ${ItemSystem.getItem(itemId).name}`);
+  }
+
+  /**
+   * Exit ability targeting mode
+   */
+  function exitAbilityTargetingMode() {
+    abilityTargetingMode = null;
+    canvas.classList.remove('targeting');
+  }
+
+  // ============================================================================
+  // BOARD COMPLETION & VICTORY
+  // ============================================================================
+
+  /**
+   * Handles board completion - transitions to shop or victory
+   */
+  function handleBoardComplete() {
+    const run = game.state.currentRun;
+
+    // Award perfect board bonus if no damage taken
+    if (run.perfectBoardTracker) {
+      run.stats.perfectBoards++;
+      game.state.addCoins(50); // Perfect board bonus
+      console.log('Perfect board! +50 coins bonus');
+
+      // Second Wind: +1 HP on perfect board
+      if (ItemSystem.hasPassiveItem(game.state, 'second_wind')) {
+        game.state.heal(1);
+        console.log('Second Wind: +1 HP for perfect board');
+      }
+    }
+
+    // Check if run is complete
+    if (run.boardNumber >= 6) {
+      handleVictory();
+      return;
+    }
+
+    // Generate shop offerings
+    ShopSystem.generateOfferings(game.state);
+    populateShopUI();
+
+    // Transition to shop
+    showScreen('shop-screen');
+    console.log(`Board ${run.boardNumber} complete! Entering shop...`);
+  }
+
+  /**
+   * Handles victory (all 6 boards cleared)
+   */
+  function handleVictory() {
+    game.state.isGameOver = true;
+
+    // End run with victory
+    const summary = game.state.endRun(true);
+
+    // Update game over screen for victory
+    updateGameOverScreen(summary);
+
+    // Show overlay
+    const overlay = document.getElementById('gameover-overlay');
+    if (overlay) {
+      overlay.classList.remove('hidden');
+      overlay.scrollTop = 0;
+    }
+
+    console.log('Victory! All 6 boards cleared!');
   }
 
   // ============================================================================
@@ -228,39 +538,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Handles "Start Run" button click
-   * For MVP: Creates a test grid and goes directly to game screen
+   * Creates first board and goes directly to game screen
    * TODO: Later this will go to quest selection screen
    */
   document.getElementById('start-button').addEventListener('click', () => {
     console.log('Start Run clicked');
 
-    // TODO: In full game, this would transition to quest-screen
-    // For MVP, we skip quest/character selection and start a test game
-
     // Reset game over flag
     game.state.isGameOver = false;
 
-    // Create a test grid (10x10 with 15 mines - same as Board 2 config)
-    const testGrid = new Grid(10, 10, 15);
-
-    // Set the grid in game state
-    game.state.grid = testGrid;
-
-    // Center keyboard cursor on new grid
-    game.state.centerCursor();
-
-    // Focus canvas for keyboard navigation
-    canvas.tabIndex = 0; // Make canvas focusable
-    canvas.focus();
-
-    // Initialize run state for testing
+    // Initialize run state
     const startingHp = getStartingHP();
-    game.state.currentRun.boardNumber = 1;
+    game.state.currentRun.boardNumber = 0; // Will be incremented to 1 by generateNextBoard
     game.state.currentRun.hp = startingHp;
     game.state.currentRun.maxHp = startingHp;
     game.state.currentRun.mana = 0;
     game.state.currentRun.maxMana = 100;
     game.state.currentRun.coins = 0;
+
+    // Reset board modifiers
+    game.state.currentRun.coinMultiplier = 1.0;
+    game.state.currentRun.perfectBoardTracker = true;
+    game.state.currentRun.shieldActive = false;
+    game.state.currentRun.highlightedMines = [];
+    game.state.currentRun.safeRevealStreak = 0;
+
+    // Clear items
+    game.state.currentRun.items = {
+      passive: [],
+      active: [],
+      consumables: []
+    };
 
     // Reset run stats
     game.state.currentRun.stats = {
@@ -273,10 +581,17 @@ document.addEventListener('DOMContentLoaded', () => {
       perfectBoards: 0
     };
 
+    // Generate first board using the proper board system
+    const boardConfig = game.state.generateNextBoard();
+
+    // Focus canvas for keyboard navigation
+    canvas.tabIndex = 0;
+    canvas.focus();
+
     // Transition to game screen
     showScreen('game-screen');
 
-    console.log('Test grid created - 10x10 with 15 mines');
+    console.log(`Starting Board 1: ${boardConfig.name} (${boardConfig.width}x${boardConfig.height}, ${boardConfig.mines} mines)`);
   });
 
   /**
@@ -415,8 +730,24 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   document.getElementById('shop-continue-button').addEventListener('click', () => {
     console.log('Shop continue clicked');
-    // TODO: Generate next board or transition to game over if run complete
+
+    // Generate next board
+    const boardConfig = game.state.generateNextBoard();
+
+    if (!boardConfig) {
+      // Run complete - shouldn't happen here but handle it
+      handleVictory();
+      return;
+    }
+
+    // Focus canvas
+    canvas.tabIndex = 0;
+    canvas.focus();
+
+    // Transition to game screen
     showScreen('game-screen');
+
+    console.log(`Starting Board ${game.state.currentRun.boardNumber}: ${boardConfig.name} (${boardConfig.width}x${boardConfig.height}, ${boardConfig.mines} mines)`);
   });
 
   // ============================================================================
@@ -504,53 +835,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Converts canvas pixel coordinates to grid cell coordinates
+   * Delegates to CanvasRenderer.canvasToGrid() for centralized coordinate conversion
    *
-   * Takes into account:
-   * - Grid centering on canvas
-   * - Cell size and padding from CanvasRenderer
-   *
-   * @param {number} canvasX - X position on canvas (from click event)
-   * @param {number} canvasY - Y position on canvas (from click event)
+   * @param {number} canvasX - X position on canvas (CSS pixels from click event)
+   * @param {number} canvasY - Y position on canvas (CSS pixels from click event)
    * @returns {{x: number, y: number}|null} Grid coordinates or null if outside grid
    */
   function canvasToGrid(canvasX, canvasY) {
     const grid = game.state.grid;
     if (!grid) return null;
 
-    const renderer = game.renderer;
-    const cellSize = renderer.cellSize;
-    const padding = renderer.padding;
-
-    // Calculate grid dimensions and centering offset (same as CanvasRenderer)
-    // Grid dimensions = (cells * cellSize) + (gaps between cells * padding)
-    // There are (n-1) gaps between n cells
-    const gridWidth = (grid.width * cellSize) + ((grid.width - 1) * padding);
-    const gridHeight = (grid.height * cellSize) + ((grid.height - 1) * padding);
-    const offsetX = (canvas.width - gridWidth) / 2;
-    const offsetY = (canvas.height - gridHeight) / 2;
-
-    // Convert canvas coords to grid coords
-    const relativeX = canvasX - offsetX;
-    const relativeY = canvasY - offsetY;
-
-    // Calculate grid cell indices
-    // Each cell occupies (cellSize + padding) space, but we need to account for
-    // the fact that padding only exists between cells, not after the last one
-    const gridX = Math.floor(relativeX / (cellSize + padding));
-    const gridY = Math.floor(relativeY / (cellSize + padding));
-
-    // Validate coordinates are within grid bounds
-    if (gridX < 0 || gridX >= grid.width || gridY < 0 || gridY >= grid.height) {
-      return null;
-    }
-
-    return { x: gridX, y: gridY };
+    // Use renderer's centralized coordinate conversion
+    return game.renderer.canvasToGrid(canvasX, canvasY, grid);
   }
 
   /**
    * Handles left-click on canvas
    * - Reveals cell if unrevealed
    * - Chords if cell is already revealed (auto-reveal adjacent cells if flags match)
+   * - Executes ability if in targeting mode
    *
    * @param {MouseEvent} event - The click event
    */
@@ -574,6 +877,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!coords) return; // Click was outside grid
 
     const { x, y } = coords;
+
+    // Check if in ability targeting mode
+    if (abilityTargetingMode) {
+      const result = ItemSystem.useActiveAbility(game.state, abilityTargetingMode.itemId, x, y);
+      exitAbilityTargetingMode();
+
+      if (result.success) {
+        console.log(`Ability used: ${result.message}`);
+
+        // Award resources for revealed cells
+        if (result.data.cellsRevealed && result.data.cellsRevealed > 0) {
+          const baseCoins = result.data.cellsRevealed * 10;
+          const coins = Math.floor(ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins) * game.state.currentRun.coinMultiplier);
+          const mana = result.data.cellsRevealed * 5;
+          game.state.addCoins(coins);
+          game.state.addMana(mana);
+          game.state.currentRun.stats.cellsRevealed += result.data.cellsRevealed;
+        }
+
+        updateHUD();
+
+        // Check win condition
+        if (grid.isComplete()) {
+          handleBoardComplete();
+        }
+      }
+      return;
+    }
     const cell = grid.getCell(x, y);
     if (!cell) return;
 
@@ -620,8 +951,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check win condition
         if (grid.isComplete()) {
-          console.log('Congratulations! You won!');
-          // TODO: Implement proper victory flow
+          handleBoardComplete();
         }
       }
     }
@@ -637,6 +967,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check if we hit a mine (damage system)
         if (revealedCell.isMine) {
+          // Mark board as imperfect
+          game.state.currentRun.perfectBoardTracker = false;
+          game.state.currentRun.safeRevealStreak = 0;
+
+          // Check for shield protection
+          if (game.state.currentRun.shieldActive) {
+            game.state.currentRun.shieldActive = false;
+            console.log('Shield blocked the damage!');
+            updateHUD();
+            return;
+          }
+
           // Damage system - lose 1 HP per mine
           game.state.takeDamage(1);
           updateHUD();
@@ -659,8 +1001,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update cells revealed stat
         game.state.currentRun.stats.cellsRevealed += cellsRevealed;
 
-        // Award coins (+10 per cell)
-        const coinsEarned = cellsRevealed * 10;
+        // Update safe reveal streak for Fortify Armor
+        game.state.currentRun.safeRevealStreak += cellsRevealed;
+        ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+
+        // Award coins with multipliers (+10 per cell base)
+        const baseCoins = cellsRevealed * 10;
+        const modifiedCoins = ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins);
+        const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier);
         game.state.addCoins(coinsEarned);
 
         // Award mana (+5 per cell)
@@ -726,11 +1074,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`${cell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y})`);
       console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
 
-      // Award mana for placing flag (+10)
+      // Award mana for placing flag (base +10, can be modified by items)
       if (cell.isFlagged) {
-        game.state.addMana(10);
+        const baseMana = 10;
+        const manaEarned = ItemSystem.getModifiedValue(game.state, 'flagMana', baseMana);
+        game.state.addMana(manaEarned);
         updateHUD();
-        console.log('Flag placed! +10 mana');
+        console.log(`Flag placed! +${manaEarned} mana`);
       }
     }
 
@@ -768,6 +1118,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hide keyboard cursor when using touch
     game.state.hideCursor();
 
+    // Prevent multi-touch interactions - cancel if more than 1 touch
+    if (event.touches.length > 1) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      touchStartPos = null;
+      longPressTriggered = false;
+      return;
+    }
+
     // Only handle touches when on playing screen
     if (game.state.currentScreen !== 'PLAYING') return;
 
@@ -802,18 +1163,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up long-press timer
     longPressTimer = setTimeout(() => {
-      // Long-press detected - toggle flag
-      const { x, y } = coords;
-      const cell = grid.getCell(x, y);
+      // Re-validate that touch is still active at same location
+      if (!touchStartPos) return;
+
+      // Re-calculate coordinates to handle any canvas size changes during hold
+      const currentCoords = canvasToGrid(touchStartPos.x, touchStartPos.y);
+      if (!currentCoords) {
+        touchStartPos = null;
+        return;
+      }
+
+      const { x, y } = currentCoords;
+      const currentGrid = game.state.grid;
+      if (!currentGrid) return;
+
+      const cell = currentGrid.getCell(x, y);
 
       // Only allow flagging on unrevealed cells
       if (cell && !cell.isRevealed) {
-        const success = grid.toggleFlag(x, y);
+        const success = currentGrid.toggleFlag(x, y);
 
         if (success) {
-          const updatedCell = grid.getCell(x, y);
+          const updatedCell = currentGrid.getCell(x, y);
           console.log(`${updatedCell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y}) via long-press`);
-          console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
+          console.log(`Total flags: ${currentGrid.flagged}/${currentGrid.mineCount}`);
 
           // Award mana for placing flag (+10)
           if (updatedCell.isFlagged) {
@@ -840,10 +1213,21 @@ document.addEventListener('DOMContentLoaded', () => {
   /**
    * Handles touch move event
    * - Cancels long-press if finger moves too far
+   * - Cancels if multi-touch detected
    *
    * @param {TouchEvent} event - The touch move event
    */
   function handleTouchMove(event) {
+    // Cancel if more than 1 touch detected (multi-touch)
+    if (event.touches.length !== 1) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      touchStartPos = null;
+      return;
+    }
+
     if (!touchStartPos) return;
 
     const touch = event.touches[0];
@@ -993,8 +1377,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check win condition
         if (grid.isComplete()) {
-          console.log('Congratulations! You won!');
-          // TODO: Implement proper victory flow
+          handleBoardComplete();
         }
       }
     }
@@ -1010,6 +1393,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check if we hit a mine (damage system)
         if (revealedCell.isMine) {
+          // Mark board as imperfect
+          game.state.currentRun.perfectBoardTracker = false;
+          game.state.currentRun.safeRevealStreak = 0;
+
+          // Check for shield protection
+          if (game.state.currentRun.shieldActive) {
+            game.state.currentRun.shieldActive = false;
+            console.log('Shield blocked the damage!');
+            updateHUD();
+            return;
+          }
+
           // Damage system - lose 1 HP per mine
           game.state.takeDamage(1);
           updateHUD();
@@ -1033,8 +1428,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update cells revealed stat
         game.state.currentRun.stats.cellsRevealed += cellsRevealed;
 
-        // Award coins (+10 per cell)
-        const coinsEarned = cellsRevealed * 10;
+        // Update safe reveal streak for Fortify Armor
+        game.state.currentRun.safeRevealStreak += cellsRevealed;
+        ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+
+        // Award coins with multipliers (+10 per cell base)
+        const baseCoins = cellsRevealed * 10;
+        const modifiedCoins = ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins);
+        const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier);
         game.state.addCoins(coinsEarned);
 
         // Award mana (+5 per cell)
@@ -1080,8 +1481,10 @@ document.addEventListener('DOMContentLoaded', () => {
       longPressTimer = null;
     }
 
+    // Reset ALL touch state
     touchStartPos = null;
     longPressTriggered = false;
+    touchHandled = false; // Critical: prevent blocking subsequent mouse events
     event.preventDefault();
   }
 
