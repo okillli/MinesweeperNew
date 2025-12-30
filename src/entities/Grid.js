@@ -10,6 +10,38 @@
  * - Chording (auto-reveal when flags match numbers)
  * - Win condition checking
  *
+ * DEPENDENCIES (what this imports):
+ * - Cell.js (creates cell instances for grid)
+ *
+ * DEPENDENTS (what imports this):
+ * - main.js (creates Grid instances, calls reveal/flag/chord methods)
+ * - Game.js (accesses via GameState.grid)
+ * - CanvasRenderer.js (reads grid state for rendering)
+ * - GameState.js (stores as currentRun.grid)
+ *
+ * CRITICAL PATHS:
+ * 1. Game loop → GameState.grid → CanvasRenderer reads → visual output
+ * 2. User click → main.js handlers → Grid.revealCell() → cascade logic → state update
+ * 3. Flag action → Grid.toggleFlag() → flag count tracking
+ * 4. Chord action → Grid.chord() → batch reveal logic
+ *
+ * CHANGE IMPACT: CRITICAL
+ * - Central to all gameplay mechanics
+ * - Changes affect rendering, input handling, and game logic
+ * - Methods called from multiple input paths (mouse, touch, keyboard)
+ *
+ * SIDE EFFECTS:
+ * - Modifies Cell.isRevealed state (affects rendering)
+ * - Modifies Cell.isFlagged state (affects rendering and chord logic)
+ * - Increments Grid.revealed counter (affects win condition)
+ * - Increments Grid.flagged counter (affects chord validation)
+ * - Cascading reveals can affect many cells at once
+ *
+ * ASSUMPTIONS:
+ * - Cell structure remains stable (x, y, isMine, isRevealed, isFlagged, number)
+ * - Grid coordinates are always within bounds when called from main.js
+ * - Grid is initialized before any operations are performed
+ *
  * Grid uses a 2D array indexed as cells[y][x] (row-major order):
  * - x represents column (horizontal position)
  * - y represents row (vertical position)

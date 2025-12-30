@@ -5,6 +5,23 @@
  * game systems without tight coupling. Events allow systems to react
  * to game state changes without direct references.
  *
+ * DEPENDENCIES (what this imports):
+ * - None (standalone utility)
+ *
+ * DEPENDENTS (what imports this):
+ * - main.js (uses for game event handling)
+ * - Currently underutilized (future expansion expected)
+ *
+ * CHANGE IMPACT: MEDIUM
+ * - Limited current usage
+ * - Future systems will depend heavily on this
+ * - Event signature changes could break consumers
+ * - Adding events is safe, changing/removing is risky
+ *
+ * SIDE EFFECTS:
+ * - Triggers callbacks registered by other systems
+ * - Event emission order matters for some flows
+ *
  * @example
  * const events = new EventBus();
  *

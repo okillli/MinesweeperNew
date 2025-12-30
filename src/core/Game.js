@@ -4,6 +4,34 @@
  * Main game loop orchestrator using RequestAnimationFrame pattern.
  * Coordinates the update-render cycle and manages the game lifecycle.
  *
+ * DEPENDENCIES (what this imports):
+ * - GameState (implicit - creates instance)
+ * - CanvasRenderer (implicit - creates instance)
+ *
+ * DEPENDENTS (what imports this):
+ * - main.js (creates Game instance, calls start/stop/render)
+ *
+ * CRITICAL PATHS:
+ * 1. RAF loop → Game.loop() → Game.update() → GameState.update()
+ * 2. RAF loop → Game.loop() → Game.render() → CanvasRenderer.render()
+ * 3. User clicks "Start" → main.js → game.start() → RAF begins
+ * 4. Game over → main.js → game.stop() → RAF halts
+ *
+ * CHANGE IMPACT: HIGH
+ * - Central coordinator but well-isolated
+ * - Interface changes affect main.js initialization
+ * - Loop timing changes affect all gameplay
+ *
+ * SIDE EFFECTS:
+ * - RAF scheduling (can affect browser performance)
+ * - Continuous rendering (CPU usage)
+ * - Error handling stops loop (prevents error spam)
+ *
+ * ASSUMPTIONS:
+ * - Canvas element exists and is valid when constructed
+ * - GameState and CanvasRenderer initialize successfully
+ * - RAF is available in browser
+ *
  * Responsibilities:
  * - RAF loop management with delta time calculation
  * - Coordinating state updates via GameState

@@ -4,6 +4,17 @@
  * Represents a single cell in the minesweeper grid with its state properties.
  * Pure data entity with no rendering or game logic.
  *
+ * DEPENDENCIES (what this imports):
+ * - None (pure data structure)
+ *
+ * DEPENDENTS (what imports this):
+ * - Grid.js (creates and manages Cell instances)
+ *
+ * CHANGE IMPACT: CRITICAL
+ * - Grid.js directly depends on Cell structure
+ * - Property changes break Grid initialization
+ * - Changes require updates to Grid generation logic
+ *
  * @class Cell
  * @example
  * const cell = new Cell(3, 5);
