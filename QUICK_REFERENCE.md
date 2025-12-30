@@ -165,7 +165,7 @@ Build: None (vanilla JS)
 
 1. **Simplicity First**: Don't over-engineer, start simple
 2. **Separation of Concerns**: Logic ≠ Rendering
-3. **Mobile-First**: Touch controls, responsive design
+3. **Mobile-First**: Design for mobile FIRST, desktop is an enhancement (not the reverse)
 4. **No Feature Creep**: MVP first, expand later
 5. **Playtesting**: Test fun factor after each phase
 
@@ -205,8 +205,9 @@ Health Potion, Vision Scroll, Shield Token, Mana Potion, Lucky Coin
 - ❌ Adding features before core loop is fun
 - ❌ Mixing game logic with rendering
 - ❌ Over-engineering simple systems
-- ❌ Ignoring mobile from the start
+- ❌ **Desktop-first thinking** (always design for mobile FIRST!)
 - ❌ Making unlocks required to win
+- ❌ Hover-dependent UI (mobile has no hover)
 
 ## 💾 Save Data Structure
 
@@ -233,12 +234,24 @@ Health Potion, Vision Scroll, Shield Token, Mana Potion, Lucky Coin
 - Mines: `#e63946` (red)
 - Flags: `#f4a261` (yellow)
 
-## 📱 Mobile Considerations
+## 📱 Mobile-First Design (PRIMARY Platform)
 
-- **Touch Controls**: Tap reveal, long-press flag
-- **Min Touch Target**: 44x44px
+**This project is mobile-first. Design for mobile FIRST, then ensure desktop works well.**
+
+### Mobile Design Requirements
+- **Touch Controls**: Tap reveal, long-press flag (500ms)
+- **Min Touch Target**: 44x44px (preferably 60x60px)
 - **Viewport**: `width=device-width, initial-scale=1, user-scalable=no`
-- **Performance**: Target 30+ FPS on mid-range phones
+- **Performance**: Target 60 FPS on mid-range phones, 30+ FPS on low-end
+- **Orientation**: Portrait-first (landscape optional)
+- **One-handed**: Critical controls must be thumb-reachable
+
+### Mobile-First Development Rules
+1. Start all UI/UX decisions assuming phone touch input
+2. Test on mobile browsers BEFORE desktop browsers
+3. Desktop support is an enhancement, not the primary experience
+4. Never require hover for essential functionality
+5. Haptic feedback on flag actions (where supported)
 
 ## 🔄 Development Workflow
 

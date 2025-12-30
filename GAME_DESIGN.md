@@ -10,10 +10,10 @@
 - Revealing a zero auto-reveals adjacent cells
 - Chording: Click number to reveal surrounding cells if flags match count
 
-**Controls**
-- **Desktop**: Left-click reveal, right-click flag
-- **Mobile**: Tap reveal, long-press flag
-- **Chording**: Click/tap on revealed number
+**Controls** (Mobile-First)
+- **Mobile** (Primary): Tap reveal, long-press flag
+- **Desktop** (Secondary): Left-click reveal, right-click flag
+- **Chording**: Tap/click on revealed number
 
 ### Modifications to Classic Minesweeper
 
@@ -434,26 +434,49 @@
 4. **Comeback mechanics**: Bad RNG shouldn't auto-lose
 5. **Skill matters**: Good play should overcome bad luck
 
-## 📱 Mobile Optimization
+## 📱 Mobile-First Design (PRIMARY Platform)
 
-**Touch Controls**
+**This game is designed mobile-first. Desktop is supported but is not the primary experience.**
+
+### Core Philosophy
+- Design for phone touch input FIRST, then ensure desktop works
+- Portrait orientation is the default; landscape is optional
+- One-handed play should be comfortable (thumb-reachable zones)
+- Desktop mouse/keyboard support is an enhancement
+
+### Touch Controls (Primary Input)
 - Tap: Reveal cell
 - Long-press (500ms): Flag cell
-- Double-tap number: Chord
-- Pinch-to-zoom: Scale grid (if too small)
+- Tap revealed number: Chord (auto-reveal if flags match)
+- All actions achievable with one thumb
 
-**UI Adaptations**
-- Vertical layout (portrait orientation)
-- Bottom-sheet shop UI
-- Large touch targets (60x60px minimum)
-- Haptic feedback on actions
+### Desktop Controls (Secondary/Enhancement)
+- Left-click: Reveal cell
+- Right-click: Flag cell
+- Click revealed number: Chord
+- Keyboard navigation (arrows, Space, F, C)
 
-**Performance Targets**
-- 60 FPS on mid-range phones
+### UI Requirements
+- Vertical layout (portrait-first orientation)
+- Bottom-sheet shop UI (thumb-reachable)
+- Large touch targets (60x60px minimum, 44x44px absolute minimum)
+- Haptic feedback on flag actions (where supported)
+- Critical controls in lower half of screen (thumb zone)
+
+### Performance Targets
+- 60 FPS on mid-range phones, 30+ FPS on low-end
 - <100ms input latency
 - <5MB total download size
+- Test on mobile browsers BEFORE desktop
+
+### Mobile-First Anti-Patterns to Avoid
+- ❌ Designing desktop UI first and "adapting" for mobile
+- ❌ Hover-dependent features (mobile has no hover)
+- ❌ Requiring precise clicking (finger is less precise than mouse)
+- ❌ Small touch targets (<44px)
+- ❌ Testing only on desktop during development
 
 ---
 
 **Last Updated**: 2025-12-30
-**Version**: 0.1.0 (Pre-MVP)
+**Version**: 0.3.0

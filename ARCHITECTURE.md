@@ -34,6 +34,18 @@
 - **Systems**: Encapsulated subsystems (grid, shop, items)
 - **Utils**: Reusable helpers (RNG, storage, math)
 
+### Mobile-First Design
+
+**Core Principle**: Design for mobile FIRST, desktop is an enhancement
+
+This project follows a mobile-first approach. All architecture decisions prioritize:
+- Touch input as the primary interaction method
+- Portrait orientation as the default layout
+- Performance on mid-range mobile devices
+- One-handed operation with thumb-reachable controls
+
+Desktop support (mouse, keyboard) is added as an enhancement after mobile works well.
+
 ## 📁 File Structure
 
 ```
@@ -745,10 +757,31 @@ events.emit('cell_revealed', { x: 5, y: 3, isMine: false });
    - Clear intervals/timeouts on cleanup
    - Remove event listeners when done
 
-4. **Mobile Optimization**
+4. **Mobile-First Optimization** (PRIMARY)
+   - Design for touch input first, mouse is secondary
+   - Target 60 FPS on mid-range phones, 30+ on low-end
+   - Scale canvas resolution based on device pixel ratio
+   - Debounce touch events appropriately
    - Reduce particle effects on low-end devices
-   - Scale canvas resolution based on device
-   - Debounce touch events
+   - Keep bundle size <5MB for fast mobile loading
+   - Test on mobile browsers BEFORE desktop
+
+### Mobile-First Input Architecture
+
+```javascript
+// Priority order for input handling:
+// 1. Touch (primary - most users)
+// 2. Pointer events (unified touch/mouse)
+// 3. Mouse (desktop enhancement)
+// 4. Keyboard (desktop enhancement/accessibility)
+
+// Touch targets must be minimum 44x44px (preferably 60x60px)
+const MIN_TOUCH_TARGET = 44;
+const PREFERRED_TOUCH_TARGET = 60;
+
+// Long-press duration for flag action
+const LONG_PRESS_MS = 500;
+```
 
 ---
 

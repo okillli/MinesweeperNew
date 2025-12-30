@@ -12,7 +12,7 @@ _Made with love for Lizzie_ ✨
 
 ### Unique Selling Points
 - **Quest-based objectives**: Different goals each run (rescue missions, treasure hunts, speed runs)
-- **Mobile-first design**: Touch-optimized, vertical orientation, one-handed play
+- **Mobile-first design**: Built for touch from day one, desktop is a bonus (not the other way around)
 - **Minimalist aesthetic**: Clean, modern design with multiple themes
 - **Quick sessions**: 5-10 minute runs perfect for casual play
 - **Simple but deep**: Easy to learn, hard to master
@@ -21,7 +21,7 @@ _Made with love for Lizzie_ ✨
 
 1. **Simplicity First**: Core is just minesweeper + items
 2. **Web-Native**: Runs in any browser, no installation
-3. **Mobile-Friendly**: Touch controls, responsive design
+3. **Mobile-First**: Design for touch/mobile FIRST, then ensure desktop works well (not the reverse)
 4. **Not Overcomplicated**: Start with 20 items, add more later
 5. **Fair Progression**: Unlocks add variety, not just power
 
@@ -144,7 +144,7 @@ Animations, sounds, juice, deployment
 2. **Over-Engineering**: Keep it simple, add complexity only when needed
 3. **Power Creep**: Don't make unlocks required to win
 4. **Tutorial Overload**: Teach through gameplay, not text
-5. **Ignoring Mobile**: Design for touch from day one
+5. **Desktop-First Thinking**: Always design for mobile FIRST, then adapt to desktop (never the reverse)
 
 ## 📚 Related Documentation
 
@@ -167,4 +167,4 @@ Animations, sounds, juice, deployment
 ---
 
 **Last Updated**: 2025-12-30
-**Version**: 0.1.0 (Pre-MVP)
+**Version**: 0.3.0

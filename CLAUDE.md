@@ -198,11 +198,16 @@ Each quest defines different win conditions:
 - Add complexity only when needed
 - Prefer simple solutions over clever ones
 
-### 2. Mobile-First
-- Touch targets minimum 44x44px
-- Long-press (500ms) for flag
-- Tap for reveal
-- Test on mobile browsers early
+### 2. Mobile-First (NOT Desktop-First)
+**Design for mobile FIRST, then ensure desktop works well. Never the reverse.**
+
+- Start all UI/UX decisions assuming touch input on a phone
+- Touch targets minimum 44x44px (preferably 60x60px)
+- Long-press (500ms) for flag, tap for reveal
+- Test on mobile browsers BEFORE desktop browsers
+- Desktop mouse/keyboard support is an enhancement, not the primary experience
+- Portrait orientation is the default; landscape is optional
+- Assume one-handed thumb-reachable zones for critical controls
 
 ### 3. No Power Creep
 - First run must be winnable without unlocks
@@ -308,9 +313,10 @@ Currently in **Phase 1: Core Proof of Fun**
 1. **Feature Creep**: Don't add features before core loop is validated as fun
 2. **Mixing Concerns**: Game logic and rendering must stay separated
 3. **Over-Engineering**: Avoid abstractions until you need them twice
-4. **Ignoring Mobile**: Test touch controls from the start
+4. **Desktop-First Thinking**: NEVER design for desktop first and "make it work on mobile later" - always design for mobile FIRST
 5. **Power Creep**: Don't make unlocks required to win
 6. **Premature Optimization**: Get it working, then make it fast
+7. **Hover-Dependent UI**: Never require hover for essential functionality (mobile has no hover)
 
 ## Quick Reference
 

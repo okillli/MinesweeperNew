@@ -48,11 +48,11 @@ _Made with love for Lizzie_ ✨
 ## 🎯 Features
 
 ### Currently Implemented ✅
+- **Mobile-First Design**: Built for touch from day one, works great on phones and tablets
 - **HP Damage System**: Survive multiple mine hits (configurable 1-10 starting HP)
 - **Resource Economy**: Earn coins (+10/cell) and mana (+5/cell, +10/flag)
 - **Color-Coded HUD**: Real-time HP/Coins/Mana display with visual feedback
-- **Multi-Input Support**: Mouse, keyboard (arrows/Space/F/C), and touch controls
-- **Mobile-Friendly**: Tap to reveal, long-press to flag
+- **Multi-Input Support**: Touch, mouse, and keyboard (arrows/Space/F/C)
 - **Game Over Flow**: Stats display, new game, return to menu
 
 ### Coming Soon 🚧
@@ -65,23 +65,23 @@ _Made with love for Lizzie_ ✨
 
 ### Basic Controls
 
-**Mouse:**
+**Touch (Mobile/Tablet) - Primary:**
+- Tap to reveal cells
+- Long-press (500ms) to flag cells
+- Tap revealed numbers to chord
+
+**Mouse (Desktop):**
 - Left-click to reveal cells
 - Right-click to flag cells
 - Click revealed numbers to chord (auto-reveal surrounding cells if flags match)
 
-**Keyboard:**
+**Keyboard (Desktop):**
 - Arrow keys (↑ ↓ ← →) to navigate
 - Space or Enter to reveal
 - F to toggle flag
 - C or Shift+Space to chord
 
-**Touch (Mobile/Tablet):**
-- Tap to reveal cells
-- Long-press (500ms) to flag cells
-- Tap revealed numbers to chord
-
-All input methods work seamlessly together - switch between them anytime!
+All input methods work seamlessly together - switch between them anytime! The game is designed mobile-first but plays great on desktop too.
 
 ### Resources
 - **HP**: Start with 3 HP. Hitting a mine costs 1 HP. 0 HP = game over
