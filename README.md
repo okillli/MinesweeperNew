@@ -1,6 +1,36 @@
 # 🎮 MineQuest
 
+> **When to Read This**: First-time users, public-facing documentation, or sharing the project
+> **Read Time**: ~3 minutes
+
 A modern, web-based minesweeper roguelike with quest-based objectives, power-ups, and progression.
+
+## 📚 Documentation Guide
+
+### For Players
+- **README.md** (this file) - How to play and game features
+
+### For Developers
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - START HERE for new sessions, quick facts
+- **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - High-level design and vision
+- **[CLAUDE.md](CLAUDE.md)** - For AI assistants working on this project
+- **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session workflow protocol
+
+### Technical Details
+- **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete mechanics and balancing
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Code structure and patterns
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap and task tracking
+
+### Which Doc to Read When
+| Situation | Read This |
+|-----------|-----------|
+| New to the project? | README.md → QUICK_REFERENCE.md |
+| Starting work session? | QUICK_REFERENCE.md |
+| Implementing features? | GAME_DESIGN.md + ARCHITECTURE.md |
+| Need code patterns? | ARCHITECTURE.md |
+| Planning next phase? | PROJECT_OVERVIEW.md + DEVELOPMENT.md |
+
+---
 
 ## 🚀 Quick Start
 
@@ -83,10 +113,7 @@ src/
 ```
 
 ### Documentation
-- [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - High-level summary
-- [GAME_DESIGN.md](GAME_DESIGN.md) - Detailed game mechanics
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Technical architecture
-- [DEVELOPMENT.md](DEVELOPMENT.md) - Development roadmap
+See "Documentation Guide" section above for complete documentation map.
 
 ## 📝 License
 

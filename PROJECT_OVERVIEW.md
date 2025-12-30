@@ -1,5 +1,9 @@
 # MineQuest - Project Overview
 
+> **When to Read This**: First session, strategic planning, or when you need to understand the "why" behind decisions
+> **Related Docs**: [GAME_DESIGN.md](GAME_DESIGN.md) for mechanics, [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
+> **Read Time**: ~5 minutes
+
 ## 🎮 Game Concept
 
 **MineQuest** is a web-based minesweeper roguelike that combines classic minesweeper mechanics with roguelike progression, power-ups, and quest-based objectives.
@@ -20,6 +24,8 @@
 5. **Fair Progression**: Unlocks add variety, not just power
 
 ## 🔑 Key Game Rules
+
+> See [GAME_DESIGN.md](GAME_DESIGN.md) for complete mechanics and balancing details
 
 ### Minesweeper Mechanics
 - Classic minesweeper grid (numbers show adjacent mine count)
@@ -69,6 +75,8 @@
 
 ## 🏗️ Technical Architecture
 
+> See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed code structure and patterns
+
 ### Tech Stack
 - **Language**: Vanilla JavaScript (ES6+)
 - **Rendering**: HTML5 Canvas (game grid) + DOM (UI)
@@ -87,6 +95,8 @@
 ```
 
 ## 📈 Development Phases
+
+> See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed roadmap and task breakdowns
 
 ### Phase 1: Core Proof of Fun (1-2 weeks)
 Basic minesweeper + simple scoring
@@ -134,12 +144,23 @@ Animations, sounds, juice, deployment
 4. **Tutorial Overload**: Teach through gameplay, not text
 5. **Ignoring Mobile**: Design for touch from day one
 
-## 📚 References
+## 📚 Related Documentation
 
-- Research documents in `/docs/research/`
-- Technical best practices in `ARCHITECTURE.md`
-- Game design principles in `GAME_DESIGN.md`
-- Item system details in `ITEMS_SYSTEM.md`
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick facts and constants for development
+- **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete game mechanics and balancing
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical implementation details
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap and task tracking
+- **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session workflow
+
+---
+
+## 🔗 Quick Navigation
+
+- **Up**: [README.md](README.md) - Main project page
+- **Quick Reference**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Fast facts
+- **Mechanics**: [GAME_DESIGN.md](GAME_DESIGN.md) - Detailed game design
+- **Technical**: [ARCHITECTURE.md](ARCHITECTURE.md) - Code structure
+- **Planning**: [DEVELOPMENT.md](DEVELOPMENT.md) - Roadmap
 
 ---
 

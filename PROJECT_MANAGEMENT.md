@@ -1,8 +1,38 @@
 # MineQuest - Project Management Protocol
 
+> **When to Read This**: Before starting any work session, especially multi-session or parallel work
+> **Related Docs**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for quick context, [CLAUDE.md](CLAUDE.md) for Claude-specific guidance
+> **Read Time**: ~15 minutes (skim sections as needed)
+>
 > **Single Source of Truth for Multi-Session Development**
 >
 > This document establishes how to manage this project across multiple Claude Code sessions without losing context or creating conflicts.
+
+## 🗺️ Decision Tree: Which Doc to Read?
+
+```
+Are you starting work?
+├─ First time on project?
+│  └─ Read: README.md → QUICK_REFERENCE.md → PROJECT_OVERVIEW.md
+├─ Returning after break?
+│  └─ Read: QUICK_REFERENCE.md → PROGRESS.md → DEVELOPMENT.md
+├─ Working with other sessions?
+│  └─ Read: This file (PROJECT_MANAGEMENT.md)
+└─ Need to implement feature?
+   └─ Read: GAME_DESIGN.md → ARCHITECTURE.md → QUICK_REFERENCE.md
+```
+
+## 📚 Quick Links to Other Docs
+
+- **[README.md](README.md)** - User-facing documentation
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick facts & constants
+- **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Vision & design philosophy
+- **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete game mechanics
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Code structure & patterns
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap & task tracking
+- **[CLAUDE.md](CLAUDE.md)** - Claude Code guidance
+- **[PROGRESS.md](PROGRESS.md)** - What's complete
+- **[SESSION_SUMMARY.md](SESSION_SUMMARY.md)** - Session notes
 
 ---
 
@@ -22,17 +52,17 @@
 
 ### Where to Check Current Status (Priority Order)
 
-1. **First**: `PROGRESS.md` - Always the source of truth for what's done
-2. **Second**: `DEVELOPMENT.md` - Phase roadmap and task breakdown
+1. **First**: [PROGRESS.md](PROGRESS.md) - Always the source of truth for what's done
+2. **Second**: [DEVELOPMENT.md](DEVELOPMENT.md) - Phase roadmap and task breakdown
 3. **Third**: Latest git commit - What was just finished
 4. **Fourth**: Code itself - Verify assumptions
 
 ### Where to Find Next Tasks
 
-1. **First**: `DEVELOPMENT.md` - Current phase tasks, ordered by priority
-2. **Second**: `TodoWrite` task list - If session in progress
-3. **Third**: `QUICK_REFERENCE.md` "Next Immediate Steps" - Quick-start guide
-4. **Fourth**: Comment any blockers in PROGRESS.md
+1. **First**: [DEVELOPMENT.md](DEVELOPMENT.md) - Current phase tasks, ordered by priority
+2. **Second**: TodoWrite task list - If session in progress
+3. **Third**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) "Next Immediate Steps" - Quick-start guide
+4. **Fourth**: Comment any blockers in [PROGRESS.md](PROGRESS.md)
 
 ---
 
@@ -54,8 +84,8 @@ Run ALL in parallel - different files, no dependencies
 
 **Process**:
 1. Ensure each agent modifies different files (check FILES_BEING_WORKED_ON section below)
-2. Pre-allocate file ownership in SESSION_SUMMARY.md
-3. Each agent reads ARCHITECTURE.md before starting
+2. Pre-allocate file ownership in [SESSION_SUMMARY.md](SESSION_SUMMARY.md)
+3. Each agent reads [ARCHITECTURE.md](ARCHITECTURE.md) before starting
 4. Agents complete independently, then meet for integration
 5. One agent does final git commit combining all changes
 
@@ -81,15 +111,15 @@ Do A → B → C in order
 ### How to Communicate Progress Between Agents
 
 **During parallel work**:
-1. Update `SESSION_SUMMARY.md` with current file, completion %, and blockers
+1. Update [SESSION_SUMMARY.md](SESSION_SUMMARY.md) with current file, completion %, and blockers
 2. Post comments in code at key decision points (use `// NOTE:` prefix)
 3. If discovering new dependencies, immediately update task breakdown
 
 **After completing work**:
-1. Update `PROGRESS.md` with what was accomplished
-2. Add entry to `SESSION_SUMMARY.md` with results
+1. Update [PROGRESS.md](PROGRESS.md) with what was accomplished
+2. Add entry to [SESSION_SUMMARY.md](SESSION_SUMMARY.md) with results
 3. Create git commit with clear message (see Commit Protocol)
-4. Update `DEVELOPMENT.md` task status (mark ✅)
+4. Update [DEVELOPMENT.md](DEVELOPMENT.md) task status (mark ✅)
 
 ### File Locking/Ownership to Prevent Conflicts
 
@@ -111,15 +141,15 @@ Agent 3: src/core/Game.js - 50% - BLOCKED: waiting for GameState pattern review
 ```
 
 **Before starting work on a file**:
-1. Check `SESSION_SUMMARY.md` - Is it already assigned?
+1. Check [SESSION_SUMMARY.md](SESSION_SUMMARY.md) - Is it already assigned?
 2. If assigned to another agent → WAIT or work on different file
-3. If free → Add your name + file to SESSION_SUMMARY.md
+3. If free → Add your name + file to [SESSION_SUMMARY.md](SESSION_SUMMARY.md)
 4. Read that file completely to understand current state
 5. Make changes, test, commit
 
 **When finished with a file**:
-1. Mark as 100% in SESSION_SUMMARY.md
-2. Update PROGRESS.md
+1. Mark as 100% in [SESSION_SUMMARY.md](SESSION_SUMMARY.md)
+2. Update [PROGRESS.md](PROGRESS.md)
 3. Create specific git commit for that file
 4. Remove from "FILES BEING WORKED ON" section
 
@@ -140,6 +170,8 @@ Agent 3: src/core/Game.js - 50% - BLOCKED: waiting for GameState pattern review
 6. Update TodoWrite with session plan
 7. Add session entry to SESSION_SUMMARY.md
 ```
+
+> See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for condensed startup checklist
 
 ### Update TodoWrite at Start
 
@@ -249,11 +281,11 @@ Related: Prep for multi-theme support
 
 | Decision Type | File | Format |
 |---|---|---|
-| Why we chose vanilla JS | PROJECT_OVERVIEW.md | Design Decisions Log table |
-| How to structure Grid.js | ARCHITECTURE.md | Code pattern example |
+| Why we chose vanilla JS | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | Design Decisions Log table |
+| How to structure Grid.js | [ARCHITECTURE.md](ARCHITECTURE.md) | Code pattern example |
 | What cells render as | Code comment in CanvasRenderer.js | `// NOTE: cells render as 32x32 squares` |
-| Why phase 2 takes 15 hrs | DEVELOPMENT.md | Estimated Time section |
-| Bug workaround | PROGRESS.md under "Known Issues" | Description + any gotchas |
+| Why phase 2 takes 15 hrs | [DEVELOPMENT.md](DEVELOPMENT.md) | Estimated Time section |
+| Bug workaround | [PROGRESS.md](PROGRESS.md) under "Known Issues" | Description + any gotchas |
 
 ---
 
@@ -297,15 +329,17 @@ Related: Prep for multi-theme support
    Create TodoWrite task list for this session
    ```
 
+> See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for condensed version of this process
+
 ### Files to Read First (Priority)
 
 | Priority | File | Why |
 |---|---|---|
-| 1 | QUICK_REFERENCE.md | Overview + next steps |
-| 2 | PROGRESS.md | What's done, current phase |
-| 3 | DEVELOPMENT.md | Detailed task list |
-| 4 | SESSION_SUMMARY.md | Last work session notes |
-| 5 | ARCHITECTURE.md | If writing code |
+| 1 | [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Overview + next steps |
+| 2 | [PROGRESS.md](PROGRESS.md) | What's done, current phase |
+| 3 | [DEVELOPMENT.md](DEVELOPMENT.md) | Detailed task list |
+| 4 | [SESSION_SUMMARY.md](SESSION_SUMMARY.md) | Last work session notes |
+| 5 | [ARCHITECTURE.md](ARCHITECTURE.md) | If writing code |
 | 6 | Git log | If confusion on current state |
 
 ### How to Determine Current State
@@ -342,9 +376,9 @@ git diff HEAD~1 --name-only
 ```
 
 **If unclear**:
-- Check PROGRESS.md "Next Steps: Phase X Planning"
-- Look at QUICK_REFERENCE.md "Next Immediate Steps"
-- Review CLAUDE.md if it has context notes
+- Check [PROGRESS.md](PROGRESS.md) "Next Steps: Phase X Planning"
+- Look at [QUICK_REFERENCE.md](QUICK_REFERENCE.md) "Next Immediate Steps"
+- Review [CLAUDE.md](CLAUDE.md) if it has context notes
 
 ---
 
@@ -363,7 +397,7 @@ git diff HEAD~1 --name-only
 ```
 
 **Exception**: If creating a brand new file from scratch (no previous version):
-- Still read ARCHITECTURE.md pattern first
+- Still read [ARCHITECTURE.md](ARCHITECTURE.md) pattern first
 - Still check related files for style
 - Create file with same patterns as similar files
 
@@ -733,16 +767,30 @@ See PROGRESS.md for details.
 
 ## Summary: The Golden Rules
 
-1. **Always read PROGRESS.md first** - It's your truth
-2. **Update SESSION_SUMMARY.md** - Help future sessions
+1. **Always read [PROGRESS.md](PROGRESS.md) first** - It's your truth
+2. **Update [SESSION_SUMMARY.md](SESSION_SUMMARY.md)** - Help future sessions
 3. **Commit often, clearly** - Git log is your lifeline
 4. **Document decisions** - Future you will thank present you
 5. **Test before moving on** - Broken code breaks everything
-6. **One file per agent** - Check SESSION_SUMMARY.md for ownership
+6. **One file per agent** - Check [SESSION_SUMMARY.md](SESSION_SUMMARY.md) for ownership
 7. **Read before modifying** - Never assume file structure
 8. **Update TodoWrite** - Track what you're doing
 9. **Playtest frequently** - Fun > features
 10. **When stuck, read docs** - The answer is usually there
+
+---
+
+## 🔗 Quick Navigation
+
+- **Main**: [README.md](README.md) - User-facing documentation
+- **Quick Ref**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Fast facts
+- **Overview**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - Vision & principles
+- **Design**: [GAME_DESIGN.md](GAME_DESIGN.md) - Game mechanics
+- **Code**: [ARCHITECTURE.md](ARCHITECTURE.md) - Technical structure
+- **Tasks**: [DEVELOPMENT.md](DEVELOPMENT.md) - Roadmap
+- **Claude**: [CLAUDE.md](CLAUDE.md) - AI assistant guidance
+- **Progress**: [PROGRESS.md](PROGRESS.md) - What's complete
+- **Sessions**: [SESSION_SUMMARY.md](SESSION_SUMMARY.md) - Session notes
 
 ---
 

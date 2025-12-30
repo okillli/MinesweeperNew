@@ -1,18 +1,53 @@
 # MineQuest - Quick Reference Guide
 
-> **Quick access to key information for development continuity**
+> **⭐ START HERE for new sessions**
+>
+> **When to Read This**: Beginning of every work session, when you need quick facts
+> **Related Docs**: All other docs link here for quick reference
+> **Read Time**: ~5 minutes (skim), ~10 minutes (full read)
 
-## 📋 Essential Documents
+This is your one-stop reference for essential information needed during development.
+
+## 📋 Which Doc to Read When
+
+### Starting a Work Session
+1. **QUICK_REFERENCE.md** (this file) - Refresh context (2 min)
+2. **[PROGRESS.md](PROGRESS.md)** - See what's complete (1 min)
+3. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Find next task (1 min)
+
+### Implementing Features
+1. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Mechanics & balancing
+2. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Code patterns & structure
+3. **This file** - Quick reference for constants/rules
+
+### Strategic Planning
+1. **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Vision & principles
+2. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap & phases
+3. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session workflow
+
+### For AI Assistants
+1. **[CLAUDE.md](CLAUDE.md)** - Claude-specific guidance (read first!)
+2. **This file** - Quick facts during work
+3. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Session protocols
+
+## 📋 Essential Documents Table
 
 | Document | Purpose | When to Read |
 |----------|---------|--------------|
-| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | High-level concept, design principles, key rules | Starting session, strategic decisions |
-| [GAME_DESIGN.md](GAME_DESIGN.md) | Complete game mechanics, items, quests, balancing | Implementing features |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical structure, code patterns, systems | Writing code |
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | This file - quick facts, constants | Every session start |
+| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | High-level concept, design principles | Strategic decisions, first session |
+| [GAME_DESIGN.md](GAME_DESIGN.md) | Complete game mechanics, balancing | Implementing features |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Code structure, patterns, systems | Writing code |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Roadmap, tasks, progress tracking | Planning work |
-| [README.md](README.md) | User-facing documentation | End-user questions |
+| [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) | Multi-session workflow, coordination | Before starting any work |
+| [CLAUDE.md](CLAUDE.md) | AI assistant guidance | For Claude Code instances |
+| [README.md](README.md) | User-facing documentation | Public/player questions |
+
+---
 
 ## 🎮 Core Game Rules (Never Forget)
+
+> See [GAME_DESIGN.md](GAME_DESIGN.md) for complete mechanics details
 
 ### Resource System
 - **HP**: Start with 3, hitting mine costs 1, 0 HP = game over
@@ -35,6 +70,8 @@
 
 ## 🏗️ Technical Stack
 
+> See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical architecture
+
 ```
 Language: Vanilla JavaScript (ES6+)
 Rendering: Canvas (grid) + DOM (UI)
@@ -44,6 +81,8 @@ Build: None (vanilla JS)
 ```
 
 ## 📁 Key Files & Responsibilities
+
+> See [ARCHITECTURE.md](ARCHITECTURE.md) for complete file structure and patterns
 
 ### Data Files (Define Content)
 - `src/data/constants.js` - Game constants (grid sizes, costs, etc.)
@@ -78,6 +117,8 @@ Build: None (vanilla JS)
 
 ## 🎯 MVP Checklist
 
+> See [DEVELOPMENT.md](DEVELOPMENT.md) for complete roadmap and task details
+
 ### Phase 1: Core Proof of Fun ✅ Started
 - [x] Project setup & documentation
 - [x] File structure created
@@ -110,6 +151,8 @@ Build: None (vanilla JS)
 
 ## 🔑 Key Design Principles
 
+> See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for complete design philosophy
+
 1. **Simplicity First**: Don't over-engineer, start simple
 2. **Separation of Concerns**: Logic ≠ Rendering
 3. **Mobile-First**: Touch controls, responsive design
@@ -117,6 +160,8 @@ Build: None (vanilla JS)
 5. **Playtesting**: Test fun factor after each phase
 
 ## 🎲 Item Categories (20 Total)
+
+> See [GAME_DESIGN.md](GAME_DESIGN.md) for complete item details and effects
 
 ### Passive (10)
 Shield Generator, Coin Magnet, Mana Crystal, Lucky Charm, Fortify Armor, Treasure Sense, Flag Efficiency, Second Wind, Range Boost, Combo Master
@@ -224,10 +269,21 @@ git push -u origin main
 ---
 
 **Pro Tips:**
-- Read PROJECT_OVERVIEW.md if losing context
-- Check ARCHITECTURE.md before writing code
-- Update DEVELOPMENT.md when completing tasks
+- Read [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) if losing context
+- Check [ARCHITECTURE.md](ARCHITECTURE.md) before writing code
+- Update [DEVELOPMENT.md](DEVELOPMENT.md) when completing tasks
+- Follow [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) for multi-session work
 - Playtest early and often!
 - Keep it simple - complexity kills momentum
+
+---
+
+## 🔗 Quick Navigation
+
+- **Up**: [README.md](README.md) - Main project page
+- **Strategic**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - Vision & principles
+- **Implementation**: [GAME_DESIGN.md](GAME_DESIGN.md) + [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Planning**: [DEVELOPMENT.md](DEVELOPMENT.md) - Tasks & roadmap
+- **Workflow**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) - Session protocols
 
 **Last Updated**: 2025-12-30

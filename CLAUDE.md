@@ -1,6 +1,39 @@
 # CLAUDE.md
 
+> **🤖 FOR CLAUDE CODE INSTANCES**
+>
+> **When to Read This**: FIRST thing when starting work on this project
+> **Related Docs**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for quick facts, [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) for workflow
+> **Read Time**: ~8 minutes
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 🗺️ Quick Navigation for Claude
+
+### First Time Working on This Project
+1. **Read this file** (CLAUDE.md) - Understand architecture & patterns (8 min)
+2. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Get quick facts (5 min)
+3. **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Understand vision (5 min)
+4. **[DEVELOPMENT.md](DEVELOPMENT.md)** - See current tasks (3 min)
+
+### Starting a Work Session
+1. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Refresh context (2 min)
+2. **[PROGRESS.md](PROGRESS.md)** - Check what's complete (1 min)
+3. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Find next task (1 min)
+4. **This file** - Review relevant architecture section
+
+### Implementing a Feature
+1. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Understand mechanics
+2. **[ARCHITECTURE.md](ARCHITECTURE.md)** - See code patterns
+3. **This file** - Check critical patterns section
+4. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Constants & values
+
+### Multi-Session Coordination
+1. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Read session protocols
+2. **[SESSION_SUMMARY.md](SESSION_SUMMARY.md)** - Check file ownership
+3. **This file** - Development workflow section
+
+---
 
 ## Development Commands
 
@@ -84,6 +117,8 @@ MENU → QUEST_SELECT → CHARACTER_SELECT → PLAYING ↔ SHOP → GAME_OVER �
 
 ### Grid System Architecture
 
+> See [ARCHITECTURE.md](ARCHITECTURE.md) for complete system details
+
 The Grid class is the heart of minesweeper logic:
 
 **Key Methods**:
@@ -119,6 +154,8 @@ Four interconnected resources create the roguelike economy:
    - Persists: Forever (saved to localStorage)
 
 ## Game Design Constants
+
+> See [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for complete constants reference
 
 ### Board Progression Formula
 ```javascript
@@ -195,6 +232,8 @@ localStorage['minequest_save_v1'] = {
 
 ## Development Workflow
 
+> See [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) for complete workflow protocols
+
 ### Phase-Based Development
 Currently in **Phase 1: Core Proof of Fun**
 
@@ -206,10 +245,11 @@ Currently in **Phase 1: Core Proof of Fun**
 5. **Playtest** - Validate core loop is fun
 
 ### Before Writing Code
-1. Check `DEVELOPMENT.md` for current phase
-2. Review `ARCHITECTURE.md` for patterns
-3. Read `GAME_DESIGN.md` for mechanics/balance
-4. Reference existing code examples in architecture docs
+1. Check [DEVELOPMENT.md](DEVELOPMENT.md) for current phase
+2. Review [ARCHITECTURE.md](ARCHITECTURE.md) for patterns
+3. Read [GAME_DESIGN.md](GAME_DESIGN.md) for mechanics/balance
+4. Check [QUICK_REFERENCE.md](QUICK_REFERENCE.md) for constants
+5. Reference existing code examples in architecture docs
 
 ### Code Organization Rules
 - **Data files** (`src/data/`): Pure data, no logic
@@ -282,8 +322,23 @@ Currently in **Phase 1: Core Proof of Fun**
 - Character classes: 5 (Explorer, Scout, Merchant, Tank, Mage)
 
 ### Documentation Hierarchy
-1. **QUICK_REFERENCE.md** - Start here for context
-2. **PROJECT_OVERVIEW.md** - High-level concept and rules
-3. **GAME_DESIGN.md** - Complete mechanics and content
-4. **ARCHITECTURE.md** - Technical patterns and code structure
-5. **DEVELOPMENT.md** - Roadmap and task tracking
+1. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Start here for context
+2. **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - High-level concept and rules
+3. **[GAME_DESIGN.md](GAME_DESIGN.md)** - Complete mechanics and content
+4. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical patterns and code structure
+5. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Roadmap and task tracking
+6. **[PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md)** - Multi-session coordination
+
+---
+
+## 🔗 Quick Links
+
+- **Main**: [README.md](README.md) - User-facing documentation
+- **Quick Ref**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Fast facts
+- **Overview**: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - Vision & principles
+- **Design**: [GAME_DESIGN.md](GAME_DESIGN.md) - Game mechanics
+- **Code**: [ARCHITECTURE.md](ARCHITECTURE.md) - Technical structure
+- **Tasks**: [DEVELOPMENT.md](DEVELOPMENT.md) - Roadmap
+- **Workflow**: [PROJECT_MANAGEMENT.md](PROJECT_MANAGEMENT.md) - Session protocols
+
+**Last Updated**: 2025-12-30
