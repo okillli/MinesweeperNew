@@ -1,0 +1,178 @@
+================================================================================
+DEPENDENCY ANALYSIS REPORT
+Generated: 2025-12-30T14:56:12.123Z
+================================================================================
+
+COMPONENT SUMMARY
+--------------------------------------------------------------------------------
+
+CanvasRenderer
+  File: src\rendering\CanvasRenderer.js
+  Risk Level: MEDIUM
+  Depends On: None
+  Used By (1): 
+    - src\core\Game.js
+
+Cell
+  File: src\entities\Cell.js
+  Risk Level: MEDIUM
+  Depends On: None
+  Used By (1): 
+    - src\entities\Grid.js
+
+EventBus
+  File: src\core\EventBus.js
+  Risk Level: LOW
+  Depends On: None
+  Used By (0): None
+
+Game
+  File: src\core\Game.js
+  Risk Level: MEDIUM
+  Depends On: GameState, CanvasRenderer
+  Used By (1): 
+    - src\main.js
+
+GameState
+  File: src\core\GameState.js
+  Risk Level: MEDIUM
+  Depends On: None
+  Used By (1): 
+    - src\core\Game.js
+
+Grid
+  File: src\entities\Grid.js
+  Risk Level: MEDIUM
+  Depends On: Cell
+  Used By (1): 
+    - src\main.js
+
+based
+  File: src\main.js
+  Risk Level: LOW
+  Depends On: Grid, Game
+  Used By (0): None
+
+from
+  File: src\main.js
+  Risk Level: LOW
+  Depends On: Grid, Game
+  Used By (0): None
+
+is
+  File: src\core\EventBus.js
+  Risk Level: LOW
+  Depends On: None
+  Used By (0): None
+
+serves
+  File: src\core\GameState.js
+  Risk Level: LOW
+  Depends On: None
+  Used By (0): None
+
+to
+  File: src\main.js
+  Risk Level: LOW
+  Depends On: Grid, Game
+  Used By (0): None
+
+
+================================================================================
+DEPENDENCY TREE
+--------------------------------------------------------------------------------
+
+CanvasRenderer
+  ↓ used by Game
+
+Cell
+  ↓ used by Grid
+
+EventBus
+  (no dependencies)
+
+Game
+  ↑ depends on GameState
+  ↑ depends on CanvasRenderer
+  ↓ used by main
+
+GameState
+  ↓ used by Game
+
+Grid
+  ↑ depends on Cell
+  ↓ used by main
+
+based
+  ↑ depends on Grid
+  ↑ depends on Game
+
+from
+  ↑ depends on Grid
+  ↑ depends on Game
+
+is
+  (no dependencies)
+
+serves
+  (no dependencies)
+
+to
+  ↑ depends on Grid
+  ↑ depends on Game
+
+
+================================================================================
+RISK ANALYSIS
+--------------------------------------------------------------------------------
+
+CRITICAL (4+ dependents): 0
+
+HIGH (2-3 dependents): 0
+
+MEDIUM (1 dependent): 5
+  - CanvasRenderer (1 dependents)
+  - Cell (1 dependents)
+  - Game (1 dependents)
+  - GameState (1 dependents)
+  - Grid (1 dependents)
+
+LOW (0 dependents): 6
+  - EventBus (0 dependents)
+  - based (0 dependents)
+  - from (0 dependents)
+  - is (0 dependents)
+  - serves (0 dependents)
+  - to (0 dependents)
+
+
+================================================================================
+CIRCULAR DEPENDENCY CHECK
+--------------------------------------------------------------------------------
+
+✅ No circular dependencies detected
+
+================================================================================
+ORPHAN CHECK
+--------------------------------------------------------------------------------
+
+⚠️  Components with no dependents (potentially unused):
+  - EventBus
+  - based
+  - from
+  - is
+  - serves
+  - to
+
+================================================================================
+STATISTICS
+--------------------------------------------------------------------------------
+
+Total Files Analyzed: 7
+Total Components: 11
+Average Dependents per Component: 0.45
+Most Depended Upon: CanvasRenderer (1 dependents)
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -101,6 +101,11 @@ class GameState {
     // Persistent state - saved to localStorage
     this.persistent = {
       gems: 0,               // Total gems (meta-currency)
+      settings: {
+        startingHp: 1,       // Starting HP for new runs (default 1)
+        soundEnabled: true,  // Sound effects toggle
+        musicEnabled: true   // Music toggle
+      },
       unlockedItems: [
         // MVP Starter Pool (10 items total)
         // Common Passives (5)
@@ -488,6 +493,11 @@ class GameState {
     // Reset persistent state
     this.persistent = {
       gems: 0,
+      settings: {
+        startingHp: 1,       // Starting HP for new runs (default 1)
+        soundEnabled: true,  // Sound effects toggle
+        musicEnabled: true   // Music toggle
+      },
       unlockedItems: [
         // MVP Starter Pool (10 items total)
         // Common Passives (5)

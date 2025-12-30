@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git config:*)",
+      "Bash(where claude:*)",
+      "Bash(gh --version:*)",
+      "Bash(gh auth login:*)"
+    ]
+  }
+}
