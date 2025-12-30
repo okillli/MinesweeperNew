@@ -1022,11 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check win condition (all non-mine cells revealed)
         if (grid.isComplete()) {
-          console.log('Congratulations! You won!');
-          // TODO: In full game, this would:
-          // - Transition to shop or next board
-          // - Update quest progress
-          // For MVP, we just log it
+          handleBoardComplete();
         }
       }
     }
@@ -1449,8 +1445,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check win condition (all non-mine cells revealed)
         if (grid.isComplete()) {
-          console.log('Congratulations! You won!');
-          // TODO: Implement proper victory flow
+          handleBoardComplete();
         }
       }
     }
@@ -1711,8 +1706,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check win condition
     if (game.state.grid.isComplete()) {
-      game.state.isGameOver = true;
-      events.emit('board_complete', { boardIndex: game.state.currentRun.boardNumber });
+      handleBoardComplete();
     }
   }
 
@@ -1806,8 +1800,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check win condition
     if (game.state.grid.isComplete()) {
-      game.state.isGameOver = true;
-      events.emit('board_complete', { boardIndex: game.state.currentRun.boardNumber });
+      handleBoardComplete();
     }
   }
 
@@ -1830,12 +1823,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
   // - Implement quest selection screen with quest data
   // - Implement character selection screen with character data
-  // - Add proper game over / victory handlers with transition to game over screen
-  // - Add shop screen transition when board is complete
-  // - Wire up HP/damage system (call game.state.takeDamage() when hitting mine)
-  // - Wire up mana/coin earning system
-  // - Add event bus listeners for game events
-  // - Add keyboard shortcuts (space = flag, etc.)
   // - Add save/load on page unload/load
   // - Populate collection screen with actual data
   // - Wire up settings toggles to actually control sound/music
