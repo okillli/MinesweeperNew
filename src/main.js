@@ -1125,6 +1125,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Handles victory (all 6 boards cleared)
    */
   function handleVictory() {
+    console.log('[handleVictory] Called!');
     game.state.isGameOver = true;
 
     // Visual effects: Victory confetti
@@ -1144,6 +1145,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (overlay) {
       overlay.classList.remove('hidden');
       overlay.scrollTop = 0;
+
+      // Auto-scroll to stats after a brief delay
+      setTimeout(() => {
+        const statsContainer = overlay.querySelector('.gameover-stats-container');
+        if (statsContainer) {
+          statsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 1500);
     }
 
     // Add victory glow to title
@@ -1253,6 +1262,14 @@ document.addEventListener('DOMContentLoaded', () => {
           overlay.classList.remove('hidden');
           // Scroll overlay to top to show message box
           overlay.scrollTop = 0;
+
+          // Step 6: Auto-scroll to stats after a brief delay
+          setTimeout(() => {
+            const statsContainer = overlay.querySelector('.gameover-stats-container');
+            if (statsContainer) {
+              statsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 1500);
         }
 
         console.log('Game Over - overlay shown, game screen visible beneath');
@@ -2307,6 +2324,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Touch interaction model:
   // - Tap (touchstart + touchend within 500ms) = reveal cell
   // - Long-press (touchstart held for 500ms+) = toggle flag
+  // - Single-finger drag (when zoomed in >1.2x) = pan the view
+  // - Two-finger pinch = zoom in/out
+  // - Two-finger drag = pan the view
   // - Prevent context menu on long-press
   // - Prevent mouse events from double-firing on touch devices
 
@@ -2316,9 +2336,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let longPressTimer = null;
   let longPressTriggered = false;
   let touchHandled = false; // Prevents mouse events from double-firing
+  let isSingleFingerPanning = false; // For single-finger pan when zoomed in
+  let lastPanPos = null; // Track last position for pan delta calculation
 
   const LONG_PRESS_DURATION = 500; // milliseconds
   const TOUCH_MOVE_THRESHOLD = 10; // pixels - max movement allowed for tap/long-press
+  const PAN_ZOOM_THRESHOLD = 1.2; // Zoom level above which single-finger drag pans
 
   /**
    * Handles touch start event
@@ -2363,9 +2386,13 @@ document.addEventListener('DOMContentLoaded', () => {
       y: touch.clientY - rect.top
     };
 
+    // Initialize pan tracking position
+    lastPanPos = { ...touchStartPos };
+
     // Reset flags
     longPressTriggered = false;
     touchHandled = false;
+    isSingleFingerPanning = false;
 
     // Convert to grid coordinates to check if touch is on a valid cell
     const coords = canvasToGrid(touchStartPos.x, touchStartPos.y);
@@ -2427,6 +2454,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Handles touch move event
    * - Cancels long-press if finger moves too far
    * - Cancels if multi-touch detected
+   * - Enables single-finger pan when zoomed in beyond threshold
    *
    * @param {TouchEvent} event - The touch move event
    */
@@ -2438,6 +2466,8 @@ document.addEventListener('DOMContentLoaded', () => {
         longPressTimer = null;
       }
       touchStartPos = null;
+      lastPanPos = null;
+      isSingleFingerPanning = false;
       return;
     }
 
@@ -2450,18 +2480,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentX = touch.clientX - rect.left;
     const currentY = touch.clientY - rect.top;
 
-    // Calculate movement distance
+    // Calculate movement distance from start
     const dx = currentX - touchStartPos.x;
     const dy = currentY - touchStartPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // If moved too far, cancel long-press
+    // If moved beyond threshold, cancel long-press and potentially start panning
     if (distance > TOUCH_MOVE_THRESHOLD) {
       if (longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
       }
-      touchStartPos = null;
+
+      // Check if camera is zoomed in enough for single-finger panning
+      const camera = game.state.camera;
+      if (camera && camera.isEnabled() && camera.zoom >= PAN_ZOOM_THRESHOLD) {
+        // Enable single-finger pan mode
+        isSingleFingerPanning = true;
+
+        // Calculate pan delta from last position
+        if (lastPanPos) {
+          const panDeltaX = currentX - lastPanPos.x;
+          const panDeltaY = currentY - lastPanPos.y;
+
+          // Apply pan to camera
+          camera.pan(panDeltaX, panDeltaY);
+
+          const viewport = getViewportSize();
+          camera.clampToBounds(viewport.width, viewport.height);
+        }
+
+        // Update last position for next frame
+        lastPanPos = { x: currentX, y: currentY };
+      } else {
+        // Not zoomed in enough - cancel touch interaction (old behavior)
+        touchStartPos = null;
+        lastPanPos = null;
+      }
     }
 
     event.preventDefault();
@@ -2469,7 +2524,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Handles touch end event
-   * - Executes tap action (reveal) if not a long-press
+   * - Executes tap action (reveal) if not a long-press or pan
    * - Cleans up timers and state
    *
    * @param {TouchEvent} event - The touch end event
@@ -2480,6 +2535,11 @@ document.addEventListener('DOMContentLoaded', () => {
       clearTimeout(longPressTimer);
       longPressTimer = null;
     }
+
+    // Clean up pan state
+    const wasPanning = isSingleFingerPanning;
+    isSingleFingerPanning = false;
+    lastPanPos = null;
 
     // Only handle touches when on playing screen
     if (game.state.currentScreen !== 'PLAYING') return;
@@ -2493,6 +2553,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = game.state.grid;
     if (!grid) {
       touchStartPos = null;
+      return;
+    }
+
+    // If panning was active, don't execute tap action
+    if (wasPanning) {
+      touchStartPos = null;
+      event.preventDefault();
       return;
     }
 
@@ -2750,6 +2817,8 @@ document.addEventListener('DOMContentLoaded', () => {
     touchStartPos = null;
     longPressTriggered = false;
     touchHandled = false; // Critical: prevent blocking subsequent mouse events
+    isSingleFingerPanning = false;
+    lastPanPos = null;
     event.preventDefault();
   }
 
