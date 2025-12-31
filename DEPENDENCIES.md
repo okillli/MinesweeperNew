@@ -28,7 +28,12 @@ This document maps upstream and downstream dependencies across the LiMineZZsweep
 │  Game.js, EventBus.js              │
 ├─────────────────────────────────────┤
 │       Systems Layer                 │
-│  ItemSystem.js, ShopSystem.js      │
+│  ItemSystem.js, ShopSystem.js,     │
+│  EffectsManager.js                  │
+├─────────────────────────────────────┤
+│      Effects Layer                  │
+│  ParticleSystem.js,                 │
+│  FloatingTextSystem.js              │
 ├─────────────────────────────────────┤
 │      Business Logic Layer           │
 │  Grid.js, GameState.js              │
@@ -37,7 +42,7 @@ This document maps upstream and downstream dependencies across the LiMineZZsweep
 │  Cell.js, items.js, boards.js      │
 └─────────────────────────────────────┘
 
-Dependency Flow: Foundation → Business Logic → Systems → Orchestration → Entry Point
+Dependency Flow: Foundation → Business Logic → Effects → Systems → Orchestration → Entry Point
 ```
 
 ---
@@ -364,6 +369,127 @@ The `getScaledBoardConfig()` function uses these settings from `GameState.persis
 
 ---
 
+## Visual Effects Dependencies
+
+### ParticleSystem.js
+**Location**: `src/systems/ParticleSystem.js`
+
+**PURPOSE**: Manages particle effects (explosions, sparkles, confetti) with object pooling
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- None (standalone system)
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `EffectsManager.js` - Creates and manages ParticleSystem instance
+
+**CHANGE RISK**: **LOW**
+- Visual-only changes
+- Self-contained with no external state dependencies
+- Object pooling implementation is internal
+
+**KEY METHODS & THEIR CONSUMERS**:
+- `emitExplosion(x, y, config)` - Called by: EffectsManager (mine hits)
+- `emitCoinSparkle(x, y, config)` - Called by: EffectsManager (coin gains)
+- `emitDamageFlash(x, y)` - Called by: EffectsManager (damage feedback)
+- `emitFlagEffect(x, y)` - Called by: EffectsManager (flag placement)
+- `emitVictoryConfetti(width, height)` - Called by: EffectsManager (victory)
+- `update(deltaTime)` - Called by: EffectsManager.update()
+- `render(ctx)` - Called by: EffectsManager.render()
+
+**SIDE EFFECTS**:
+- Canvas drawing operations
+- Object pool management (internal)
+
+**TESTING IMPACT**:
+- Direct: Visual regression tests
+- Blast Radius: **1** (EffectsManager only)
+
+---
+
+### FloatingTextSystem.js
+**Location**: `src/systems/FloatingTextSystem.js`
+
+**PURPOSE**: Manages floating text effects (+coins, -HP, +mana) with animation
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- None (standalone system)
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `EffectsManager.js` - Creates and manages FloatingTextSystem instance
+
+**CHANGE RISK**: **LOW**
+- Visual-only changes
+- Self-contained with no external state dependencies
+
+**KEY METHODS & THEIR CONSUMERS**:
+- `spawnCoinText(x, y, amount)` - Called by: EffectsManager (coin gains)
+- `spawnManaText(x, y, amount)` - Called by: EffectsManager (mana gains)
+- `spawnDamageText(x, y, amount)` - Called by: EffectsManager (damage)
+- `spawnHealText(x, y, amount)` - Called by: EffectsManager (healing)
+- `spawn(x, y, text, config)` - Called by: EffectsManager (custom text)
+- `update(deltaTime)` - Called by: EffectsManager.update()
+- `render(ctx)` - Called by: EffectsManager.render()
+
+**SIDE EFFECTS**:
+- Canvas drawing operations
+- Object pool management (internal)
+
+**TESTING IMPACT**:
+- Direct: Visual regression tests
+- Blast Radius: **1** (EffectsManager only)
+
+---
+
+### EffectsManager.js
+**Location**: `src/systems/EffectsManager.js`
+
+**PURPOSE**: Central coordinator for all visual effects (particles, floating text, screen shake)
+
+**UPSTREAM DEPENDENCIES (what this imports):**
+- `ParticleSystem.js` - Creates instance for particle effects
+- `FloatingTextSystem.js` - Creates instance for floating text
+
+**DOWNSTREAM DEPENDENCIES (what imports this):**
+- `main.js` - Creates EffectsManager, triggers effects on game events
+- `Game.js` - Calls update() and render() in game loop
+
+**CRITICAL PATHS**:
+1. Mine hit → main.js → EffectsManager.mineExplosion() → ParticleSystem
+2. Coin gain → main.js → EffectsManager.coinGain() → FloatingTextSystem + ParticleSystem
+3. Game loop → Game.update() → EffectsManager.update() → all sub-systems update
+4. Game loop → Game.render() → EffectsManager.render() → all sub-systems render
+
+**CHANGE RISK**: **MEDIUM**
+- Central effects coordinator
+- Method signature changes affect main.js triggers
+- Adding new effect types is safe
+
+**KEY METHODS & THEIR CONSUMERS**:
+- `setCanvas(canvas)` - Called by: Game.setEffectsManager()
+- `mineExplosion(cellX, cellY, layout)` - Called by: main.js (mine hit)
+- `damage(amount, cellX, cellY, layout)` - Called by: main.js (damage taken)
+- `coinGain(amount, cellX, cellY, layout)` - Called by: main.js (coin reward)
+- `manaGain(amount, cellX, cellY, layout)` - Called by: main.js (mana reward)
+- `flagPlaced(cellX, cellY, layout)` - Called by: main.js (flag placed)
+- `victory()` - Called by: main.js (handleVictory)
+- `triggerScreenShake(intensity, duration)` - Called by: damage()
+- `triggerDamageFlash()` - Called by: damage()
+- `update(deltaTime)` - Called by: Game.update()
+- `render(ctx)` - Called by: Game.render()
+- `clear()` - Called by: main.js (new game)
+
+**SIDE EFFECTS**:
+- Canvas transform manipulation (screen shake)
+- DOM manipulation (damage flash overlay)
+- Respects `prefers-reduced-motion` media query
+
+**TESTING IMPACT**:
+- Direct: Visual effects integration tests
+- Indirect: Full game flow tests
+- Blast Radius: **2** (main.js, Game.js)
+
+---
+
 ## Orchestration Dependencies
 
 ### Game.js
@@ -374,6 +500,7 @@ The `getScaledBoardConfig()` function uses these settings from `GameState.persis
 **UPSTREAM DEPENDENCIES (what this imports):**
 - `GameState` (implicit - creates instance)
 - `CanvasRenderer` (implicit - creates instance)
+- `EffectsManager` (via setEffectsManager - updates and renders effects)
 
 **DOWNSTREAM DEPENDENCIES (what imports this):**
 - `main.js` - Creates Game instance, calls start/stop/render
@@ -630,6 +757,16 @@ GameState.js (Business Logic)
   ← ItemSystem.js (passive effects)
   ← ShopSystem.js (purchases)
 
+ParticleSystem.js (Effects)
+  ← EffectsManager.js (creates instance)
+
+FloatingTextSystem.js (Effects)
+  ← EffectsManager.js (creates instance)
+
+EffectsManager.js (Systems)
+  ← main.js (creates instance, triggers effects)
+  ← Game.js (update/render in loop)
+
 ItemSystem.js (Systems)
   ← main.js (modifier calcs, abilities)
   ← GameState.js (passive effects)
@@ -692,10 +829,12 @@ When adding new systems (Phase 2+), follow these principles:
 **Implemented Systems**:
 - `ShopSystem.js` → depends on: ITEMS, RARITY_WEIGHTS, ItemSystem, GameState
 - `ItemSystem.js` → depends on: ITEMS, Grid (for abilities), GameState
+- `ParticleSystem.js` → depends on: None (standalone)
+- `FloatingTextSystem.js` → depends on: None (standalone)
+- `EffectsManager.js` → depends on: ParticleSystem, FloatingTextSystem
 
 **Planned Future Dependencies**:
 - `QuestSystem.js` → depends on: GameState, EventBus
-- `SaveSystem.js` → depends on: GameState
 - `UIRenderer.js` → depends on: GameState (read-only)
 
 ---
@@ -709,5 +848,5 @@ When adding new systems (Phase 2+), follow these principles:
 
 ---
 
-**Last Updated**: 2025-12-30 (Updated for Board Size Settings feature)
-**Next Review**: When adding new systems (Phase 3+)
+**Last Updated**: 2025-12-30 (Updated for Visual Effects System)
+**Next Review**: When adding remaining Phase 4 effects

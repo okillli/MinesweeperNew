@@ -16,7 +16,7 @@
 
 class SaveSystem {
   static STORAGE_KEY = 'minequest_save';
-  static CURRENT_VERSION = '0.5.0';
+  static CURRENT_VERSION = '0.6.0';
 
   /**
    * Save game state to localStorage
@@ -35,6 +35,8 @@ class SaveSystem {
           unlockedCharacters: [...gameState.persistent.unlockedCharacters],
           unlockedQuests: [...gameState.persistent.unlockedQuests],
           achievements: [...gameState.persistent.achievements],
+          tutorialCompleted: gameState.persistent.tutorialCompleted,
+          seenTips: [...gameState.persistent.seenTips],
           stats: { ...gameState.persistent.stats }
         }
       };
@@ -123,6 +125,15 @@ class SaveSystem {
       ])];
     }
 
+    // Tutorial tracking
+    gameState.persistent.tutorialCompleted = p.tutorialCompleted ?? false;
+    if (p.seenTips) {
+      gameState.persistent.seenTips = [...new Set([
+        ...gameState.persistent.seenTips,
+        ...p.seenTips
+      ])];
+    }
+
     // Stats - keep higher values
     if (p.stats) {
       const stats = gameState.persistent.stats;
@@ -197,10 +208,10 @@ class SaveSystem {
    */
   static _migrate(data) {
     // Handle version migrations here
-    // For now, just update the version and return
     // Future migrations would transform data structure as needed
 
-    // v0.4.0 -> v0.5.0: Add any new fields with defaults
+    // v0.5.0 -> v0.6.0: Add tutorial tracking fields
+    // v0.4.0 -> v0.5.0: Add achievements and stats
     const migrated = {
       ...data,
       version: this.CURRENT_VERSION,
@@ -208,6 +219,9 @@ class SaveSystem {
         ...data.persistent,
         // Ensure new fields exist
         achievements: data.persistent?.achievements || [],
+        // v0.6.0: Tutorial tracking
+        tutorialCompleted: data.persistent?.tutorialCompleted ?? false,
+        seenTips: data.persistent?.seenTips || [],
         stats: {
           totalRuns: 0,
           totalWins: 0,

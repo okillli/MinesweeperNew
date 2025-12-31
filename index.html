@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="LiMineZZsweeperIE - A modern minesweeper roguelike with quests and progression">
     <meta name="theme-color" content="#1a1a2e">
 
@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Ambient Background Particles -->
+    <div id="ambient-particles" class="ambient-particles" aria-hidden="true"></div>
+
     <!-- Main Container -->
     <div id="app">
         <!-- HUD (Top Bar) - aria-live for dynamic updates -->
@@ -19,6 +22,10 @@
                 <div class="stat">
                     <span class="stat-label" id="hp-label">HP:</span>
                     <span id="hp-display" class="stat-value" aria-labelledby="hp-label">3</span>
+                    <div class="hp-bar-container" aria-hidden="true">
+                        <div id="hp-bar" class="hp-bar" style="width: 100%;"></div>
+                        <div id="hp-bar-damage" class="hp-bar-damage" style="width: 0%;"></div>
+                    </div>
                 </div>
                 <div class="stat">
                     <span class="stat-label" id="mana-label">Mana:</span>
@@ -47,6 +54,7 @@
 
                 <div class="menu-buttons">
                     <button id="start-button" class="btn btn-primary">Start Run</button>
+                    <button id="guide-button" class="btn btn-secondary">How to Play</button>
                     <button id="collection-button" class="btn btn-secondary">Collection</button>
                     <button id="settings-button" class="btn btn-secondary">Settings</button>
                 </div>
@@ -55,6 +63,66 @@
                     <p>Gems: <span id="menu-gems">0</span></p>
                     <p>Runs: <span id="menu-runs">0</span></p>
                     <p>Wins: <span id="menu-wins">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tutorial Screen (Pre-game onboarding) -->
+        <div id="tutorial-screen" class="screen">
+            <div class="screen-content tutorial-content">
+                <h2>How to Play</h2>
+
+                <!-- Tutorial Slides -->
+                <div class="tutorial-slides" id="tutorial-slides">
+                    <!-- Slide 1: Reveal & Numbers -->
+                    <div class="tutorial-slide active" data-slide="0">
+                        <div class="tutorial-icon">🔍</div>
+                        <h3>Reveal Cells</h3>
+                        <p><strong>Tap</strong> or <strong>click</strong> to reveal a cell.</p>
+                        <p>Numbers show how many mines are adjacent (1-8).</p>
+                        <p class="tutorial-tip">Empty cells reveal neighbors automatically!</p>
+                    </div>
+
+                    <!-- Slide 2: Flagging -->
+                    <div class="tutorial-slide" data-slide="1">
+                        <div class="tutorial-icon">🚩</div>
+                        <h3>Flag Mines</h3>
+                        <p><strong>Long-press</strong> or <strong>right-click</strong> to flag suspected mines.</p>
+                        <p>Use the <strong>mode toggle</strong> button to switch tap action.</p>
+                        <p class="tutorial-tip">Flags give +10 mana when placed!</p>
+                    </div>
+
+                    <!-- Slide 3: HP System -->
+                    <div class="tutorial-slide" data-slide="2">
+                        <div class="tutorial-icon">❤️</div>
+                        <h3>HP System</h3>
+                        <p>Hitting a mine costs <strong>1 HP</strong> - not instant death!</p>
+                        <p>Your HP is shown at the top of the screen.</p>
+                        <p class="tutorial-tip">Items can heal you or increase max HP.</p>
+                    </div>
+
+                    <!-- Slide 4: Goal -->
+                    <div class="tutorial-slide" data-slide="3">
+                        <div class="tutorial-icon">🏆</div>
+                        <h3>Your Goal</h3>
+                        <p>Reveal all safe cells to complete each board.</p>
+                        <p>Survive <strong>6 boards</strong> to win the run!</p>
+                        <p class="tutorial-tip">Coins earned can buy items between boards.</p>
+                    </div>
+                </div>
+
+                <!-- Slide Indicators -->
+                <div class="tutorial-indicators" id="tutorial-indicators">
+                    <span class="indicator active" data-slide="0"></span>
+                    <span class="indicator" data-slide="1"></span>
+                    <span class="indicator" data-slide="2"></span>
+                    <span class="indicator" data-slide="3"></span>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="tutorial-nav">
+                    <button id="tutorial-skip-btn" class="btn btn-secondary">Skip</button>
+                    <button id="tutorial-next-btn" class="btn btn-primary">Next</button>
                 </div>
             </div>
         </div>
@@ -352,6 +420,162 @@
                 <button id="settings-back-button" class="btn btn-secondary">Back</button>
             </div>
         </div>
+
+        <!-- Guide Screen (Full reference) -->
+        <div id="guide-screen" class="screen">
+            <div class="screen-content guide-content">
+                <h2>How to Play</h2>
+
+                <div class="guide-sections">
+                    <!-- Controls Section -->
+                    <details class="guide-section" open>
+                        <summary class="guide-section-title">Controls</summary>
+                        <div class="guide-section-content">
+                            <div class="guide-item">
+                                <span class="guide-icon">👆</span>
+                                <div>
+                                    <strong>Reveal Cell</strong>
+                                    <p>Tap / Click / Space / Enter</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">🚩</span>
+                                <div>
+                                    <strong>Flag Cell</strong>
+                                    <p>Long-press / Right-click / F key</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">⚡</span>
+                                <div>
+                                    <strong>Chord</strong>
+                                    <p>Click revealed number (with correct flags) / C key</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">🔄</span>
+                                <div>
+                                    <strong>Mode Toggle</strong>
+                                    <p>Tap FAB button to switch tap action (Reveal/Flag)</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">⬅️➡️</span>
+                                <div>
+                                    <strong>Navigation</strong>
+                                    <p>Arrow keys to move cursor</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Resources Section -->
+                    <details class="guide-section">
+                        <summary class="guide-section-title">Resources</summary>
+                        <div class="guide-section-content">
+                            <div class="guide-item">
+                                <span class="guide-icon">❤️</span>
+                                <div>
+                                    <strong>HP (Health)</strong>
+                                    <p>Lose 1 HP per mine hit. Reach 0 = game over.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">🪙</span>
+                                <div>
+                                    <strong>Coins</strong>
+                                    <p>+10 per safe cell. Spend in shop between boards.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">💎</span>
+                                <div>
+                                    <strong>Mana</strong>
+                                    <p>+5 per reveal, +10 per flag. Powers active abilities.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">💠</span>
+                                <div>
+                                    <strong>Gems</strong>
+                                    <p>Earned from quests. Unlock new content.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Items Section -->
+                    <details class="guide-section">
+                        <summary class="guide-section-title">Items</summary>
+                        <div class="guide-section-content">
+                            <div class="guide-item">
+                                <span class="guide-icon">🛡️</span>
+                                <div>
+                                    <strong>Passive Items</strong>
+                                    <p>Always active. Stat boosts and multipliers.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">⚔️</span>
+                                <div>
+                                    <strong>Active Abilities</strong>
+                                    <p>Cost mana to use. Tap ability bar or press 1-3.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">🧪</span>
+                                <div>
+                                    <strong>Consumables</strong>
+                                    <p>Single use. Potions, scrolls, shields.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Progression Section -->
+                    <details class="guide-section">
+                        <summary class="guide-section-title">Progression</summary>
+                        <div class="guide-section-content">
+                            <div class="guide-item">
+                                <span class="guide-icon">📊</span>
+                                <div>
+                                    <strong>6 Boards Per Run</strong>
+                                    <p>Tutorial → Easy → Normal → Hard → Very Hard → Boss</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">🛒</span>
+                                <div>
+                                    <strong>Shop</strong>
+                                    <p>Buy items between boards. 3 random items offered.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">📜</span>
+                                <div>
+                                    <strong>Quests</strong>
+                                    <p>Complete objectives for gem rewards.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">🧙</span>
+                                <div>
+                                    <strong>Characters</strong>
+                                    <p>Each has unique starting stats and abilities.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <button id="guide-back-button" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Tip Toast Container (for progressive tips) -->
+        <div id="tip-container" class="tip-container" aria-live="polite" aria-atomic="true">
+            <!-- Tips will be dynamically inserted here -->
+        </div>
     </div>
 
     <!-- Load game scripts -->
@@ -370,6 +594,7 @@
     <script src="src/systems/ItemSystem.js"></script>
     <script src="src/systems/ShopSystem.js"></script>
     <script src="src/systems/SaveSystem.js"></script>
+    <script src="src/systems/AudioManager.js"></script>
 
     <!-- Visual Effects -->
     <script src="src/systems/ParticleSystem.js"></script>
@@ -378,6 +603,7 @@
 
     <!-- Rendering -->
     <script src="src/rendering/CanvasRenderer.js"></script>
+    <script src="src/rendering/MinimapRenderer.js"></script>
 
     <!-- Core -->
     <script src="src/core/Camera.js"></script>

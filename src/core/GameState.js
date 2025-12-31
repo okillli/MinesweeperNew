@@ -162,6 +162,10 @@ class GameState {
       ],
       achievements: [],      // Array of achievement IDs (strings)
 
+      // Tutorial & tips tracking
+      tutorialCompleted: false,  // Whether pre-game tutorial has been completed
+      seenTips: [],              // Array of tip IDs that have been shown (e.g., ['tip_numbers', 'tip_hp'])
+
       stats: {
         totalRuns: 0,        // Total runs started
         totalWins: 0,        // Total successful quest completions
@@ -625,6 +629,8 @@ class GameState {
         'boss_slayer'            // Objective: Defeat the boss board
       ],
       achievements: [],
+      tutorialCompleted: false,
+      seenTips: [],
       stats: {
         totalRuns: 0,
         totalWins: 0,

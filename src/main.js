@@ -33,6 +33,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const effects = new EffectsManager(document.getElementById('game-screen'));
   game.setEffectsManager(effects);
 
+  // Create the Minimap Renderer for large boards
+  const minimapCanvas = document.getElementById('minimap-canvas');
+  const minimapRenderer = typeof MinimapRenderer !== 'undefined' && minimapCanvas
+    ? new MinimapRenderer(minimapCanvas)
+    : null;
+
+  // Initialize audio on first user interaction (required by browsers)
+  let audioInitialized = false;
+  function initAudioOnInteraction() {
+    if (audioInitialized) return;
+    if (typeof AudioManager !== 'undefined') {
+      AudioManager.init();
+      AudioManager.setEnabled(game.state.persistent.settings.soundEnabled);
+      audioInitialized = true;
+    }
+  }
+  document.addEventListener('click', initAudioOnInteraction, { once: true });
+  document.addEventListener('touchstart', initAudioOnInteraction, { once: true });
+  document.addEventListener('keydown', initAudioOnInteraction, { once: true });
+
   /**
    * Updates canvas size to fit available space responsively
    * Called on init and window resize
@@ -65,9 +85,86 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial canvas size setup
   updateCanvasSize();
 
+  /**
+   * Initializes camera for the current grid
+   * Fits camera to show entire grid and updates UI visibility
+   */
+  function initializeCamera() {
+    const camera = game.state.camera;
+    const grid = game.state.grid;
+    if (!camera || !grid) return;
+
+    // Calculate grid pixel dimensions
+    const cellSize = game.renderer.cellSize;
+    const padding = game.renderer.padding;
+    const gridPixelWidth = (grid.width * cellSize) + ((grid.width - 1) * padding);
+    const gridPixelHeight = (grid.height * cellSize) + ((grid.height - 1) * padding);
+
+    // Get viewport size
+    const gameScreen = document.getElementById('game-screen');
+    const viewportW = gameScreen ? gameScreen.clientWidth : canvas.width / game.renderer.dpr;
+    const viewportH = gameScreen ? gameScreen.clientHeight : canvas.height / game.renderer.dpr;
+
+    // Fit camera to grid
+    camera.fitToGrid(gridPixelWidth, gridPixelHeight, viewportW, viewportH);
+
+    // Update zoom controls visibility
+    updateZoomControlsVisibility();
+  }
+
+  /**
+   * Updates the visibility of zoom controls and minimap
+   */
+  function updateZoomControlsVisibility() {
+    const camera = game.state.camera;
+    const zoomControls = document.getElementById('zoom-controls');
+    const minimap = document.getElementById('minimap-canvas');
+
+    if (!camera || !camera.isEnabled()) {
+      // Hide controls for small boards
+      if (zoomControls) zoomControls.classList.add('hidden');
+      if (minimap) minimap.classList.add('hidden');
+      return;
+    }
+
+    // Show zoom controls for large boards
+    if (zoomControls) {
+      zoomControls.classList.remove('hidden');
+    }
+
+    // Show minimap for boards 25x25+
+    const grid = game.state.grid;
+    if (minimap && grid) {
+      const isVeryLargeBoard = grid.width >= 25 || grid.height >= 25;
+      if (isVeryLargeBoard) {
+        minimap.classList.remove('hidden');
+      } else {
+        minimap.classList.add('hidden');
+      }
+    }
+  }
+
+  /**
+   * Gets the current viewport dimensions
+   * @returns {{width: number, height: number}}
+   */
+  function getViewportSize() {
+    const gameScreen = document.getElementById('game-screen');
+    return {
+      width: gameScreen ? gameScreen.clientWidth : canvas.width / game.renderer.dpr,
+      height: gameScreen ? gameScreen.clientHeight : canvas.height / game.renderer.dpr
+    };
+  }
+
   // Handle window resize
   window.addEventListener('resize', () => {
     updateCanvasSize();
+    // Re-fit camera on resize if enabled
+    const camera = game.state.camera;
+    if (camera && camera.isEnabled()) {
+      const viewport = getViewportSize();
+      camera.clampToBounds(viewport.width, viewport.height);
+    }
   }, { signal });
 
   // Handle orientation change on mobile
@@ -79,6 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Start the game loop immediately
   // The loop runs continuously, but only renders when on PLAYING screen
   game.start();
+
+  // Initialize visual effects
+  initButtonRipples();
+  initAmbientParticles();
 
   console.log('LiMineZZsweeperIE initialized - Made for Lizzie ✨');
 
@@ -116,6 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Map HTML screen IDs to game state screen constants
     const screenMap = {
       'menu-screen': 'MENU',
+      'tutorial-screen': 'TUTORIAL',
+      'guide-screen': 'GUIDE',
       'quest-screen': 'QUEST',
       'character-screen': 'CHARACTER',
       'game-screen': 'PLAYING',
@@ -148,6 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
       canvas.classList.remove('playing');
       // Hide input mode toggle
       updateInputModeToggleVisibility();
+      // Hide zoom controls and minimap when not playing
+      const zoomControls = document.getElementById('zoom-controls');
+      const minimap = document.getElementById('minimap-canvas');
+      if (zoomControls) zoomControls.classList.add('hidden');
+      if (minimap) minimap.classList.add('hidden');
       // Remove canvas mode tints
       canvas.classList.remove('reveal-mode-active', 'flag-mode-active');
     }
@@ -159,6 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
    * Updates the HUD display with current game state
    * Includes color-coded HP display for better visual feedback
    */
+  // Track previous HP for damage animation
+  let previousHpValue = null;
+
   function updateHUD() {
     const run = game.state.currentRun;
 
@@ -181,10 +292,19 @@ document.addEventListener('DOMContentLoaded', () => {
       hpDisplay.classList.add('hp-full'); // Green (67-100%)
     }
 
+    // Update HP bar with damage animation
+    updateHPBar(run.hp, run.maxHp, previousHpValue);
+    previousHpValue = run.hp;
+
     // Update other HUD elements
     document.getElementById('mana-display').textContent = `${run.mana}/${run.maxMana}`;
     document.getElementById('coins-display').textContent = run.coins;
     document.getElementById('board-display').textContent = `${run.boardNumber}/6`;
+
+    // Check for mana full tip
+    if (run.mana >= run.maxMana) {
+      showTip('tip_mana_full');
+    }
 
     // Update abilities bar
     updateAbilitiesBar();
@@ -213,6 +333,177 @@ document.addEventListener('DOMContentLoaded', () => {
       element.classList.add(animClass);
       setTimeout(() => element.classList.remove(animClass), 300);
     }
+  }
+
+  /**
+   * Updates the HP bar visual display
+   * @param {number} current - Current HP
+   * @param {number} max - Maximum HP
+   * @param {number} previousHp - Previous HP value (for damage flash)
+   */
+  function updateHPBar(current, max, previousHp = null) {
+    const hpBar = document.getElementById('hp-bar');
+    const hpBarDamage = document.getElementById('hp-bar-damage');
+    if (!hpBar) return;
+
+    const percentage = Math.max(0, (current / max) * 100);
+
+    // Show damage indicator briefly
+    if (previousHp !== null && previousHp > current) {
+      const damagePercent = ((previousHp - current) / max) * 100;
+      hpBarDamage.style.width = damagePercent + '%';
+      setTimeout(() => {
+        hpBarDamage.style.width = '0%';
+      }, 300);
+    }
+
+    // Update bar width
+    hpBar.style.width = percentage + '%';
+
+    // Update bar color class
+    hpBar.classList.remove('low', 'critical');
+    if (percentage <= 33) {
+      hpBar.classList.add('critical');
+    } else if (percentage <= 66) {
+      hpBar.classList.add('low');
+    }
+  }
+
+  /**
+   * Adds ripple effect to a button click
+   * @param {MouseEvent} event - The click event
+   */
+  function createRipple(event) {
+    const button = event.currentTarget;
+    const existingRipple = button.querySelector('.ripple');
+    if (existingRipple) {
+      existingRipple.remove();
+    }
+
+    const ripple = document.createElement('span');
+    ripple.classList.add('ripple');
+
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+    ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+
+    button.appendChild(ripple);
+
+    // Remove ripple after animation
+    setTimeout(() => ripple.remove(), 600);
+  }
+
+  /**
+   * Initializes button ripple effects for all buttons
+   */
+  function initButtonRipples() {
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+      button.addEventListener('click', createRipple);
+    });
+  }
+
+  /**
+   * Initializes ambient background particles
+   */
+  function initAmbientParticles() {
+    const container = document.getElementById('ambient-particles');
+    if (!container) return;
+
+    // Check for reduced motion preference
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    // Create floating particles
+    const particleCount = 15;
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('ambient-particle');
+
+      // Randomize position and animation
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 15 + 's';
+      particle.style.animationDuration = (12 + Math.random() * 8) + 's';
+
+      // Vary size slightly
+      const size = 3 + Math.random() * 4;
+      particle.style.width = size + 'px';
+      particle.style.height = size + 'px';
+
+      container.appendChild(particle);
+    }
+  }
+
+  /**
+   * Triggers board transition animation
+   * @param {Function} callback - Called after exit animation, before enter
+   */
+  function animateBoardTransition(callback) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reducedMotion) {
+      callback();
+      return;
+    }
+
+    // Exit animation
+    canvas.classList.add('board-exit');
+
+    setTimeout(() => {
+      canvas.classList.remove('board-exit');
+      callback();
+
+      // Enter animation
+      canvas.classList.add('board-enter');
+      setTimeout(() => {
+        canvas.classList.remove('board-enter');
+      }, 300);
+    }, 300);
+  }
+
+  /**
+   * Triggers defeat screen effect
+   */
+  function triggerDefeatEffect() {
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+      gameScreen.classList.add('game-screen-defeated');
+    }
+  }
+
+  /**
+   * Clears defeat screen effect
+   */
+  function clearDefeatEffect() {
+    const gameScreen = document.getElementById('game-screen');
+    if (gameScreen) {
+      gameScreen.classList.remove('game-screen-defeated');
+    }
+  }
+
+  /**
+   * Triggers shop purchase animation on an item card
+   * @param {HTMLElement} itemCard - The shop item element
+   */
+  function animateShopPurchase(itemCard) {
+    if (!itemCard) return;
+    itemCard.classList.add('purchased');
+    animateStatChange('coins-display', 'coin-spend');
+  }
+
+  /**
+   * Triggers ability activation animation
+   * @param {HTMLElement} abilityButton - The ability button element
+   */
+  function animateAbilityActivation(abilityButton) {
+    if (!abilityButton) return;
+    abilityButton.classList.remove('activating');
+    void abilityButton.offsetWidth;
+    abilityButton.classList.add('activating');
+    setTimeout(() => abilityButton.classList.remove('activating'), 400);
   }
 
   // ============================================================================
@@ -546,6 +837,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Transition to game screen
     showScreen('game-screen');
 
+    // Initialize camera after screen is shown (needs correct viewport size)
+    requestAnimationFrame(() => {
+      initializeCamera();
+    });
+
     console.log(`Starting run with ${char.name} on Board ${startingBoard}: ${boardConfig.name} (${boardConfig.width}x${boardConfig.height}, ${boardConfig.mines} mines)`);
   }
 
@@ -623,8 +919,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = ShopSystem.purchaseItem(game.state, item.id);
         if (result.success) {
           console.log(result.message);
-          // Refresh shop UI
-          populateShopUI();
+
+          // Animate the purchase
+          animateShopPurchase(card);
+
+          // Show ability tip if this is an active ability
+          if (item.type === 'active') {
+            showTip('tip_ability');
+          }
+
+          // Refresh shop UI after animation
+          setTimeout(() => {
+            populateShopUI();
+          }, 400);
         }
       });
     }
@@ -797,6 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Transition to shop
     showScreen('shop-screen');
+    showTip('tip_shop');
     console.log(`Board ${run.boardNumber} complete! Entering shop...`);
   }
 
@@ -808,6 +1116,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Visual effects: Victory confetti
     effects.victory();
+
+    // Play victory sound
+    if (typeof AudioManager !== 'undefined') AudioManager.play('victory');
 
     // End run with victory
     const summary = game.state.endRun(true);
@@ -890,6 +1201,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set game over flag to prevent further clicks
     game.state.isGameOver = true;
 
+    // Apply defeat visual effect (desaturation)
+    triggerDefeatEffect();
+
     // Hide input mode toggle
     updateInputModeToggleVisibility();
 
@@ -909,6 +1223,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // This preserves the final state visible beneath the overlay
         game.stop();
         game.renderer.freeze();
+
+        // Play game over sound
+        if (typeof AudioManager !== 'undefined') AudioManager.play('gameover');
 
         // Transition state and get summary
         const summary = game.state.endRun(false); // false = defeat
@@ -944,9 +1261,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset game over flag
     game.state.isGameOver = false;
 
-    // Populate quest UI and show quest selection
-    populateQuestUI();
-    showScreen('quest-screen');
+    // Check if tutorial has been completed
+    if (!game.state.persistent.tutorialCompleted) {
+      // Show tutorial for first-time players
+      currentTutorialSlide = 0;
+      updateTutorialSlide();
+      showScreen('tutorial-screen');
+    } else {
+      // Proceed to quest selection
+      populateQuestUI();
+      showScreen('quest-screen');
+    }
   });
 
   /**
@@ -966,6 +1291,216 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings(); // Ensure UI reflects current settings
     showScreen('settings-screen');
   });
+
+  /**
+   * Handles "How to Play" button click
+   */
+  document.getElementById('guide-button').addEventListener('click', () => {
+    console.log('Guide clicked');
+    showScreen('guide-screen');
+  });
+
+  // ============================================================================
+  // TUTORIAL SCREEN LOGIC
+  // ============================================================================
+
+  let currentTutorialSlide = 0;
+  const totalTutorialSlides = 4;
+
+  /**
+   * Updates tutorial slide visibility and indicators
+   */
+  function updateTutorialSlide() {
+    // Update slides
+    document.querySelectorAll('.tutorial-slide').forEach((slide, index) => {
+      slide.classList.toggle('active', index === currentTutorialSlide);
+    });
+
+    // Update indicators
+    document.querySelectorAll('.tutorial-indicators .indicator').forEach((indicator, index) => {
+      indicator.classList.toggle('active', index === currentTutorialSlide);
+    });
+
+    // Update button text on last slide
+    const nextBtn = document.getElementById('tutorial-next-btn');
+    if (currentTutorialSlide === totalTutorialSlides - 1) {
+      nextBtn.textContent = 'Start Game';
+    } else {
+      nextBtn.textContent = 'Next';
+    }
+  }
+
+  /**
+   * Completes the tutorial and marks it as done
+   */
+  function completeTutorial() {
+    game.state.persistent.tutorialCompleted = true;
+    SaveSystem.save(game.state);
+    console.log('Tutorial completed');
+
+    // Reset slide for next time (if user replays)
+    currentTutorialSlide = 0;
+    updateTutorialSlide();
+
+    // Proceed to quest selection
+    populateQuestUI();
+    showScreen('quest-screen');
+  }
+
+  // Tutorial skip button
+  document.getElementById('tutorial-skip-btn').addEventListener('click', () => {
+    console.log('Tutorial skipped');
+    completeTutorial();
+  });
+
+  // Tutorial next button
+  document.getElementById('tutorial-next-btn').addEventListener('click', () => {
+    if (currentTutorialSlide < totalTutorialSlides - 1) {
+      currentTutorialSlide++;
+      updateTutorialSlide();
+    } else {
+      // Last slide - complete tutorial
+      completeTutorial();
+    }
+  });
+
+  // Tutorial indicator clicks (for direct navigation)
+  document.querySelectorAll('.tutorial-indicators .indicator').forEach(indicator => {
+    indicator.addEventListener('click', () => {
+      const slideIndex = parseInt(indicator.dataset.slide, 10);
+      if (!isNaN(slideIndex) && slideIndex >= 0 && slideIndex < totalTutorialSlides) {
+        currentTutorialSlide = slideIndex;
+        updateTutorialSlide();
+      }
+    });
+  });
+
+  // ============================================================================
+  // PROGRESSIVE TIP SYSTEM
+  // ============================================================================
+
+  // Tip definitions with their trigger conditions
+  const TIP_DEFINITIONS = {
+    tip_numbers: {
+      title: 'Tip',
+      message: 'Numbers show how many mines are adjacent. Use them to deduce safe cells!',
+      icon: '💡'
+    },
+    tip_hp: {
+      title: 'Don\'t Panic!',
+      message: 'You hit a mine but survived! You can take multiple hits before game over.',
+      icon: '❤️'
+    },
+    tip_flag: {
+      title: 'Flagged!',
+      message: 'Flags mark suspected mines and give +10 mana. Long-press or right-click to flag.',
+      icon: '🚩'
+    },
+    tip_cascade: {
+      title: 'Cascade!',
+      message: 'Empty cells automatically reveal their neighbors. Great for quick progress!',
+      icon: '✨'
+    },
+    tip_shop: {
+      title: 'Welcome to the Shop!',
+      message: 'Spend your coins on items to help your run. Choose wisely!',
+      icon: '🛒'
+    },
+    tip_ability: {
+      title: 'Active Ability!',
+      message: 'Tap the ability button or press 1-3 keys to use your active abilities.',
+      icon: '⚡'
+    },
+    tip_mana_full: {
+      title: 'Mana Full!',
+      message: 'Your mana is maxed out. Use an ability before it goes to waste!',
+      icon: '💎'
+    },
+    tip_progression: {
+      title: 'Level Up!',
+      message: 'Boards get harder but coin multipliers increase. Good luck!',
+      icon: '📈'
+    },
+    tip_shield: {
+      title: 'Shield Active!',
+      message: 'Your shield absorbed the hit! One-time protection from mine damage.',
+      icon: '🛡️'
+    },
+    tip_chord: {
+      title: 'Chording!',
+      message: 'Click a revealed number when adjacent flags match to auto-reveal safe neighbors.',
+      icon: '⚡'
+    }
+  };
+
+  let currentTip = null;
+  let tipTimeout = null;
+
+  /**
+   * Shows a tip toast if it hasn't been seen before
+   * @param {string} tipId - The tip identifier
+   */
+  function showTip(tipId) {
+    // Check if tip exists and hasn't been seen
+    if (!TIP_DEFINITIONS[tipId]) return;
+    if (game.state.persistent.seenTips.includes(tipId)) return;
+
+    // Don't show if another tip is currently visible
+    if (currentTip) return;
+
+    // Mark tip as seen
+    game.state.persistent.seenTips.push(tipId);
+    SaveSystem.save(game.state);
+
+    const tip = TIP_DEFINITIONS[tipId];
+    currentTip = tipId;
+
+    // Create tip element
+    const tipContainer = document.getElementById('tip-container');
+    const tipElement = document.createElement('div');
+    tipElement.className = 'tip-toast';
+    tipElement.innerHTML = `
+      <span class="tip-icon">${tip.icon}</span>
+      <div class="tip-content">
+        <strong>${tip.title}</strong>
+        <p>${tip.message}</p>
+        <span class="tip-dismiss">Tap to dismiss</span>
+      </div>
+    `;
+
+    tipContainer.appendChild(tipElement);
+
+    // Dismiss on click
+    tipElement.addEventListener('click', () => dismissTip(tipElement));
+
+    // Auto-dismiss after 5 seconds
+    tipTimeout = setTimeout(() => dismissTip(tipElement), 5000);
+
+    console.log(`Tip shown: ${tipId}`);
+  }
+
+  /**
+   * Dismisses the current tip toast
+   * @param {HTMLElement} tipElement - The tip element to dismiss
+   */
+  function dismissTip(tipElement) {
+    if (!tipElement) return;
+
+    // Clear timeout if exists
+    if (tipTimeout) {
+      clearTimeout(tipTimeout);
+      tipTimeout = null;
+    }
+
+    // Add hiding animation
+    tipElement.classList.add('hiding');
+
+    // Remove after animation
+    setTimeout(() => {
+      tipElement.remove();
+      currentTip = null;
+    }, 300);
+  }
 
   // ============================================================================
   // BACK BUTTON HANDLERS
@@ -1000,6 +1535,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /**
+   * Guide screen back button
+   */
+  document.getElementById('guide-back-button').addEventListener('click', () => {
+    showScreen('menu-screen');
+  });
+
+  /**
    * Game Over overlay "New Game" button
    * Goes to quest selection to start a fresh run
    */
@@ -1015,6 +1557,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (title) {
       title.classList.remove('victory-title');
     }
+
+    // Clear defeat effect
+    clearDefeatEffect();
+
+    // Reset HP tracking
+    previousHpValue = null;
 
     // Clear board state and reset flags
     game.state.clearBoard();
@@ -1085,6 +1633,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Transition to game screen
     showScreen('game-screen');
 
+    // Show progression tip on board 2
+    if (game.state.currentRun.boardNumber === 2) {
+      showTip('tip_progression');
+    }
+
+    // Initialize camera after screen is shown (needs correct viewport size)
+    requestAnimationFrame(() => {
+      initializeCamera();
+    });
+
     console.log(`Starting Board ${game.state.currentRun.boardNumber}: ${boardConfig.name} (${boardConfig.width}x${boardConfig.height}, ${boardConfig.mines} mines)`);
   });
 
@@ -1136,6 +1694,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update difficulty preview
     updateDifficultyPreview();
+
+    // Sync audio settings with AudioManager
+    if (typeof AudioManager !== 'undefined') {
+      AudioManager.setEnabled(settings.soundEnabled);
+    }
 
     console.log('Settings loaded:', settings);
   }
@@ -1421,8 +1984,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const grid = game.state.grid;
     if (!grid) return null;
 
-    // Use renderer's centralized coordinate conversion
-    return game.renderer.canvasToGrid(canvasX, canvasY, grid);
+    // Use renderer's centralized coordinate conversion (pass camera for transform)
+    return game.renderer.canvasToGrid(canvasX, canvasY, grid, game.state.camera);
   }
 
   /**
@@ -1494,11 +2057,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const updatedCell = grid.getCell(x, y);
         console.log(`${updatedCell.isFlagged ? 'Flagged' : 'Unflagged'} cell at (${x}, ${y}) via click (flag mode)`);
         console.log(`Total flags: ${grid.flagged}/${grid.mineCount}`);
+        if (typeof AudioManager !== 'undefined') AudioManager.play(updatedCell.isFlagged ? 'flag' : 'unflag');
 
         // Award mana for placing flag (+10)
         if (updatedCell.isFlagged) {
           game.state.addMana(10);
           updateHUD();
+          showTip('tip_flag');
           console.log('Flag placed! +10 mana');
         }
       }
@@ -1535,6 +2100,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const layout = getGridLayout();
           effects.damage(minesHit, x, y, layout);
           animateStatChange('hp-display', 'hp-change');
+          if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
 
           game.state.takeDamage(minesHit);
           updateHUD();
@@ -1547,6 +2113,8 @@ document.addEventListener('DOMContentLoaded', () => {
             handleGameOver();
           } else {
             console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+            // Show tip about HP system on first mine hit
+            showTip('tip_hp');
           }
           return;
         }
@@ -1577,6 +2145,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (game.state.currentRun.shieldActive) {
             game.state.currentRun.shieldActive = false;
             console.log('Shield blocked the damage!');
+            showTip('tip_shield');
             updateHUD();
             return;
           }
@@ -1586,6 +2155,7 @@ document.addEventListener('DOMContentLoaded', () => {
           effects.mineExplosion(x, y, layout);
           effects.damage(1, x, y, layout);
           animateStatChange('hp-display', 'hp-change');
+          if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
 
           // Damage system - lose 1 HP per mine
           game.state.takeDamage(1);
@@ -1599,6 +2169,8 @@ document.addEventListener('DOMContentLoaded', () => {
             handleGameOver();
           } else {
             console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+            // Show tip about HP system on first mine hit
+            showTip('tip_hp');
           }
           return;
         }
@@ -1635,6 +2207,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updateHUD();
 
         console.log(`Revealed ${cellsRevealed} cells | +${coinsEarned} coins | +${manaEarned} mana`);
+
+        // Progressive tips for gameplay mechanics
+        if (revealedCell.number > 0) {
+          showTip('tip_numbers');
+        }
+        if (cellsRevealed > 1) {
+          showTip('tip_cascade');
+        }
 
         // Check win condition (all non-mine cells revealed)
         if (grid.isComplete()) {
@@ -2006,6 +2586,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const layout = getGridLayout();
           effects.damage(minesHit, x, y, layout);
           animateStatChange('hp-display', 'hp-change');
+          if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
 
           game.state.takeDamage(minesHit);
           updateHUD();
@@ -2049,6 +2630,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (game.state.currentRun.shieldActive) {
             game.state.currentRun.shieldActive = false;
             console.log('Shield blocked the damage!');
+            showTip('tip_shield');
             updateHUD();
             return;
           }
@@ -2058,6 +2640,7 @@ document.addEventListener('DOMContentLoaded', () => {
           effects.mineExplosion(x, y, layout);
           effects.damage(1, x, y, layout);
           animateStatChange('hp-display', 'hp-change');
+          if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
 
           // Damage system - lose 1 HP per mine
           game.state.takeDamage(1);
@@ -2257,6 +2840,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
 
   /**
+   * Auto-pans camera to keep keyboard cursor visible
+   */
+  function autoPanToCursor() {
+    const camera = game.state.camera;
+    if (!camera || !camera.isEnabled()) return;
+
+    const cursor = game.state.cursor;
+    const viewport = getViewportSize();
+    const cellSize = game.renderer.cellSize;
+    const padding = game.renderer.padding;
+
+    camera.panToCell(cursor.x, cursor.y, cellSize, padding, viewport.width, viewport.height);
+  }
+
+  /**
    * Keyboard event handler for grid navigation and actions
    * Follows WCAG 2.1 standards: arrow keys for navigation, Space/Enter for actions
    */
@@ -2275,15 +2873,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Arrow key navigation
     if (key === 'ArrowUp') {
       game.state.moveCursor(0, -1);
+      autoPanToCursor();
       handled = true;
     } else if (key === 'ArrowDown') {
       game.state.moveCursor(0, 1);
+      autoPanToCursor();
       handled = true;
     } else if (key === 'ArrowLeft') {
       game.state.moveCursor(-1, 0);
+      autoPanToCursor();
       handled = true;
     } else if (key === 'ArrowRight') {
       game.state.moveCursor(1, 0);
+      autoPanToCursor();
       handled = true;
     }
 
@@ -2590,12 +3192,307 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('Keyboard navigation enabled - use arrow keys to move, Space/Enter to reveal, F to flag');
 
   // ============================================================================
+  // ZOOM/PAN CAMERA CONTROLS
+  // ============================================================================
+
+  // Touch state for pinch-to-zoom and two-finger pan
+  let pinchStartDistance = 0;
+  let pinchStartZoom = 1;
+  let panStartX = 0;
+  let panStartY = 0;
+  let isPanning = false;
+  let lastPinchCenter = null;
+
+  /**
+   * Handles mouse wheel zoom
+   * Zooms toward/away from cursor position (focal point zoom)
+   */
+  function handleWheel(event) {
+    const camera = game.state.camera;
+    if (!camera || !camera.isEnabled()) return;
+    if (game.state.currentScreen !== 'PLAYING') return;
+
+    // Prevent page scroll
+    event.preventDefault();
+
+    // Get cursor position relative to canvas
+    const rect = canvas.getBoundingClientRect();
+    const focalX = event.clientX - rect.left;
+    const focalY = event.clientY - rect.top;
+
+    // Calculate zoom delta (normalize for different browsers/devices)
+    const delta = -event.deltaY * 0.001;
+
+    // Get viewport size
+    const viewport = getViewportSize();
+
+    // Zoom toward cursor
+    camera.zoomBy(delta, focalX, focalY, viewport.width, viewport.height);
+    camera.clampToBounds(viewport.width, viewport.height);
+  }
+
+  /**
+   * Handles two-finger touch start for pinch/pan
+   */
+  function handlePinchStart(event) {
+    if (event.touches.length !== 2) return;
+
+    const camera = game.state.camera;
+    if (!camera || !camera.isEnabled()) return;
+
+    // Calculate initial pinch distance
+    const touch1 = event.touches[0];
+    const touch2 = event.touches[1];
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    pinchStartDistance = Math.sqrt(dx * dx + dy * dy);
+    pinchStartZoom = camera.zoom;
+
+    // Calculate pinch center
+    lastPinchCenter = {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+
+    // Track pan start
+    const rect = canvas.getBoundingClientRect();
+    panStartX = lastPinchCenter.x - rect.left;
+    panStartY = lastPinchCenter.y - rect.top;
+    isPanning = true;
+
+    event.preventDefault();
+  }
+
+  /**
+   * Handles two-finger touch move for pinch/pan
+   */
+  function handlePinchMove(event) {
+    if (event.touches.length !== 2) {
+      isPanning = false;
+      return;
+    }
+
+    const camera = game.state.camera;
+    if (!camera || !camera.isEnabled()) return;
+    if (!isPanning) return;
+
+    const touch1 = event.touches[0];
+    const touch2 = event.touches[1];
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate current pinch distance
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+    // Calculate pinch center
+    const centerX = (touch1.clientX + touch2.clientX) / 2 - rect.left;
+    const centerY = (touch1.clientY + touch2.clientY) / 2 - rect.top;
+
+    const viewport = getViewportSize();
+
+    // Handle zoom (pinch)
+    if (pinchStartDistance > 0) {
+      const scale = currentDistance / pinchStartDistance;
+      const newZoom = pinchStartZoom * scale;
+      camera.zoomTo(newZoom, centerX, centerY, viewport.width, viewport.height);
+    }
+
+    // Handle pan (two-finger drag)
+    if (lastPinchCenter) {
+      const panDeltaX = centerX - panStartX;
+      const panDeltaY = centerY - panStartY;
+
+      // Update pan start for next frame
+      panStartX = centerX;
+      panStartY = centerY;
+
+      // Apply pan
+      camera.pan(panDeltaX, panDeltaY);
+    }
+
+    camera.clampToBounds(viewport.width, viewport.height);
+
+    event.preventDefault();
+  }
+
+  /**
+   * Handles two-finger touch end
+   */
+  function handlePinchEnd(event) {
+    if (event.touches.length < 2) {
+      isPanning = false;
+      pinchStartDistance = 0;
+      lastPinchCenter = null;
+    }
+  }
+
+  /**
+   * Enhanced touch start that detects two-finger gestures
+   */
+  function handleCameraTouchStart(event) {
+    if (event.touches.length === 2) {
+      handlePinchStart(event);
+    }
+  }
+
+  /**
+   * Enhanced touch move that handles pinch/pan
+   */
+  function handleCameraTouchMove(event) {
+    if (event.touches.length === 2) {
+      handlePinchMove(event);
+    }
+  }
+
+  /**
+   * Enhanced touch end that cleans up pinch state
+   */
+  function handleCameraTouchEnd(event) {
+    handlePinchEnd(event);
+  }
+
+  // Register zoom/pan event listeners
+  canvas.addEventListener('wheel', handleWheel, { passive: false, signal });
+  canvas.addEventListener('touchstart', handleCameraTouchStart, { passive: false, signal });
+  canvas.addEventListener('touchmove', handleCameraTouchMove, { passive: false, signal });
+  canvas.addEventListener('touchend', handleCameraTouchEnd, { passive: true, signal });
+  canvas.addEventListener('touchcancel', handleCameraTouchEnd, { passive: true, signal });
+
+  console.log('Camera controls enabled - scroll to zoom, pinch to zoom/pan on touch');
+
+  // ============================================================================
+  // ZOOM BUTTON HANDLERS
+  // ============================================================================
+
+  const zoomInBtn = document.getElementById('zoom-in');
+  const zoomOutBtn = document.getElementById('zoom-out');
+  const zoomFitBtn = document.getElementById('zoom-fit');
+
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const camera = game.state.camera;
+      if (!camera || !camera.isEnabled()) return;
+
+      const viewport = getViewportSize();
+      const centerX = viewport.width / 2;
+      const centerY = viewport.height / 2;
+
+      camera.zoomBy(0.2, centerX, centerY, viewport.width, viewport.height);
+      camera.clampToBounds(viewport.width, viewport.height);
+    }, { signal });
+  }
+
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const camera = game.state.camera;
+      if (!camera || !camera.isEnabled()) return;
+
+      const viewport = getViewportSize();
+      const centerX = viewport.width / 2;
+      const centerY = viewport.height / 2;
+
+      camera.zoomBy(-0.2, centerX, centerY, viewport.width, viewport.height);
+      camera.clampToBounds(viewport.width, viewport.height);
+    }, { signal });
+  }
+
+  if (zoomFitBtn) {
+    zoomFitBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      initializeCamera(); // Re-fit to grid
+    }, { signal });
+  }
+
+  // Prevent zoom buttons from triggering game actions
+  [zoomInBtn, zoomOutBtn, zoomFitBtn].forEach(btn => {
+    if (btn) {
+      btn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true, signal });
+      btn.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true, signal });
+    }
+  });
+
+  // ============================================================================
+  // MINIMAP RENDERING AND INTERACTION
+  // ============================================================================
+
+  /**
+   * Renders the minimap if visible
+   */
+  function renderMinimap() {
+    if (!minimapRenderer) return;
+    if (!minimapCanvas || minimapCanvas.classList.contains('hidden')) return;
+
+    const camera = game.state.camera;
+    const grid = game.state.grid;
+    if (!grid) return;
+
+    const viewport = getViewportSize();
+    minimapRenderer.render(grid, camera, viewport.width, viewport.height);
+  }
+
+  // Minimap render loop (separate from main game loop for performance)
+  let minimapAnimationId = null;
+
+  function minimapRenderLoop() {
+    if (game.state.currentScreen === 'PLAYING' && !game.state.isGameOver) {
+      renderMinimap();
+    }
+    minimapAnimationId = requestAnimationFrame(minimapRenderLoop);
+  }
+
+  // Start minimap render loop
+  minimapRenderLoop();
+
+  // Minimap click handler for navigation
+  if (minimapCanvas) {
+    minimapCanvas.addEventListener('click', (event) => {
+      const camera = game.state.camera;
+      if (!camera || !camera.isEnabled()) return;
+
+      const grid = game.state.grid;
+      if (!grid) return;
+
+      // Get click position relative to minimap
+      const rect = minimapCanvas.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const clickY = event.clientY - rect.top;
+
+      // Convert to world position
+      const worldPos = minimapRenderer.clickToWorld(clickX, clickY, grid);
+      if (!worldPos) return;
+
+      // Move camera to clicked position
+      camera.x = worldPos.x;
+      camera.y = worldPos.y;
+
+      const viewport = getViewportSize();
+      camera.clampToBounds(viewport.width, viewport.height);
+    }, { signal });
+
+    // Prevent minimap interactions from triggering game events
+    minimapCanvas.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true, signal });
+    minimapCanvas.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true, signal });
+  }
+
+  // ============================================================================
   // EVENT LISTENER CLEANUP
   // ============================================================================
 
   // Cleanup event listeners on page unload
   window.addEventListener('beforeunload', () => {
     eventController.abort();
+    if (minimapAnimationId) {
+      cancelAnimationFrame(minimapAnimationId);
+    }
   });
 
   // ============================================================================

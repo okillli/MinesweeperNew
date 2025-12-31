@@ -119,52 +119,60 @@ class CanvasRenderer {
   /**
    * Converts canvas pixel coordinates to grid cell coordinates
    * Properly handles the padding between cells (not after the last cell)
+   * Supports camera transforms when camera is enabled
    *
    * @param {number} canvasX - X position on canvas (CSS pixels, after getBoundingClientRect adjustment)
    * @param {number} canvasY - Y position on canvas (CSS pixels, after getBoundingClientRect adjustment)
    * @param {Grid} grid - The grid to convert coordinates for
+   * @param {Camera} [camera] - Optional camera for coordinate conversion
    * @returns {{x: number, y: number}|null} Grid coordinates or null if outside grid or in padding
    */
-  canvasToGrid(canvasX, canvasY, grid) {
+  canvasToGrid(canvasX, canvasY, grid, camera) {
     if (!grid) return null;
 
-    const layout = this.calculateGridLayout(grid);
-    if (!layout) return null;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
+    const gridCols = grid.width;
+    const gridRows = grid.height;
 
-    const { offsetX, offsetY, cellSize, padding, gridCols, gridRows } = layout;
+    // Check if camera is enabled
+    const cameraEnabled = camera && camera.isEnabled();
 
-    // Convert to coordinates relative to grid origin
-    const relativeX = canvasX - offsetX;
-    const relativeY = canvasY - offsetY;
+    let worldX, worldY;
+
+    if (cameraEnabled) {
+      // Get viewport dimensions
+      const viewportW = this.canvas.width / this.dpr;
+      const viewportH = this.canvas.height / this.dpr;
+
+      // Convert screen coordinates to world coordinates using camera
+      const worldCoords = camera.screenToWorld(canvasX, canvasY, viewportW, viewportH);
+      worldX = worldCoords.x;
+      worldY = worldCoords.y;
+    } else {
+      // No camera - use original centered layout
+      const layout = this.calculateGridLayout(grid);
+      if (!layout) return null;
+
+      // Convert to world coordinates (relative to grid origin)
+      worldX = canvasX - layout.offsetX;
+      worldY = canvasY - layout.offsetY;
+    }
+
+    // Grid dimensions in pixels
+    const gridPixelWidth = (gridCols * cellSize) + ((gridCols - 1) * padding);
+    const gridPixelHeight = (gridRows * cellSize) + ((gridRows - 1) * padding);
 
     // Quick bounds check
-    if (relativeX < 0 || relativeY < 0) return null;
-    if (relativeX >= layout.gridWidth || relativeY >= layout.gridHeight) return null;
-
-    // Calculate cell span (cell + padding after it, except for last cell)
-    const cellSpan = cellSize + padding;
+    if (worldX < 0 || worldY < 0) return null;
+    if (worldX >= gridPixelWidth || worldY >= gridPixelHeight) return null;
 
     // Calculate which cell span the click falls into
-    const gridX = Math.floor(relativeX / cellSpan);
-    const gridY = Math.floor(relativeY / cellSpan);
+    const gridX = Math.floor(worldX / cellSpan);
+    const gridY = Math.floor(worldY / cellSpan);
 
     // Check bounds
-    if (gridX >= gridCols || gridY >= gridRows) return null;
-
-    // Calculate position within the cell span
-    const posInSpanX = relativeX - (gridX * cellSpan);
-    const posInSpanY = relativeY - (gridY * cellSpan);
-
-    // Check if click is in padding area (between cells), not the cell itself
-    // For the last column/row, there's no padding after, so allow full cellSize
-    const maxXInSpan = (gridX === gridCols - 1) ? cellSize : cellSize;
-    const maxYInSpan = (gridY === gridRows - 1) ? cellSize : cellSize;
-
-    // If click is past the cell (in padding area), it's still the same cell
-    // because visually users are clicking "on" that cell
-    // The padding is minimal (2px) so we should still register the click
-
-    // Validate final coordinates
     if (gridX < 0 || gridX >= gridCols || gridY < 0 || gridY >= gridRows) {
       return null;
     }
@@ -254,18 +262,21 @@ class CanvasRenderer {
     // Clear canvas
     this.clear();
 
-    // Render grid if playing
-    if (gameState.currentScreen === 'PLAYING' && gameState.grid) {
-      this.renderGrid(gameState.grid);
+    // Render grid if playing or game over (keep showing grid on game over)
+    if ((gameState.currentScreen === 'PLAYING' || gameState.currentScreen === 'GAME_OVER') && gameState.grid) {
+      // Get camera reference
+      const camera = gameState.camera;
+
+      this.renderGrid(gameState.grid, camera);
 
       // Render hover highlight if a cell is being hovered
       if (gameState.hoverCell) {
-        this.renderHoverHighlight(gameState.grid, gameState.hoverCell);
+        this.renderHoverHighlight(gameState.grid, gameState.hoverCell, camera);
       }
 
       // Render keyboard cursor if visible
       if (gameState.cursor && gameState.cursor.visible) {
-        this.renderCursor(gameState.grid, gameState.cursor);
+        this.renderCursor(gameState.grid, gameState.cursor, camera);
       }
     }
   }
@@ -284,21 +295,72 @@ class CanvasRenderer {
   /**
    * Renders the entire grid centered on the canvas
    * @param {Grid} grid - The grid to render
+   * @param {Camera} [camera] - Optional camera for pan/zoom
    */
-  renderGrid(grid) {
-    // Use centralized layout calculation
-    const layout = this.calculateGridLayout(grid);
-    if (!layout) return;
+  renderGrid(grid, camera) {
+    const ctx = this.ctx;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
 
-    const { offsetX, offsetY, cellSize, padding } = layout;
+    // Calculate grid dimensions in world coordinates
+    const gridPixelWidth = (grid.width * cellSize) + ((grid.width - 1) * padding);
+    const gridPixelHeight = (grid.height * cellSize) + ((grid.height - 1) * padding);
 
-    // Render each cell
-    for (let y = 0; y < grid.height; y++) {
-      for (let x = 0; x < grid.width; x++) {
-        const cell = grid.cells[y][x];
-        const cellX = offsetX + x * (cellSize + padding);
-        const cellY = offsetY + y * (cellSize + padding);
-        this.renderCell(cell, cellX, cellY);
+    // Get viewport dimensions
+    const viewportW = this.canvas.width / this.dpr;
+    const viewportH = this.canvas.height / this.dpr;
+
+    // Check if camera is enabled
+    const cameraEnabled = camera && camera.isEnabled();
+
+    if (cameraEnabled) {
+      // Set world bounds on camera (needed for clamping)
+      camera.setWorldBounds(gridPixelWidth, gridPixelHeight);
+
+      // Apply camera transform
+      ctx.save();
+
+      // Move to center of viewport
+      ctx.translate(viewportW / 2, viewportH / 2);
+
+      // Apply zoom
+      ctx.scale(camera.zoom, camera.zoom);
+
+      // Translate to camera position (negative because camera moves opposite to world)
+      ctx.translate(-camera.x, -camera.y);
+
+      // Get visible cell range for frustum culling
+      const visible = camera.getVisibleCells(
+        grid.width, grid.height, cellSize, padding, viewportW, viewportH
+      );
+
+      // Render only visible cells
+      for (let y = visible.startRow; y <= visible.endRow; y++) {
+        for (let x = visible.startCol; x <= visible.endCol; x++) {
+          const cell = grid.cells[y][x];
+          const cellX = x * cellSpan;
+          const cellY = y * cellSpan;
+          this.renderCell(cell, cellX, cellY);
+        }
+      }
+
+      ctx.restore();
+    } else {
+      // No camera - use original centered rendering
+      const layout = this.calculateGridLayout(grid);
+      if (!layout) return;
+
+      const { offsetX, offsetY } = layout;
+
+      // Render each cell
+      for (let y = 0; y < grid.height; y++) {
+        for (let x = 0; x < grid.width; x++) {
+          const cell = grid.cells[y][x];
+          const cellX = offsetX + x * cellSpan;
+          const cellY = offsetY + y * cellSpan;
+          this.renderCell(cell, cellX, cellY);
+        }
       }
     }
   }
@@ -403,21 +465,44 @@ class CanvasRenderer {
    *
    * @param {Grid} grid - The grid being rendered
    * @param {{x: number, y: number}} hoverCell - The hovered cell coordinates
+   * @param {Camera} [camera] - Optional camera for pan/zoom
    */
-  renderHoverHighlight(grid, hoverCell) {
+  renderHoverHighlight(grid, hoverCell, camera) {
     const { x, y } = hoverCell;
     const cell = grid.getCell(x, y);
     if (!cell) return;
 
-    // Use centralized layout calculation
-    const layout = this.calculateGridLayout(grid);
-    if (!layout) return;
+    const ctx = this.ctx;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
+    const cameraEnabled = camera && camera.isEnabled();
 
-    const { offsetX, offsetY, cellSize, padding } = layout;
+    // Get viewport dimensions for camera
+    const viewportW = this.canvas.width / this.dpr;
+    const viewportH = this.canvas.height / this.dpr;
 
-    // Calculate cell position
-    const cellX = offsetX + x * (cellSize + padding);
-    const cellY = offsetY + y * (cellSize + padding);
+    let cellX, cellY;
+
+    if (cameraEnabled) {
+      // Apply camera transform for highlight
+      ctx.save();
+      ctx.translate(viewportW / 2, viewportH / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+
+      // Cell position in world coordinates
+      cellX = x * cellSpan;
+      cellY = y * cellSpan;
+    } else {
+      // Use centralized layout calculation
+      const layout = this.calculateGridLayout(grid);
+      if (!layout) return;
+
+      cellX = layout.offsetX + x * cellSpan;
+      cellY = layout.offsetY + y * cellSpan;
+    }
+
     const size = cellSize;
 
     // DPR-aware line width for crisp hover borders
@@ -426,24 +511,28 @@ class CanvasRenderer {
     // Different highlight styles based on cell state
     if (cell.isRevealed) {
       // Revealed cell hover (for chording) - subtle blue border
-      this.ctx.strokeStyle = '#4a90e2';
-      this.ctx.lineWidth = hoverLineWidth;
-      this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+      ctx.strokeStyle = '#4a90e2';
+      ctx.lineWidth = hoverLineWidth;
+      ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
     } else if (cell.isFlagged) {
       // Flagged cell hover (can be unflagged) - yellow border matching flag color
-      this.ctx.strokeStyle = '#f4a261';
-      this.ctx.lineWidth = hoverLineWidth;
-      this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+      ctx.strokeStyle = '#f4a261';
+      ctx.lineWidth = hoverLineWidth;
+      ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
     } else {
       // Unrevealed cell hover (primary action) - white overlay + green border
       // Semi-transparent white overlay for emphasis
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      this.ctx.fillRect(cellX, cellY, size, size);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(cellX, cellY, size, size);
 
       // Green border to indicate clickable/revealable
-      this.ctx.strokeStyle = '#2ecc71';
-      this.ctx.lineWidth = hoverLineWidth;
-      this.ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+      ctx.strokeStyle = '#2ecc71';
+      ctx.lineWidth = hoverLineWidth;
+      ctx.strokeRect(cellX + 1.5, cellY + 1.5, size - 3, size - 3);
+    }
+
+    if (cameraEnabled) {
+      ctx.restore();
     }
   }
 
@@ -459,29 +548,55 @@ class CanvasRenderer {
    *
    * @param {Grid} grid - The grid being rendered
    * @param {{x: number, y: number, visible: boolean}} cursor - The cursor state
+   * @param {Camera} [camera] - Optional camera for pan/zoom
    */
-  renderCursor(grid, cursor) {
+  renderCursor(grid, cursor, camera) {
     const { x, y } = cursor;
     const cell = grid.getCell(x, y);
     if (!cell) return;
 
-    // Use centralized layout calculation
-    const layout = this.calculateGridLayout(grid);
-    if (!layout) return;
+    const ctx = this.ctx;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
+    const cameraEnabled = camera && camera.isEnabled();
 
-    const { offsetX, offsetY, cellSize, padding } = layout;
+    // Get viewport dimensions for camera
+    const viewportW = this.canvas.width / this.dpr;
+    const viewportH = this.canvas.height / this.dpr;
 
-    // Calculate cell position with integer coordinates for crisp rendering
-    const cellX = Math.floor(offsetX + x * (cellSize + padding));
-    const cellY = Math.floor(offsetY + y * (cellSize + padding));
+    ctx.save();
+
+    let cellX, cellY;
+
+    if (cameraEnabled) {
+      // Apply camera transform
+      ctx.translate(viewportW / 2, viewportH / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+
+      // Cell position in world coordinates
+      cellX = Math.floor(x * cellSpan);
+      cellY = Math.floor(y * cellSpan);
+    } else {
+      // Use centralized layout calculation
+      const layout = this.calculateGridLayout(grid);
+      if (!layout) {
+        ctx.restore();
+        return;
+      }
+
+      cellX = Math.floor(layout.offsetX + x * cellSpan);
+      cellY = Math.floor(layout.offsetY + y * cellSpan);
+    }
+
     const size = cellSize;
 
     // Draw keyboard cursor (gold border) with DPR-aware line width
-    this.ctx.save();
-    this.ctx.strokeStyle = '#FFD700'; // Gold - high contrast against all cell states
-    this.ctx.lineWidth = Math.max(2, 4 / this.dpr);
-    this.ctx.strokeRect(cellX + 2, cellY + 2, size - 4, size - 4);
-    this.ctx.restore();
+    ctx.strokeStyle = '#FFD700'; // Gold - high contrast against all cell states
+    ctx.lineWidth = Math.max(2, 4 / this.dpr);
+    ctx.strokeRect(cellX + 2, cellY + 2, size - 4, size - 4);
+    ctx.restore();
   }
 
   /**

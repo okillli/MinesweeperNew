@@ -14,9 +14,9 @@ _Made with love for Lizzie_
 | Phase 2A: Resources | Complete | 2025-12-30 |
 | Phase 2B: Items & Shop | Complete | 2025-12-30 |
 | Phase 3: Progression | Complete | 2025-12-30 |
-| Phase 4: Polish | Next | — |
+| Phase 4: Polish | In Progress | — |
 
-**Version**: 0.5.0
+**Version**: 0.6.0
 
 ---
 
@@ -73,13 +73,45 @@ _Made with love for Lizzie_
 - Victory screen
 - Real-time HUD updates
 
+### Visual Effects System
+- Particle system with object pooling
+- Floating text system (+coins, -HP, +mana)
+- Mine explosion particles (red/orange/yellow burst)
+- Damage feedback (screen shake + red vignette flash)
+- Coin sparkle effects (gold particles)
+- Flag placement effect (orange sparkle)
+- Victory confetti (colorful falling particles)
+- HUD stat animations (pulse on change)
+- Respects `prefers-reduced-motion` accessibility setting
+
+### Pan/Zoom Camera System (NEW)
+- Virtual camera for large boards (15x15+)
+- Mouse wheel zoom with focal-point tracking
+- Pinch-to-zoom on mobile (zoom toward pinch center)
+- Two-finger pan gesture on mobile
+- Middle-mouse drag to pan on desktop
+- Zoom controls (+/-/Fit buttons)
+- Minimap for boards 25x25+ with click-to-navigate
+- Frustum culling for performance
+- Auto-pan keeps keyboard cursor visible
+
 ---
 
-## Next Up: Phase 4
+## Next Up: Phase 4 (Continued)
 
-1. Animations (reveal, damage, effects)
-2. Tutorial/onboarding
-3. Deploy to GitHub Pages
+### Remaining Visual Effects
+- Cell reveal cascade animation (staggered reveal)
+- Button press ripple effect
+- Defeat screen desaturation
+- Shop purchase effects
+- Mana/ability usage effects
+- Board transition animation
+- Number pop on reveal
+- Ambient background effects
+
+### Other Phase 4 Items
+1. Tutorial/onboarding
+2. Deploy to GitHub Pages
 
 > See [DEVELOPMENT.md](DEVELOPMENT.md) for full roadmap
 
@@ -89,9 +121,10 @@ _Made with love for Lizzie_
 
 | File | Purpose |
 |------|---------|
-| `src/main.js` | Entry point, input handlers (~2000 lines) |
+| `src/main.js` | Entry point, input handlers (~2600 lines) |
 | `src/entities/Grid.js` | Minesweeper logic |
 | `src/core/GameState.js` | Central state |
+| `src/core/Game.js` | Game loop orchestration |
 | `src/rendering/CanvasRenderer.js` | Grid rendering |
 | `src/data/items.js` | Item definitions (20 items) |
 | `src/data/boards.js` | Board configurations |
@@ -100,6 +133,11 @@ _Made with love for Lizzie_
 | `src/systems/ItemSystem.js` | Item effect processing |
 | `src/systems/ShopSystem.js` | Shop generation & purchases |
 | `src/systems/SaveSystem.js` | localStorage persistence |
+| `src/systems/ParticleSystem.js` | Particle effects (explosions, sparkles) |
+| `src/systems/FloatingTextSystem.js` | Floating text (+coins, -HP) |
+| `src/systems/EffectsManager.js` | Central effects coordinator |
+| `src/core/Camera.js` | Virtual camera for pan/zoom |
+| `src/rendering/MinimapRenderer.js` | Minimap for large boards |
 
 ---
 
@@ -127,4 +165,4 @@ None currently.
 
 ---
 
-**Last Updated**: 2025-12-30
+**Last Updated**: 2025-12-31 (Pan/Zoom Camera System added)
