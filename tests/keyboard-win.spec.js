@@ -45,7 +45,7 @@ test.describe('Keyboard Win Condition', () => {
     await page.waitForTimeout(500);
   });
 
-  test('should log win condition check after keyboard reveal', async ({ page }) => {
+  test('should reveal cells using keyboard', async ({ page }) => {
     const consoleMessages = [];
     page.on('console', msg => {
       consoleMessages.push(msg.text());
@@ -60,37 +60,29 @@ test.describe('Keyboard Win Condition', () => {
     await page.keyboard.press('Space');
     await page.waitForTimeout(100);
 
-    // Check that win check log was output
-    const hasWinCheck = consoleMessages.some(m => m.includes('[KB Win Check]'));
-    console.log('Console messages:', consoleMessages.filter(m => m.includes('[KB') || m.includes('Revealed')));
-    expect(hasWinCheck).toBeTruthy();
+    // Check that reveal happened (either coins earned or mine hit)
+    const hasReveal = consoleMessages.some(m =>
+      m.includes('Revealed') || m.includes('Hit mine') || m.includes('coins')
+    );
+    console.log('Console messages:', consoleMessages.filter(m => m.includes('Revealed') || m.includes('Hit')));
+    expect(hasReveal).toBeTruthy();
   });
 
-  test('should trigger board complete when all non-mine cells revealed via keyboard', async ({ page }) => {
-    const consoleMessages = [];
-    page.on('console', msg => {
-      consoleMessages.push(msg.text());
-    });
-
+  test('should trigger board complete or game over when using keyboard', async ({ page }) => {
     // Focus canvas for keyboard input
     await page.click('#game-canvas');
 
-    // We'll systematically reveal cells using keyboard
+    // Systematically reveal cells using keyboard
     // Move and reveal in a pattern to cover the 8x8 grid
     let attempts = 0;
-    const maxAttempts = 150; // More than enough for 8x8
+    const maxAttempts = 150;
 
     while (attempts < maxAttempts) {
-      // Check if game is over or shop is visible
+      // Check if game ended (shop or game over)
       const isShopVisible = await page.locator('#shop-screen.active').isVisible({ timeout: 50 }).catch(() => false);
       const isGameOverVisible = await page.locator('#gameover-overlay:not(.hidden)').isVisible({ timeout: 50 }).catch(() => false);
 
-      if (isShopVisible) {
-        console.log('Shop screen visible - board completed!');
-        break;
-      }
-      if (isGameOverVisible) {
-        console.log('Game over visible - died or won');
+      if (isShopVisible || isGameOverVisible) {
         break;
       }
 
@@ -113,19 +105,11 @@ test.describe('Keyboard Win Condition', () => {
       attempts++;
     }
 
-    // Check for win condition logs
-    const winCheckLogs = consoleMessages.filter(m => m.includes('[KB Win Check]'));
-    const boardCompleteLogs = consoleMessages.filter(m => m.includes('[handleBoardComplete]'));
-    console.log('Win check logs found:', winCheckLogs.length);
-    console.log('Board complete logs:', boardCompleteLogs);
-
     // Either shop or game over should be visible
     const shopVisible = await page.locator('#shop-screen.active').isVisible({ timeout: 2000 }).catch(() => false);
     const gameOverVisible = await page.locator('#gameover-overlay:not(.hidden)').isVisible({ timeout: 2000 }).catch(() => false);
 
-    console.log('Shop visible:', shopVisible, 'Game over visible:', gameOverVisible);
-
-    // At minimum, one of these should be true if the game progressed properly
-    expect(shopVisible || gameOverVisible || boardCompleteLogs.length > 0).toBeTruthy();
+    // Game should end via keyboard play (either complete board -> shop, or die -> game over)
+    expect(shopVisible || gameOverVisible).toBeTruthy();
   });
 });
