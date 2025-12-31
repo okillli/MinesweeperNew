@@ -1088,9 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Handles board completion - transitions to shop or victory
    */
   function handleBoardComplete() {
-    console.log('[handleBoardComplete] Called!');
     const run = game.state.currentRun;
-    console.log(`[handleBoardComplete] boardNumber=${run.boardNumber}`);
 
     // Award perfect board bonus if no damage taken
     if (run.perfectBoardTracker) {
@@ -1125,7 +1123,6 @@ document.addEventListener('DOMContentLoaded', () => {
    * Handles victory (all 6 boards cleared)
    */
   function handleVictory() {
-    console.log('[handleVictory] Called!');
     game.state.isGameOver = true;
 
     // Visual effects: Victory confetti
@@ -3115,11 +3112,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle mine hit (damage system)
     if (revealed.isMine) {
+      // Mark board as imperfect
+      game.state.currentRun.perfectBoardTracker = false;
+      game.state.currentRun.safeRevealStreak = 0;
+
+      // Check for shield protection
+      if (game.state.currentRun.shieldActive) {
+        game.state.currentRun.shieldActive = false;
+        console.log('Shield blocked the damage!');
+        showTip('tip_shield');
+        updateHUD();
+        return;
+      }
+
       // Visual effects: Mine explosion + damage feedback
       const layout = getGridLayout();
       effects.mineExplosion(x, y, layout);
       effects.damage(1, x, y, layout);
       animateStatChange('hp-display', 'hp-change');
+      if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
 
       // Damage system - lose 1 HP per mine
       game.state.takeDamage(1);
@@ -3136,6 +3147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
       } else {
         console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
+        showTip('tip_hp');
       }
       return;
     } else {
@@ -3145,8 +3157,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update cells revealed stat
       game.state.currentRun.stats.cellsRevealed += cellsRevealed;
 
-      // Award coins (+10 per cell)
-      const coinsEarned = cellsRevealed * 10;
+      // Update safe reveal streak for Fortify Armor
+      game.state.currentRun.safeRevealStreak += cellsRevealed;
+      ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+
+      // Award coins with multipliers (+10 per cell base)
+      const baseCoins = cellsRevealed * 10;
+      const modifiedCoins = ItemSystem.getModifiedValue(game.state, 'coinEarn', baseCoins);
+      const charCoinMult = game.state.currentRun.characterCoinMult || 1.0;
+      const coinsEarned = Math.floor(modifiedCoins * game.state.currentRun.coinMultiplier * charCoinMult);
       game.state.addCoins(coinsEarned);
 
       // Award mana (+5 per cell)
@@ -3168,12 +3187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check win condition
-    const grid = game.state.grid;
-    const totalCells = grid.width * grid.height;
-    const targetRevealed = totalCells - grid.mineCount;
-    console.log(`[KB Win Check] revealed=${grid.revealed}, target=${targetRevealed}, isComplete=${grid.isComplete()}`);
-    if (grid.isComplete()) {
-      console.log('[KB] Board complete! Calling handleBoardComplete...');
+    if (game.state.grid.isComplete()) {
       handleBoardComplete();
     }
   }
@@ -3218,15 +3232,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const revealedCells = game.state.grid.chord(x, y);
 
-    // Check if any chorded cells were mines (damage system)
+    // Count safe cells and mines
     const minesHit = revealedCells.filter(c => c.isMine).length;
+    const safeCells = revealedCells.length - minesHit;
+
+    // Update cells revealed stat
+    game.state.currentRun.stats.cellsRevealed += revealedCells.length;
+
+    // Award coins and mana for safe cells
+    if (safeCells > 0) {
+      const coinsEarned = safeCells * 10;
+      const manaEarned = safeCells * 5;
+      game.state.addCoins(coinsEarned);
+      game.state.addMana(manaEarned);
+      updateHUD();
+      console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
+    }
+
+    // Apply damage for mines hit
     if (minesHit > 0) {
       // Visual effects: Damage feedback for chord hit
       const layout = getGridLayout();
       effects.damage(minesHit, x, y, layout);
       animateStatChange('hp-display', 'hp-change');
+      if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
 
-      // Apply damage for each mine hit
       game.state.takeDamage(minesHit);
       updateHUD();
 
@@ -3235,43 +3265,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // Only game over if HP depleted
       if (game.state.currentRun.hp <= 0) {
         console.log('HP depleted! Game Over.');
-        // Small delay to show the revealed mine before game over sequence
-        setTimeout(() => {
-          handleGameOver();
-        }, 200);
+        handleGameOver();
       } else {
         console.log(`Still alive! ${game.state.currentRun.hp} HP remaining`);
       }
       return;
     }
 
-    // Count safe cells and award resources
-    const safeCells = revealedCells.filter(c => !c.isMine).length;
-
-    if (safeCells > 0) {
-      // Award coins and mana for safe cells
-      const coinsEarned = safeCells * 10;
-      const manaEarned = safeCells * 5;
-      game.state.addCoins(coinsEarned);
-      game.state.addMana(manaEarned);
-
-      // Update stats
-      game.state.currentRun.stats.cellsRevealed += safeCells;
-
-      // Update HUD
-      updateHUD();
-
-      console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
-
-      // Emit events for each revealed cell
-      for (const revealed of revealedCells) {
-        if (!revealed.isMine) {
-          events.emit('cell_revealed', {
-            x: revealed.x,
-            y: revealed.y,
-            coinsEarned: 10
-          });
-        }
+    // Emit events for each revealed cell
+    for (const revealed of revealedCells) {
+      if (!revealed.isMine) {
+        events.emit('cell_revealed', {
+          x: revealed.x,
+          y: revealed.y,
+          coinsEarned: 10
+        });
       }
     }
 
