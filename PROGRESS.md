@@ -69,8 +69,8 @@ _Made with love for Lizzie_
 - Shop screen
 - Quest selection screen
 - Character selection screen
-- Game over overlay
-- Victory screen
+- Game over overlay with auto-scroll to stats
+- Victory screen with auto-scroll to stats
 - Real-time HUD updates
 - **NEW**: Consistent emoji icons throughout UI
 
@@ -153,6 +153,7 @@ All Phase 4 items have been completed:
 | `src/systems/ParticleSystem.js` | Particle effects (explosions, sparkles) |
 | `src/systems/FloatingTextSystem.js` | Floating text with icons (🪙, 💎, ❤️) |
 | `src/systems/EffectsManager.js` | Central effects coordinator |
+| `src/systems/AudioManager.js` | Procedural Web Audio sounds |
 | `src/core/Camera.js` | Virtual camera for pan/zoom |
 | `src/rendering/MinimapRenderer.js` | Minimap for large boards |
 
@@ -182,4 +183,4 @@ None currently.
 
 ---
 
-**Last Updated**: 2025-12-31 (Emoji Icons added)
+**Last Updated**: 2025-12-31 (Phase 4 complete, auto-scroll added)
