@@ -112,8 +112,9 @@ _Made with love for Lizzie_
 - Mouse wheel zoom with focal-point tracking
 - Pinch-to-zoom on mobile (zoom toward pinch center)
 - Two-finger pan gesture on mobile
+- **Single-finger drag to pan when zoomed in (>1.2x)** - intuitive mobile UX
 - Middle-mouse drag to pan on desktop
-- Zoom controls (+/-/Fit buttons)
+- **Zoom controls in HUD toolbar** - no longer overlays the board
 - Minimap for boards 25x25+ with click-to-navigate
 - Frustum culling for performance
 - Auto-pan keeps keyboard cursor visible
