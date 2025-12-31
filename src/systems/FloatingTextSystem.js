@@ -78,9 +78,9 @@ class FloatingTextSystem {
 
     textObj.x = x;
     textObj.y = y;
-    textObj.text = `+${amount}`;
+    textObj.text = `🪙+${amount}`;
     textObj.color = '#ffd700';
-    textObj.size = 18;
+    textObj.size = 16;
     textObj.alpha = 1;
     textObj.life = 1;
     textObj.decay = 0.018;
@@ -106,9 +106,9 @@ class FloatingTextSystem {
 
     textObj.x = x;
     textObj.y = y - 15; // Offset from coin text
-    textObj.text = `+${amount}`;
+    textObj.text = `💎+${amount}`;
     textObj.color = '#4a90e2';
-    textObj.size = 14;
+    textObj.size = 12;
     textObj.alpha = 1;
     textObj.life = 1;
     textObj.decay = 0.022;
@@ -134,9 +134,9 @@ class FloatingTextSystem {
 
     textObj.x = x;
     textObj.y = y;
-    textObj.text = `-${amount}`;
+    textObj.text = `❤️-${amount}`;
     textObj.color = '#e63946';
-    textObj.size = 24;
+    textObj.size = 20;
     textObj.alpha = 1;
     textObj.life = 1;
     textObj.decay = 0.015;
@@ -162,9 +162,9 @@ class FloatingTextSystem {
 
     textObj.x = x;
     textObj.y = y;
-    textObj.text = `+${amount}`;
+    textObj.text = `❤️+${amount}`;
     textObj.color = '#2ecc71';
-    textObj.size = 22;
+    textObj.size = 18;
     textObj.alpha = 1;
     textObj.life = 1;
     textObj.decay = 0.018;

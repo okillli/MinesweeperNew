@@ -9,6 +9,27 @@ test.describe('Grid Validation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('#menu-screen.active');
+
+    // Mark tutorial as completed so tests go directly to quest screen
+    await page.evaluate(() => {
+      const existingSave = localStorage.getItem('minequest_save');
+      let saveData;
+      if (existingSave) {
+        saveData = JSON.parse(existingSave);
+        saveData.persistent = saveData.persistent || {};
+        saveData.persistent.tutorialCompleted = true;
+        saveData.persistent.seenTips = saveData.persistent.seenTips || [];
+      } else {
+        saveData = {
+          version: '0.6.0',
+          timestamp: Date.now(),
+          persistent: { tutorialCompleted: true, seenTips: [] }
+        };
+      }
+      localStorage.setItem('minequest_save', JSON.stringify(saveData));
+    });
+    await page.reload();
+    await page.waitForSelector('#menu-screen.active');
   });
 
   test('TC1: Mine count matches configuration', async ({ page }) => {

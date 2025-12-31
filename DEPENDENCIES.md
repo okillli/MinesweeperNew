@@ -129,11 +129,13 @@ The `getScaledBoardConfig()` function uses these settings from `GameState.persis
 
 **DOWNSTREAM DEPENDENCIES (what imports this):**
 - `Grid.js` - Creates and manages Cell instances
+- `CanvasRenderer.js` - Reads `revealedAt` for cascade animations
 
 **CHANGE RISK**: **CRITICAL**
 - Grid.js directly depends on Cell structure
 - Any property changes break Grid initialization
 - Changes require updates to Grid generation logic
+- `revealedAt` property used for visual animations
 
 **SIDE EFFECTS**: None (pure data holder)
 

@@ -14,9 +14,9 @@ _Made with love for Lizzie_
 | Phase 2A: Resources | Complete | 2025-12-30 |
 | Phase 2B: Items & Shop | Complete | 2025-12-30 |
 | Phase 3: Progression | Complete | 2025-12-30 |
-| Phase 4: Polish | In Progress | — |
+| Phase 4: Polish | Complete | 2025-12-31 |
 
-**Version**: 0.6.0
+**Version**: 1.0.0 🎉
 
 ---
 
@@ -82,6 +82,16 @@ _Made with love for Lizzie_
 - Flag placement effect (orange sparkle)
 - Victory confetti (colorful falling particles)
 - HUD stat animations (pulse on change)
+- **NEW**: Cell reveal cascade animation (scale effect)
+- **NEW**: Number pop on reveal (overshoot scale)
+- **NEW**: Button ripple effect (Material Design style)
+- **NEW**: Defeat screen desaturation
+- **NEW**: Shop purchase animations
+- **NEW**: Ability/consumable activation effects
+- **NEW**: Board transition fade animation
+- **NEW**: HP bar with smooth width transitions
+- **NEW**: Ambient background particles
+- **NEW**: Tooltip hover animations
 - Respects `prefers-reduced-motion` accessibility setting
 
 ### Pan/Zoom Camera System (NEW)
@@ -97,21 +107,14 @@ _Made with love for Lizzie_
 
 ---
 
-## Next Up: Phase 4 (Continued)
+## Phase 4: Complete ✅
 
-### Remaining Visual Effects
-- Cell reveal cascade animation (staggered reveal)
-- Button press ripple effect
-- Defeat screen desaturation
-- Shop purchase effects
-- Mana/ability usage effects
-- Board transition animation
-- Number pop on reveal
-- Ambient background effects
-
-### Other Phase 4 Items
-1. Tutorial/onboarding
-2. Deploy to GitHub Pages
+All Phase 4 items have been completed:
+- ✅ Visual effects & animations
+- ✅ Tutorial/onboarding (4-slide intro)
+- ✅ Audio system (12 procedural sounds)
+- ✅ Responsive layout (mobile-first)
+- ✅ Deployment (Vercel, auto-linked with GitHub)
 
 > See [DEVELOPMENT.md](DEVELOPMENT.md) for full roadmap
 
@@ -165,4 +168,4 @@ None currently.
 
 ---
 
-**Last Updated**: 2025-12-31 (Pan/Zoom Camera System added)
+**Last Updated**: 2025-12-31 (MVP Complete - v1.0.0)

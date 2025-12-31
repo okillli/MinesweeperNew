@@ -178,6 +178,43 @@ class EffectsManager {
   }
 
   /**
+   * Triggers ability activation effect (mana usage)
+   *
+   * @param {number} manaCost - Mana cost of ability
+   * @param {number} cellX - Target cell X (optional)
+   * @param {number} cellY - Target cell Y (optional)
+   * @param {Object} layout - Grid layout (optional)
+   */
+  abilityActivation(manaCost, cellX = null, cellY = null, layout = null) {
+    if (this.reducedMotion) return;
+
+    // Blue mana particles at target or center of canvas
+    if (cellX !== null && cellY !== null && layout) {
+      const canvasX = layout.offsetX + cellX * (layout.cellSize + layout.padding) + layout.cellSize / 2;
+      const canvasY = layout.offsetY + cellY * (layout.cellSize + layout.padding) + layout.cellSize / 2;
+
+      // Blue ability particles
+      this.particles.emitExplosion(canvasX, canvasY, {
+        count: 15,
+        colors: ['#4a90e2', '#5da9e9', '#7ec8e3', '#fff'],
+        minSpeed: 30,
+        maxSpeed: 80,
+        minSize: 2,
+        maxSize: 5,
+        gravity: -30,
+        decay: 0.03
+      });
+
+      // Mana cost floating text
+      this.floatingText.spawn(canvasX, canvasY - 20, `-${manaCost}`, {
+        color: '#4a90e2',
+        size: 16,
+        decay: 0.025
+      });
+    }
+  }
+
+  /**
    * Triggers healing effect
    *
    * @param {number} amount - Heal amount

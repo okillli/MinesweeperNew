@@ -12,7 +12,7 @@
 | 2A: Resources | HP, coins, mana | Complete |
 | 2B: Items | 20 items, shop, multi-board | Complete |
 | 3: Progression | Quests, characters, unlocks | Complete |
-| 4: Polish | Animations, deploy | Next |
+| 4: Polish | Animations, deploy | Complete |
 
 ---
 
@@ -91,16 +91,29 @@
 
 ---
 
-## Next: Phase 4: Polish & Launch
+### Phase 4: Polish & Launch (Complete)
 
 **Goal**: Juice, optimization, deploy
 
-- [ ] Animations (reveal, damage, effects)
-- [ ] Tutorial/onboarding
-- [ ] Responsive layout optimization
-- [ ] Audio (optional)
-- [ ] Cross-browser testing
-- [ ] Deploy to GitHub Pages
+- [x] Animations (reveal, damage, effects)
+  - [x] Particle system with object pooling
+  - [x] Floating text (+coins, -HP, +mana)
+  - [x] Cell reveal cascade animation
+  - [x] Number pop on reveal
+  - [x] Screen shake & damage flash
+  - [x] Victory confetti
+  - [x] Button ripple effects
+  - [x] Defeat desaturation
+  - [x] Shop purchase animations
+  - [x] Ability activation effects
+  - [x] Board transitions
+  - [x] HP bar smooth animation
+  - [x] Ambient background particles
+- [x] Tutorial/onboarding (4-slide intro)
+- [x] Responsive layout (mobile-first, 5 breakpoints)
+- [x] Audio system (12 procedural Web Audio sounds)
+- [x] Cross-browser testing (Playwright: Chromium, Firefox, WebKit, Mobile)
+- [x] Deployment (Vercel, auto-linked with GitHub)
 
 ---
 
@@ -135,13 +148,13 @@
 - [x] Documented in code
 - [x] Committed with descriptive message
 
-### MVP Launch
-- [ ] All phases complete
-- [ ] No critical bugs
-- [ ] Works desktop & mobile
-- [ ] Deployed to GitHub Pages
-- [ ] README complete
+### MVP Launch ✅
+- [x] All phases complete
+- [x] No critical bugs
+- [x] Works desktop & mobile
+- [x] Deployed (Vercel)
+- [x] README complete
 
 ---
 
-**Version**: 0.5.0 | **Last Updated**: 2025-12-30
+**Version**: 1.0.0 | **Last Updated**: 2025-12-31

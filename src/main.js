@@ -1006,9 +1006,17 @@ document.addEventListener('DOMContentLoaded', () => {
           enterAbilityTargetingMode(item.id);
         } else {
           // Execute immediately (auto-chord, etc.)
+          const manaCost = ItemSystem.getAbilityManaCost(game.state, item.id);
           const result = ItemSystem.useActiveAbility(game.state, item.id);
           if (result.success) {
             console.log(`Used ${item.name}: ${result.message}`);
+
+            // Trigger ability activation visual effect (no target cell)
+            if (effects) {
+              effects.abilityActivation(manaCost);
+            }
+            animateAbilityActivation(button);
+
             updateHUD();
             // Check if any cells were revealed for win condition
             if (result.data.cellsRevealed && game.state.grid.isComplete()) {
@@ -1028,6 +1036,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = ItemSystem.useConsumable(game.state, index);
         if (result.success) {
           console.log(`Used ${item.name}: ${result.message}`);
+
+          // Trigger consumable use visual effect
+          animateAbilityActivation(button);
 
           // Handle reroll shop
           if (result.data && result.data.triggerReroll) {
@@ -1077,7 +1088,9 @@ document.addEventListener('DOMContentLoaded', () => {
    * Handles board completion - transitions to shop or victory
    */
   function handleBoardComplete() {
+    console.log('[handleBoardComplete] Called!');
     const run = game.state.currentRun;
+    console.log(`[handleBoardComplete] boardNumber=${run.boardNumber}`);
 
     // Award perfect board bonus if no damage taken
     if (run.perfectBoardTracker) {
@@ -2019,11 +2032,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check if in ability targeting mode
     if (abilityTargetingMode) {
+      const itemDef = ItemSystem.getItem(abilityTargetingMode.itemId);
+      const manaCost = ItemSystem.getAbilityManaCost(game.state, abilityTargetingMode.itemId);
       const result = ItemSystem.useActiveAbility(game.state, abilityTargetingMode.itemId, x, y);
       exitAbilityTargetingMode();
 
       if (result.success) {
         console.log(`Ability used: ${result.message}`);
+
+        // Trigger ability activation visual effect
+        if (effects) {
+          const layout = renderer.calculateGridLayout();
+          effects.abilityActivation(manaCost, x, y, layout);
+        }
 
         // Award resources for revealed cells
         if (result.data.cellsRevealed && result.data.cellsRevealed > 0) {
@@ -3078,7 +3099,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check win condition
-    if (game.state.grid.isComplete()) {
+    const grid = game.state.grid;
+    const totalCells = grid.width * grid.height;
+    const targetRevealed = totalCells - grid.mineCount;
+    console.log(`[KB Win Check] revealed=${grid.revealed}, target=${targetRevealed}, isComplete=${grid.isComplete()}`);
+    if (grid.isComplete()) {
+      console.log('[KB] Board complete! Calling handleBoardComplete...');
       handleBoardComplete();
     }
   }

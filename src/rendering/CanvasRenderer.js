@@ -75,6 +75,12 @@ class CanvasRenderer {
     this.frozen = false; // Track whether rendering is frozen
     this.dpr = window.devicePixelRatio || 1; // Device pixel ratio for crisp rendering
 
+    // Reduced motion preference for animations
+    this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+      this.reducedMotion = e.matches;
+    });
+
     // Cache grid layout info for coordinate conversion
     this.gridLayout = null;
   }
@@ -375,6 +381,31 @@ class CanvasRenderer {
     const ctx = this.ctx;
     const size = this.cellSize;
 
+    // Animation constants
+    const REVEAL_ANIM_DURATION = 300; // ms for reveal cascade
+    const now = performance.now();
+    const revealAge = cell.revealedAt ? now - cell.revealedAt : Infinity;
+    const isAnimating = cell.isRevealed && revealAge < REVEAL_ANIM_DURATION;
+
+    // Calculate animation scale (0.7 -> 1.0 with ease-out)
+    let animScale = 1;
+    if (isAnimating && !this.reducedMotion) {
+      const progress = Math.min(1, revealAge / REVEAL_ANIM_DURATION);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      animScale = 0.7 + (0.3 * eased);
+    }
+
+    // Apply cell reveal animation transform
+    if (isAnimating && animScale < 1 && !this.reducedMotion) {
+      ctx.save();
+      const centerX = x + size / 2;
+      const centerY = y + size / 2;
+      ctx.translate(centerX, centerY);
+      ctx.scale(animScale, animScale);
+      ctx.translate(-centerX, -centerY);
+    }
+
     // Draw cell background
     if (cell.isRevealed) {
       ctx.fillStyle = cell.isMine ? '#e63946' : '#eee';
@@ -393,10 +424,15 @@ class CanvasRenderer {
       if (cell.isMine) {
         this.renderMine(x, y, size);
       } else if (cell.number > 0) {
-        this.renderNumber(cell.number, x, y, size);
+        this.renderNumber(cell.number, x, y, size, revealAge);
       }
     } else if (cell.isFlagged) {
       this.renderFlag(x, y, size);
+    }
+
+    // Restore transform if animation was applied
+    if (isAnimating && animScale < 1 && !this.reducedMotion) {
+      ctx.restore();
     }
   }
 
@@ -406,15 +442,38 @@ class CanvasRenderer {
    * @param {number} x - The x position on the canvas
    * @param {number} y - The y position on the canvas
    * @param {number} size - The cell size
+   * @param {number} [revealAge=Infinity] - Time since cell was revealed (for pop animation)
    */
-  renderNumber(num, x, y, size) {
+  renderNumber(num, x, y, size, revealAge = Infinity) {
+    const ctx = this.ctx;
     const colors = ['', '#0000ff', '#008000', '#ff0000', '#000080',
                     '#800000', '#008080', '#000000', '#808080'];
-    this.ctx.fillStyle = colors[num] || '#000';
-    this.ctx.font = `bold ${size * 0.6}px Arial`;
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    this.ctx.fillText(num, x + size/2, y + size/2);
+
+    // Number pop animation: scale up briefly then settle
+    const POP_DURATION = 250; // ms
+    let popScale = 1;
+    if (revealAge < POP_DURATION && !this.reducedMotion) {
+      const progress = revealAge / POP_DURATION;
+      // Overshoot easing: goes to 1.3 then settles to 1.0
+      if (progress < 0.4) {
+        // Scale up phase (0 -> 1.3)
+        popScale = 1 + (0.3 * (progress / 0.4));
+      } else {
+        // Settle phase (1.3 -> 1.0)
+        const settleProgress = (progress - 0.4) / 0.6;
+        popScale = 1.3 - (0.3 * settleProgress);
+      }
+    }
+
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+    const baseFontSize = size * 0.6;
+
+    ctx.fillStyle = colors[num] || '#000';
+    ctx.font = `bold ${baseFontSize * popScale}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(num, centerX, centerY);
   }
 
   /**

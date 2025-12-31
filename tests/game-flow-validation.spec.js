@@ -10,9 +10,16 @@ test.describe('Game Flow Validation', () => {
     await page.goto('/');
     await page.waitForSelector('#menu-screen.active');
 
-    // Clear any saved settings to start fresh
+    // Clear any saved settings and mark tutorial as completed
     await page.evaluate(() => {
       localStorage.clear();
+      // Set tutorial as completed so tests go directly to quest screen
+      const saveData = {
+        version: '0.6.0',
+        timestamp: Date.now(),
+        persistent: { tutorialCompleted: true, seenTips: [] }
+      };
+      localStorage.setItem('minequest_save', JSON.stringify(saveData));
     });
     await page.reload();
     await page.waitForSelector('#menu-screen.active');

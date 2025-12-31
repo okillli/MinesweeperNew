@@ -2188,48 +2188,48 @@ select:focus-visible {
 }
 
 /* ===========================
-   Zoom Controls
+   Zoom Controls (in HUD)
    =========================== */
 
 .zoom-controls {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 1000;
+    flex-direction: row;
+    gap: 4px;
+    margin-right: 12px;
 }
 
 .zoom-btn {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 32px;
     border: none;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.7);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: bold;
     cursor: pointer;
     touch-action: manipulation;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 .zoom-btn:hover {
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .zoom-btn:active {
-    background: rgba(78, 78, 78, 0.9);
+    background: rgba(255, 255, 255, 0.35);
     transform: scale(0.95);
 }
 
 .zoom-fit-btn {
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
+    padding: 0 8px;
+    width: auto;
+    min-width: 36px;
 }
 
 /* Hide zoom controls when not needed */
@@ -2268,26 +2268,23 @@ select:focus-visible {
         right: 10px;
     }
 
-    .zoom-controls {
-        bottom: 80px;
-        left: 10px;
+    /* Zoom controls in HUD - slightly smaller on mobile */
+    .zoom-btn {
+        width: 32px;
+        height: 28px;
+        font-size: 16px;
     }
 
-    .zoom-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 20px;
+    .zoom-fit-btn {
+        font-size: 10px;
+        padding: 0 6px;
+        min-width: 32px;
     }
 }
 
 /* When input mode toggle is on the left, minimap can be on the right */
 .minimap.mode-left {
     right: 10px;
-}
-
-/* When input mode toggle is on the left, zoom controls stay left */
-.zoom-controls.mode-left {
-    left: 10px;
 }
 
 /* ===========================
@@ -2321,10 +2318,7 @@ select:focus-visible {
         right: auto;
     }
 
-    .zoom-controls {
-        bottom: max(80px, calc(env(safe-area-inset-bottom) + 70px));
-        left: max(10px, env(safe-area-inset-left));
-    }
+    /* Zoom controls are now in the HUD, which already has safe area support */
 
     .minimap {
         top: max(70px, calc(env(safe-area-inset-top) + 60px));

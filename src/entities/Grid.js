@@ -246,6 +246,7 @@ class Grid {
     if (!cell || cell.isRevealed || cell.isFlagged) return null;
 
     cell.isRevealed = true;
+    cell.revealedAt = performance.now(); // Timestamp for animation
     this.revealed++;
 
     // Auto-reveal zeros

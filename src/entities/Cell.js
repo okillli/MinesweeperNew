@@ -46,6 +46,9 @@ class Cell {
 
     /** @type {number} Count of adjacent mines (0-8) */
     this.number = 0;
+
+    /** @type {number|null} Timestamp when cell was revealed (for animations) */
+    this.revealedAt = null;
   }
 }
 
