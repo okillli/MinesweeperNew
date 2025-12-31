@@ -97,7 +97,7 @@
 
 - [x] Animations (reveal, damage, effects)
   - [x] Particle system with object pooling
-  - [x] Floating text (+coins, -HP, +mana)
+  - [x] Floating text with icons (🪙+10, 💎+5, ❤️-1)
   - [x] Cell reveal cascade animation
   - [x] Number pop on reveal
   - [x] Screen shake & damage flash
@@ -114,6 +114,7 @@
 - [x] Audio system (12 procedural Web Audio sounds)
 - [x] Cross-browser testing (Playwright: Chromium, Firefox, WebKit, Mobile)
 - [x] Deployment (Vercel, auto-linked with GitHub)
+- [x] Consistent emoji icons (HUD, floating text, all screens)
 
 ---
 

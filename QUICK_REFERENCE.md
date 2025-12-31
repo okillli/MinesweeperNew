@@ -22,12 +22,12 @@ _Made with love for Lizzie_ ✨
 > **Authoritative source**: [GAME_DESIGN.md](GAME_DESIGN.md)
 
 ### Resources
-| Resource | Earn | Spend | Note |
-|----------|------|-------|------|
-| **HP** | Start 3 | -1 per mine | 0 = game over |
-| **Coins** | +10/cell | Shop items | Resets each run |
-| **Mana** | +5/cell, +10/flag | Active abilities | Cap: 100 |
-| **Gems** | Quest completion | Permanent unlocks | Persists forever |
+| Resource | Icon | Earn | Spend | Note |
+|----------|------|------|-------|------|
+| **HP** | ❤️ | Start 3 | -1 per mine | 0 = game over |
+| **Coins** | 🪙 | +10/cell | Shop items | Resets each run |
+| **Mana** | 💎 | +5/cell, +10/flag | Active abilities | Cap: 100 |
+| **Gems** | 💠 | Quest completion | Permanent unlocks | Persists forever |
 
 ### Run Flow
 ```
@@ -106,9 +106,11 @@ Classic Clear • Treasure Hunter • Speed Runner • Perfect Game • Boss Sla
 
 - ✅ Phase 1: Core Minesweeper
 - ✅ Phase 2A: HP, Coins, Mana
-- 🚧 Phase 2B: Items & Shop (NEXT)
-- ⏳ Phase 3: Quests, Characters, Progression
-- ⏳ Phase 4: Polish & Deploy
+- ✅ Phase 2B: Items & Shop
+- ✅ Phase 3: Quests, Characters, Progression
+- ✅ Phase 4: Polish & Deploy
+
+**Version**: 1.0.0 🎉
 
 ---
 
@@ -145,4 +147,4 @@ Classic Clear • Treasure Hunter • Speed Runner • Perfect Game • Boss Sla
 
 ---
 
-**Version**: 0.3.0 | **Last Updated**: 2025-12-30
+**Version**: 1.0.0 | **Last Updated**: 2025-12-31

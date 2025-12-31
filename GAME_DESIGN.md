@@ -159,9 +159,10 @@ Board 3 → Shop → Board 4 → Shop → Board 5 → Shop → Boss → Victory/
 ```
 
 ### HUD Layout
-- **Top**: HP hearts, Mana bar, Coins
+- **Top Left**: ❤️ HP, 💎 Mana, 🪙 Coins
+- **Top Right**: 📊 Board progress, Zoom controls
 - **Bottom**: Active abilities, Consumables
-- **Side** (desktop): Quest progress, Board #, Passive icons
+- **Side** (desktop): Quest progress, Passive icons
 
 ---
 
@@ -178,10 +179,21 @@ Board 3 → Shop → Board 4 → Shop → Board 5 → Shop → Boss → Victory/
 ### Numbers
 1=blue, 2=green, 3=red, 4=dark blue, 5=brown, 6=teal, 7=black, 8=gray
 
+### Icons (Consistent Throughout)
+| Resource | Icon | Color |
+|----------|------|-------|
+| HP | ❤️ | Red/Green |
+| Mana | 💎 | Blue |
+| Coins | 🪙 | Gold |
+| Board | 📊 | White |
+| Gems | 💠 | Cyan |
+
 ### Feedback
 - Cell reveal: 150ms fade-in
-- Coin gain: +10 floating text
-- Damage: Screen shake + red flash
+- Coin gain: 🪙+10 floating text
+- Mana gain: 💎+5 floating text
+- Damage: ❤️-1 + screen shake + red flash
+- Heal: ❤️+1 green floating text
 
 ---
 

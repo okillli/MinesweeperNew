@@ -72,10 +72,23 @@ _Made with love for Lizzie_
 - Game over overlay
 - Victory screen
 - Real-time HUD updates
+- **NEW**: Consistent emoji icons throughout UI
+
+### Emoji Icon System (NEW)
+| Resource | Icon | Used In |
+|----------|------|---------|
+| HP | ❤️ | HUD, floating text, game over |
+| Mana | 💎 | HUD, floating text |
+| Coins | 🪙 | HUD, shop, floating text, game over |
+| Board | 📊 | HUD, game over |
+| Gems | 💠 | Menu, game over rewards |
+| Runs | 🎮 | Menu stats |
+| Wins | 🏆 | Menu stats |
+| Cells | 🔍 | Game over stats |
 
 ### Visual Effects System
 - Particle system with object pooling
-- Floating text system (+coins, -HP, +mana)
+- Floating text system with icons (🪙+10, 💎+5, ❤️-1)
 - Mine explosion particles (red/orange/yellow burst)
 - Damage feedback (screen shake + red vignette flash)
 - Coin sparkle effects (gold particles)
@@ -137,7 +150,7 @@ All Phase 4 items have been completed:
 | `src/systems/ShopSystem.js` | Shop generation & purchases |
 | `src/systems/SaveSystem.js` | localStorage persistence |
 | `src/systems/ParticleSystem.js` | Particle effects (explosions, sparkles) |
-| `src/systems/FloatingTextSystem.js` | Floating text (+coins, -HP) |
+| `src/systems/FloatingTextSystem.js` | Floating text with icons (🪙, 💎, ❤️) |
 | `src/systems/EffectsManager.js` | Central effects coordinator |
 | `src/core/Camera.js` | Virtual camera for pan/zoom |
 | `src/rendering/MinimapRenderer.js` | Minimap for large boards |
@@ -168,4 +181,4 @@ None currently.
 
 ---
 
-**Last Updated**: 2025-12-31 (MVP Complete - v1.0.0)
+**Last Updated**: 2025-12-31 (Emoji Icons added)
