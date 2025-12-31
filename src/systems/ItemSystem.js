@@ -56,6 +56,8 @@ class ItemSystem {
 
     // Reset visual modifier flags
     gameState.currentRun.hasTreasureSense = false;
+    gameState.currentRun.hasGoldSense = false;
+    gameState.currentRun.firstHitShieldUsed = false;
 
     for (const item of passives) {
       const def = this.getItem(item.id);
@@ -79,6 +81,21 @@ class ItemSystem {
           if (effect.highlightType === 'high_value') {
             gameState.currentRun.hasTreasureSense = true;
           }
+          // Gold Sense: cursed cells glow brighter
+          if (effect.highlightType === 'cursed_cells') {
+            gameState.currentRun.hasGoldSense = true;
+          }
+          break;
+
+        case 'timer_bonus':
+          // Speed Boots: add time to timer at board start
+          if (gameState.currentRun.timerDuration > 0) {
+            gameState.currentRun.timerRemaining += effect.value;
+          }
+          break;
+
+        case 'first_hit_shield':
+          // Thick Skin: flag is reset, first damage will be blocked
           break;
         // Other passive types are applied dynamically (multipliers, etc.)
       }
@@ -209,6 +226,40 @@ class ItemSystem {
         result = this._executeAutoChord(grid, gameState);
         break;
 
+      // --- NEW ABILITY EFFECTS (Phase E) ---
+
+      case 'highlight_traps':
+        result = this._executeHighlightTraps(grid, gameState);
+        break;
+
+      case 'cleanse_area':
+        result = this._executeCleanse(grid, targetX, targetY, effect.size, gameState);
+        break;
+
+      case 'pause_timer':
+        result = this._executePauseTimer(gameState, effect.duration);
+        break;
+
+      case 'reveal_row':
+        result = this._executeSafeRow(grid, targetY, gameState);
+        break;
+
+      case 'reveal_corners':
+        result = this._executeRevealCorners(grid, gameState);
+        break;
+
+      case 'auto_flag_area':
+        result = this._executeAutoFlagArea(grid, targetX, targetY, effect.size, gameState);
+        break;
+
+      case 'invulnerable_reveals':
+        result = this._executeInvulnerability(gameState, effect.count);
+        break;
+
+      case 'reveal_high_value':
+        result = this._executeRevealHighValue(grid, effect.count, gameState);
+        break;
+
       default:
         // Refund mana for unknown effects
         gameState.addMana(manaCost);
@@ -266,6 +317,64 @@ class ItemSystem {
         // This is handled by ShopSystem
         result.message = 'Shop rerolled';
         result.data = { triggerReroll: true };
+        break;
+
+      // --- NEW CONSUMABLE EFFECTS (Phase E) ---
+
+      case 'reveal_all_traps':
+        const trapsFound = this._revealAllTraps(gameState.grid, gameState);
+        result.message = `Revealed ${trapsFound} traps`;
+        result.data = { trapsFound };
+        break;
+
+      case 'add_time':
+        if (gameState.currentRun.timerDuration > 0) {
+          gameState.currentRun.timerRemaining += effect.value;
+          result.message = `+${effect.value} seconds`;
+        } else {
+          result.message = 'No timer on this board';
+        }
+        break;
+
+      case 'cleanse_area':
+        // Use 5x5 area centered on last revealed cell or center
+        const centerX = Math.floor(gameState.grid.width / 2);
+        const centerY = Math.floor(gameState.grid.height / 2);
+        const cursesRemoved = this._removeCursesInArea(gameState.grid, centerX, centerY, effect.size);
+        result.message = `Removed ${cursesRemoved} curses`;
+        result.data = { cursesRemoved };
+        break;
+
+      case 'reveal_area':
+        // Consumable version (Reveal Bomb)
+        const areaResult = this._executeScanArea(gameState.grid,
+          Math.floor(gameState.grid.width / 2),
+          Math.floor(gameState.grid.height / 2),
+          effect.size, gameState);
+        result.message = areaResult.message;
+        result.data = areaResult.data;
+        break;
+
+      case 'multi_shield':
+        gameState.currentRun.shieldCount = (gameState.currentRun.shieldCount || 0) + effect.count;
+        gameState.currentRun.shieldActive = true;
+        result.message = `Shield x${effect.count} activated`;
+        break;
+
+      case 'temp_coin_multiplier':
+        gameState.currentRun.tempCoinMultiplier = effect.multiplier;
+        gameState.currentRun.tempCoinRevealsLeft = effect.reveals;
+        result.message = `${effect.multiplier}x coins for ${effect.reveals} reveals`;
+        break;
+
+      case 'skip_board':
+        result.message = 'Board skipped';
+        result.data = { skipBoard: true };
+        break;
+
+      case 'guaranteed_legendaries':
+        gameState.currentRun.guaranteedLegendaries = effect.count;
+        result.message = `Next shop: ${effect.count} legendaries`;
         break;
 
       default:
@@ -512,6 +621,348 @@ class ItemSystem {
     }
 
     return { rareBonus, legendaryBonus };
+  }
+
+  // ============================================
+  // NEW ABILITY HELPER METHODS (Phase E)
+  // ============================================
+
+  /**
+   * Highlight all traps on the grid (Trap Detector)
+   */
+  static _executeHighlightTraps(grid, gameState) {
+    const traps = [];
+
+    for (let y = 0; y < grid.height; y++) {
+      for (let x = 0; x < grid.width; x++) {
+        const cell = grid.getCell(x, y);
+        if (cell && cell.isTrap && !cell.isRevealed) {
+          traps.push({ x, y });
+        }
+      }
+    }
+
+    // Store highlighted traps for rendering
+    gameState.currentRun.highlightedTraps = traps;
+
+    return {
+      success: true,
+      message: `Detected ${traps.length} traps`,
+      data: { traps }
+    };
+  }
+
+  /**
+   * Remove curses in area (Curse Cleanse / Purify Scroll)
+   */
+  static _executeCleanse(grid, centerX, centerY, size, gameState) {
+    const cursesRemoved = this._removeCursesInArea(grid, centerX, centerY, size);
+
+    return {
+      success: true,
+      message: `Removed ${cursesRemoved} curses`,
+      data: { cursesRemoved }
+    };
+  }
+
+  /**
+   * Helper: Remove curses in an area
+   */
+  static _removeCursesInArea(grid, centerX, centerY, size) {
+    const radius = Math.floor(size / 2);
+    let removed = 0;
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const x = centerX + dx;
+        const y = centerY + dy;
+
+        if (!grid.isValid(x, y)) continue;
+
+        const cell = grid.getCell(x, y);
+        if (cell && cell.isCursed && !cell.isRevealed) {
+          cell.isCursed = false;
+          removed++;
+        }
+      }
+    }
+
+    return removed;
+  }
+
+  /**
+   * Pause timer for duration (Time Freeze)
+   */
+  static _executePauseTimer(gameState, duration) {
+    if (gameState.currentRun.timerDuration <= 0) {
+      return {
+        success: false,
+        message: 'No timer on this board'
+      };
+    }
+
+    gameState.currentRun.timerRemaining += duration;
+
+    return {
+      success: true,
+      message: `+${duration} seconds`,
+      data: { addedTime: duration }
+    };
+  }
+
+  /**
+   * Reveal entire row safely (Safe Row)
+   */
+  static _executeSafeRow(grid, rowY, gameState) {
+    let cellsRevealed = 0;
+
+    for (let x = 0; x < grid.width; x++) {
+      const cell = grid.getCell(x, rowY);
+      if (cell && !cell.isRevealed && !cell.isMine) {
+        grid.revealCell(x, rowY);
+        cellsRevealed++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Revealed ${cellsRevealed} cells in row`,
+      data: { cellsRevealed }
+    };
+  }
+
+  /**
+   * Reveal all 4 corners (Reveal Corners)
+   */
+  static _executeRevealCorners(grid, gameState) {
+    const corners = [
+      { x: 0, y: 0 },
+      { x: grid.width - 1, y: 0 },
+      { x: 0, y: grid.height - 1 },
+      { x: grid.width - 1, y: grid.height - 1 }
+    ];
+
+    let cellsRevealed = 0;
+
+    for (const corner of corners) {
+      const cell = grid.getCell(corner.x, corner.y);
+      if (cell && !cell.isRevealed && !cell.isMine) {
+        grid.revealCell(corner.x, corner.y);
+        cellsRevealed++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Revealed ${cellsRevealed} corners`,
+      data: { cellsRevealed }
+    };
+  }
+
+  /**
+   * Auto-flag mines in area (Mass Flag)
+   */
+  static _executeAutoFlagArea(grid, centerX, centerY, size, gameState) {
+    const radius = Math.floor(size / 2);
+    let flagsPlaced = 0;
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const x = centerX + dx;
+        const y = centerY + dy;
+
+        if (!grid.isValid(x, y)) continue;
+
+        const cell = grid.getCell(x, y);
+        if (cell && cell.isMine && !cell.isRevealed && !cell.isFlagged) {
+          grid.toggleFlag(x, y);
+          flagsPlaced++;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      message: `Flagged ${flagsPlaced} mines`,
+      data: { flagsPlaced }
+    };
+  }
+
+  /**
+   * Grant invulnerability for next N reveals (Invulnerability)
+   */
+  static _executeInvulnerability(gameState, count) {
+    gameState.currentRun.invulnerableReveals = count;
+
+    return {
+      success: true,
+      message: `Next ${count} reveals protected`,
+      data: { count }
+    };
+  }
+
+  /**
+   * Reveal highest value cells (Treasure Hunt)
+   */
+  static _executeRevealHighValue(grid, count, gameState) {
+    // Find all unrevealed safe cells and score them
+    const candidates = [];
+
+    for (let y = 0; y < grid.height; y++) {
+      for (let x = 0; x < grid.width; x++) {
+        const cell = grid.getCell(x, y);
+        if (cell && !cell.isRevealed && !cell.isMine) {
+          // Score based on adjacent mines (higher number = more valuable)
+          candidates.push({ x, y, value: cell.number || 0 });
+        }
+      }
+    }
+
+    // Sort by value (high to low) and take top 'count'
+    candidates.sort((a, b) => b.value - a.value);
+    const toReveal = candidates.slice(0, count);
+
+    let cellsRevealed = 0;
+    for (const pos of toReveal) {
+      grid.revealCell(pos.x, pos.y);
+      cellsRevealed++;
+    }
+
+    return {
+      success: true,
+      message: `Revealed ${cellsRevealed} high-value cells`,
+      data: { cellsRevealed }
+    };
+  }
+
+  /**
+   * Reveal all trap locations (Trap Map consumable)
+   */
+  static _revealAllTraps(grid, gameState) {
+    const traps = [];
+
+    for (let y = 0; y < grid.height; y++) {
+      for (let x = 0; x < grid.width; x++) {
+        const cell = grid.getCell(x, y);
+        if (cell && cell.isTrap && !cell.isRevealed) {
+          traps.push({ x, y });
+        }
+      }
+    }
+
+    // Store for permanent highlighting
+    gameState.currentRun.revealedTraps = traps;
+
+    return traps.length;
+  }
+
+  // ============================================
+  // NEW PASSIVE EFFECT CHECKS (Phase E)
+  // ============================================
+
+  /**
+   * Check if player has trap immunity (Trap Armor)
+   */
+  static hasTrapImmunity(gameState) {
+    return this.hasPassiveItem(gameState, 'trap_armor');
+  }
+
+  /**
+   * Get curse mana reduction (Curse Ward)
+   */
+  static getCurseReduction(gameState) {
+    let reduction = 0;
+
+    const passives = gameState.currentRun.items.passive;
+    for (const item of passives) {
+      const def = this.getItem(item.id);
+      if (def && def.effect && def.effect.type === 'curse_reduction') {
+        reduction += def.effect.value;
+      }
+    }
+
+    return reduction;
+  }
+
+  /**
+   * Check if curse should give mana instead (Curse Conversion)
+   */
+  static hasCurseConversion(gameState) {
+    return this.hasPassiveItem(gameState, 'curse_conversion');
+  }
+
+  /**
+   * Get curse to mana value (Curse Conversion)
+   */
+  static getCurseConversionValue(gameState) {
+    const passives = gameState.currentRun.items.passive;
+    for (const item of passives) {
+      const def = this.getItem(item.id);
+      if (def && def.effect && def.effect.type === 'curse_to_mana') {
+        return def.effect.value;
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Check if first hit should be blocked (Thick Skin)
+   */
+  static shouldBlockFirstHit(gameState) {
+    if (!this.hasPassiveItem(gameState, 'thick_skin')) return false;
+    if (gameState.currentRun.firstHitShieldUsed) return false;
+
+    // Mark as used and block the hit
+    gameState.currentRun.firstHitShieldUsed = true;
+    return true;
+  }
+
+  /**
+   * Get reveal mana bonus (Mana Siphon)
+   */
+  static getRevealManaBonus(gameState) {
+    let bonus = 0;
+
+    const passives = gameState.currentRun.items.passive;
+    for (const item of passives) {
+      const def = this.getItem(item.id);
+      if (def && def.effect && def.effect.type === 'reveal_mana_bonus') {
+        bonus += def.effect.value;
+      }
+    }
+
+    return bonus;
+  }
+
+  /**
+   * Get trap coin refund value (Trap Refund)
+   */
+  static getTrapRefundValue(gameState) {
+    let refund = 0;
+
+    const passives = gameState.currentRun.items.passive;
+    for (const item of passives) {
+      const def = this.getItem(item.id);
+      if (def && def.effect && def.effect.type === 'trap_coin_refund') {
+        refund += def.effect.value;
+      }
+    }
+
+    return refund;
+  }
+
+  /**
+   * Check if overtime should be a bonus (Overtime Bonus)
+   */
+  static hasOvertimeBonus(gameState) {
+    return this.hasPassiveItem(gameState, 'overtime_bonus');
+  }
+
+  /**
+   * Check if chain reveal should trigger (Chain Reveal)
+   */
+  static hasChainReveal(gameState) {
+    return this.hasPassiveItem(gameState, 'chain_reveal');
   }
 }
 

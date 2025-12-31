@@ -192,8 +192,26 @@ class GameState {
   update(deltaTime) {
     // Update systems based on current screen
     if (this.currentScreen === 'PLAYING') {
-      // Game update logic would go here
-      // For now, this is minimal - actual game logic happens in Grid and other systems
+      // Update timer countdown
+      if (this.currentRun.timerDuration > 0 && !this.currentRun.timerPaused) {
+        if (this.currentRun.timerRemaining > 0) {
+          this.currentRun.timerRemaining -= deltaTime;
+          if (this.currentRun.timerRemaining <= 0) {
+            this.currentRun.timerRemaining = 0;
+            this.currentRun.isOvertime = true;
+            // Check for Overtime Bonus passive (inverts penalty to bonus)
+            if (typeof ItemSystem !== 'undefined' && ItemSystem.hasOvertimeBonus(this)) {
+              // Overtime Bonus: INCREASE coin multiplier by 50%
+              this.currentRun.coinMultiplier *= 1.5;
+              console.log('Overtime Bonus! +50% coins instead of penalty');
+            } else {
+              // Overtime penalty: reduce coin multiplier by 50%
+              this.currentRun.coinMultiplier *= 0.5;
+              console.log('Timer expired! Overtime penalty: -50% coins');
+            }
+          }
+        }
+      }
     }
 
     // Other screen-specific updates can be added here

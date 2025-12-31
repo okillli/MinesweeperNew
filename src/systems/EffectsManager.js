@@ -235,6 +235,57 @@ class EffectsManager {
   }
 
   /**
+   * Triggers board complete celebration (lighter than full victory)
+   * Used when completing boards 1-5 before shop transition
+   */
+  boardComplete() {
+    if (this.reducedMotion) return;
+
+    if (this.canvas) {
+      const width = this.canvas.width / (window.devicePixelRatio || 1);
+      const height = this.canvas.height / (window.devicePixelRatio || 1);
+
+      // Emit green/gold sparkles from center - lighter than victory confetti
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Burst of celebration particles
+      this.particles.emitExplosion(centerX, centerY, {
+        count: 30,
+        colors: ['#4ade80', '#22c55e', '#ffd700', '#f4a261', '#fff'],
+        minSpeed: 80,
+        maxSpeed: 200,
+        minSize: 3,
+        maxSize: 8,
+        gravity: 50,
+        decay: 0.015
+      });
+
+      // Additional sparkles from top corners
+      this.particles.emitExplosion(width * 0.2, 0, {
+        count: 10,
+        colors: ['#4ade80', '#ffd700'],
+        minSpeed: 50,
+        maxSpeed: 120,
+        minSize: 2,
+        maxSize: 5,
+        gravity: 80,
+        decay: 0.02
+      });
+      this.particles.emitExplosion(width * 0.8, 0, {
+        count: 10,
+        colors: ['#4ade80', '#ffd700'],
+        minSpeed: 50,
+        maxSpeed: 120,
+        minSize: 2,
+        maxSize: 5,
+        gravity: 80,
+        decay: 0.02
+      });
+    }
+  }
+
+  /**
    * Triggers victory celebration
    */
   victory() {

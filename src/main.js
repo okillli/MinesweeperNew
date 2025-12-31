@@ -28,6 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Game handles the update-render loop and owns GameState and CanvasRenderer
   const game = new Game(canvas);
 
+  // Expose game globally for testing (Playwright tests need access)
+  window.__GAME__ = game;
+  window.__ITEM_SYSTEM__ = ItemSystem;
+
   // Create the Effects Manager for visual feedback
   // Handles particles, floating text, screen shake, and damage flash
   const effects = new EffectsManager(document.getElementById('game-screen'));
@@ -310,6 +314,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('mana-display').textContent = `${run.mana}/${run.maxMana}`;
     document.getElementById('coins-display').textContent = run.coins;
     document.getElementById('board-display').textContent = `${run.boardNumber}/${getTotalBoards()}`;
+
+    // Update timer display
+    const timerContainer = document.getElementById('timer-container');
+    const timerDisplay = document.getElementById('timer-display');
+    if (timerContainer && timerDisplay) {
+      if (run.timerDuration > 0) {
+        timerContainer.classList.remove('hidden');
+
+        // Format time as M:SS
+        const seconds = Math.max(0, Math.ceil(run.timerRemaining));
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerDisplay.textContent = run.isOvertime
+          ? `OVERTIME`
+          : `${mins}:${secs.toString().padStart(2, '0')}`;
+
+        // Update timer color based on time remaining
+        timerDisplay.classList.remove('timer-normal', 'timer-warning', 'timer-critical', 'timer-overtime');
+        if (run.isOvertime) {
+          timerDisplay.classList.add('timer-overtime');
+        } else if (run.timerRemaining <= run.timerDuration * 0.25) {
+          timerDisplay.classList.add('timer-critical');
+        } else if (run.timerRemaining <= run.timerDuration * 0.5) {
+          timerDisplay.classList.add('timer-warning');
+        } else {
+          timerDisplay.classList.add('timer-normal');
+        }
+      } else {
+        timerContainer.classList.add('hidden');
+      }
+    }
 
     // Check for mana full tip
     if (run.mana >= run.maxMana) {
@@ -847,6 +882,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Transition to game screen
     showScreen('game-screen');
 
+    // Show new mechanic tips when they first appear
+    if (boardConfig.traps > 0) {
+      showTip('tip_trap');
+    }
+    if (boardConfig.cursed > 0) {
+      showTip('tip_cursed');
+    }
+    if (boardConfig.timer > 0) {
+      showTip('tip_timer');
+    }
+
     // Initialize camera after screen is shown (needs correct viewport size)
     requestAnimationFrame(() => {
       initializeCamera();
@@ -1106,8 +1152,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // BOARD COMPLETION & VICTORY
   // ============================================================================
 
+  // Track board complete transition state
+  let boardCompleteTimeout = null;
+  let boardCompleteSkipHandler = null;
+
   /**
-   * Handles board completion - transitions to shop or victory
+   * Handles board completion - shows celebration, then transitions to shop or victory
    */
   function handleBoardComplete() {
     const run = game.state.currentRun;
@@ -1125,20 +1175,103 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Check if run is complete
+    // Check if run is complete (board 6 = final victory)
     if (run.boardNumber >= 6) {
-      handleVictory();
+      // For final victory, add a brief delay before showing victory overlay
+      showBoardCompleteCelebration(run.boardNumber, () => {
+        handleVictory();
+      }, 800); // Shorter delay for final board
       return;
     }
 
-    // Generate shop offerings
-    ShopSystem.generateOfferings(game.state);
-    populateShopUI();
+    // For boards 1-5, show celebration then transition to shop
+    showBoardCompleteCelebration(run.boardNumber, () => {
+      // Generate shop offerings
+      ShopSystem.generateOfferings(game.state);
+      populateShopUI();
 
-    // Transition to shop
-    showScreen('shop-screen');
-    showTip('tip_shop');
-    console.log(`Board ${run.boardNumber} complete! Entering shop...`);
+      // Transition to shop
+      showScreen('shop-screen');
+      showTip('tip_shop');
+      console.log(`Board ${run.boardNumber} complete! Entering shop...`);
+    }, 1500); // 1.5 second celebration
+  }
+
+  /**
+   * Shows the board complete celebration overlay with tap-to-skip
+   * @param {number} boardNumber - The board that was just completed
+   * @param {Function} onComplete - Callback when celebration ends (skip or timeout)
+   * @param {number} duration - Duration before auto-transition (ms)
+   */
+  function showBoardCompleteCelebration(boardNumber, onComplete, duration = 1500) {
+    const overlay = document.getElementById('board-complete-overlay');
+    const boardNumberEl = document.getElementById('completed-board-number');
+
+    if (!overlay) {
+      // Fallback if overlay doesn't exist
+      onComplete();
+      return;
+    }
+
+    // Update board number display
+    if (boardNumberEl) {
+      boardNumberEl.textContent = boardNumber;
+    }
+
+    // Play success sound
+    if (typeof AudioManager !== 'undefined') {
+      AudioManager.play('reveal'); // Use reveal sound as success indicator
+    }
+
+    // Trigger celebration particles
+    if (effects) {
+      effects.boardComplete();
+    }
+
+    // Show overlay
+    overlay.classList.remove('hidden');
+
+    // Clean up any existing handlers/timeouts
+    cleanupBoardCompleteCelebration();
+
+    // Set up tap-to-skip handler
+    boardCompleteSkipHandler = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      cleanupBoardCompleteCelebration();
+      overlay.classList.add('hidden');
+      onComplete();
+    };
+
+    overlay.addEventListener('click', boardCompleteSkipHandler);
+    overlay.addEventListener('touchend', boardCompleteSkipHandler);
+
+    // Auto-transition after duration
+    boardCompleteTimeout = setTimeout(() => {
+      cleanupBoardCompleteCelebration();
+      overlay.classList.add('hidden');
+      onComplete();
+    }, duration);
+
+    console.log(`Board ${boardNumber} complete! Celebrating for ${duration}ms (tap to skip)`);
+  }
+
+  /**
+   * Cleans up board complete celebration handlers and timeouts
+   */
+  function cleanupBoardCompleteCelebration() {
+    const overlay = document.getElementById('board-complete-overlay');
+
+    if (boardCompleteTimeout) {
+      clearTimeout(boardCompleteTimeout);
+      boardCompleteTimeout = null;
+    }
+
+    if (boardCompleteSkipHandler && overlay) {
+      overlay.removeEventListener('click', boardCompleteSkipHandler);
+      overlay.removeEventListener('touchend', boardCompleteSkipHandler);
+      boardCompleteSkipHandler = null;
+    }
   }
 
   /**
@@ -1479,6 +1612,21 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Chording!',
       message: 'Click a revealed number when adjacent flags match to auto-reveal safe neighbors.',
       icon: '⚡'
+    },
+    tip_trap: {
+      title: 'Watch Out: Traps!',
+      message: 'Trap cells deal 1 damage when revealed but still reveal. Look for purple highlights!',
+      icon: '⚠️'
+    },
+    tip_cursed: {
+      title: 'Beware: Cursed Cells!',
+      message: 'Cursed cells drain 20 mana when revealed. Look for the gold shimmer!',
+      icon: '✨'
+    },
+    tip_timer: {
+      title: 'Beat the Clock!',
+      message: 'Complete the board before time runs out. Overtime reduces coin rewards by 50%!',
+      icon: '⏱️'
     }
   };
 
@@ -1685,6 +1833,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show progression tip on board 2
     if (game.state.currentRun.boardNumber === 2) {
       showTip('tip_progression');
+    }
+
+    // Show new mechanic tips when they first appear
+    // Board 4 introduces traps
+    if (boardConfig.traps > 0) {
+      showTip('tip_trap');
+    }
+    // Board 6 introduces cursed cells
+    if (boardConfig.cursed > 0) {
+      showTip('tip_cursed');
+    }
+    // Board 7 introduces timer
+    if (boardConfig.timer > 0) {
+      showTip('tip_timer');
     }
 
     // Initialize camera after screen is shown (needs correct viewport size)
@@ -2247,12 +2409,45 @@ document.addEventListener('DOMContentLoaded', () => {
           game.state.currentRun.perfectBoardTracker = false;
           game.state.currentRun.safeRevealStreak = 0;
 
+          // Check for Trap Armor (immunity)
+          if (ItemSystem.hasTrapImmunity(game.state)) {
+            console.log('Trap Armor blocked trap damage!');
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn('IMMUNE', x, y, layout, '#9b59b6');
+            }
+          }
+          // Check for invulnerable reveals
+          else if (game.state.currentRun.invulnerableReveals > 0) {
+            game.state.currentRun.invulnerableReveals--;
+            console.log(`Invulnerability blocked trap! ${game.state.currentRun.invulnerableReveals} reveals left`);
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn('PROTECTED', x, y, layout, '#00ff00');
+            }
+          }
           // Check for shield protection
-          if (game.state.currentRun.shieldActive) {
+          else if (game.state.currentRun.shieldActive) {
             game.state.currentRun.shieldActive = false;
+            // Decrement shield count if multi-shield
+            if (game.state.currentRun.shieldCount > 0) {
+              game.state.currentRun.shieldCount--;
+              if (game.state.currentRun.shieldCount > 0) {
+                game.state.currentRun.shieldActive = true;
+              }
+            }
             console.log('Shield blocked trap damage!');
             showTip('tip_shield');
-          } else {
+          }
+          // Check for Thick Skin (first hit shield)
+          else if (ItemSystem.shouldBlockFirstHit(game.state)) {
+            console.log('Thick Skin blocked first trap damage!');
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn('THICK SKIN', x, y, layout, '#ffd700');
+            }
+          }
+          else {
             // Visual effects: damage feedback (no explosion for traps)
             const layout = getGridLayout();
             effects.damage(1, x, y, layout);
@@ -2262,6 +2457,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Damage system - lose 1 HP per trap
             game.state.takeDamage(1);
             console.log(`Hit trap! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+            // Apply trap refund if player has Trap Refund item
+            const trapRefund = ItemSystem.getTrapRefundValue(game.state);
+            if (trapRefund > 0) {
+              game.state.currentRun.coins += trapRefund;
+              if (effects && effects.floatingText) {
+                effects.floatingText.spawn(`+${trapRefund}💰`, x, y, layout, '#ffd700');
+              }
+            }
 
             // Game over if HP depleted
             if (game.state.currentRun.hp <= 0) {
@@ -2274,20 +2478,45 @@ document.addEventListener('DOMContentLoaded', () => {
           // Note: Don't return - trap cells still reveal and grant rewards
         }
 
-        // Check if we hit a cursed cell (mana drain)
+        // Check if we hit a cursed cell (mana drain or gain)
         if (revealedCell.isCursed) {
-          const manaDrain = 20;
-          game.state.currentRun.mana = Math.max(0, game.state.currentRun.mana - manaDrain);
-          console.log(`Cursed cell! Mana drained by ${manaDrain}`);
+          // Check for Curse Conversion (turns drain into gain)
+          if (ItemSystem.hasCurseConversion(game.state)) {
+            const manaGain = ItemSystem.getCurseConversionValue(game.state);
+            game.state.currentRun.mana = Math.min(
+              game.state.currentRun.maxMana,
+              game.state.currentRun.mana + manaGain
+            );
+            console.log(`Curse Conversion! Gained ${manaGain} mana`);
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn(`💎+${manaGain}`, x, y, layout, '#00ff00');
+            }
+          } else {
+            // Apply curse reduction from Curse Ward
+            const curseReduction = ItemSystem.getCurseReduction(game.state);
+            const manaDrain = Math.max(0, 20 - curseReduction);
 
-          // Visual effect for mana drain
-          const layout = getGridLayout();
-          if (effects && effects.floatingText) {
-            effects.floatingText.spawn(`💎-${manaDrain}`, x, y, layout, '#9b59b6');
+            if (manaDrain > 0) {
+              game.state.currentRun.mana = Math.max(0, game.state.currentRun.mana - manaDrain);
+              console.log(`Cursed cell! Mana drained by ${manaDrain}`);
+
+              // Visual effect for mana drain
+              const layout = getGridLayout();
+              if (effects && effects.floatingText) {
+                effects.floatingText.spawn(`💎-${manaDrain}`, x, y, layout, '#9b59b6');
+              }
+            } else {
+              console.log('Curse Ward negated mana drain!');
+              const layout = getGridLayout();
+              if (effects && effects.floatingText) {
+                effects.floatingText.spawn('WARDED', x, y, layout, '#ffd700');
+              }
+            }
           }
           animateStatChange('mana-display', 'mana-change');
           updateHUD();
-          // Note: Cursed cells still reveal and grant rewards (reduced by drain)
+          // Note: Cursed cells still reveal and grant rewards
         }
 
         // Calculate how many cells were revealed (including cascade)
@@ -2841,12 +3070,45 @@ document.addEventListener('DOMContentLoaded', () => {
           game.state.currentRun.perfectBoardTracker = false;
           game.state.currentRun.safeRevealStreak = 0;
 
+          // Check for Trap Armor (immunity)
+          if (ItemSystem.hasTrapImmunity(game.state)) {
+            console.log('Trap Armor blocked trap damage!');
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn('IMMUNE', x, y, layout, '#9b59b6');
+            }
+          }
+          // Check for invulnerable reveals
+          else if (game.state.currentRun.invulnerableReveals > 0) {
+            game.state.currentRun.invulnerableReveals--;
+            console.log(`Invulnerability blocked trap! ${game.state.currentRun.invulnerableReveals} reveals left`);
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn('PROTECTED', x, y, layout, '#00ff00');
+            }
+          }
           // Check for shield protection
-          if (game.state.currentRun.shieldActive) {
+          else if (game.state.currentRun.shieldActive) {
             game.state.currentRun.shieldActive = false;
+            // Decrement shield count if multi-shield
+            if (game.state.currentRun.shieldCount > 0) {
+              game.state.currentRun.shieldCount--;
+              if (game.state.currentRun.shieldCount > 0) {
+                game.state.currentRun.shieldActive = true;
+              }
+            }
             console.log('Shield blocked trap damage!');
             showTip('tip_shield');
-          } else {
+          }
+          // Check for Thick Skin (first hit shield)
+          else if (ItemSystem.shouldBlockFirstHit(game.state)) {
+            console.log('Thick Skin blocked first trap damage!');
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn('THICK SKIN', x, y, layout, '#ffd700');
+            }
+          }
+          else {
             // Visual effects: damage feedback (no explosion for traps)
             const layout = getGridLayout();
             effects.damage(1, x, y, layout);
@@ -2856,6 +3118,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Damage system - lose 1 HP per trap
             game.state.takeDamage(1);
             console.log(`Hit trap! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+            // Apply trap refund if player has Trap Refund item
+            const trapRefund = ItemSystem.getTrapRefundValue(game.state);
+            if (trapRefund > 0) {
+              game.state.currentRun.coins += trapRefund;
+              if (effects && effects.floatingText) {
+                effects.floatingText.spawn(`+${trapRefund}💰`, x, y, layout, '#ffd700');
+              }
+            }
 
             // Game over if HP depleted
             if (game.state.currentRun.hp <= 0) {
@@ -2869,20 +3140,45 @@ document.addEventListener('DOMContentLoaded', () => {
           // Note: Don't return - trap cells still reveal and grant rewards
         }
 
-        // Check if we hit a cursed cell (mana drain)
+        // Check if we hit a cursed cell (mana drain or gain)
         if (revealedCell.isCursed) {
-          const manaDrain = 20;
-          game.state.currentRun.mana = Math.max(0, game.state.currentRun.mana - manaDrain);
-          console.log(`Cursed cell! Mana drained by ${manaDrain}`);
+          // Check for Curse Conversion (turns drain into gain)
+          if (ItemSystem.hasCurseConversion(game.state)) {
+            const manaGain = ItemSystem.getCurseConversionValue(game.state);
+            game.state.currentRun.mana = Math.min(
+              game.state.currentRun.maxMana,
+              game.state.currentRun.mana + manaGain
+            );
+            console.log(`Curse Conversion! Gained ${manaGain} mana`);
+            const layout = getGridLayout();
+            if (effects && effects.floatingText) {
+              effects.floatingText.spawn(`💎+${manaGain}`, x, y, layout, '#00ff00');
+            }
+          } else {
+            // Apply curse reduction from Curse Ward
+            const curseReduction = ItemSystem.getCurseReduction(game.state);
+            const manaDrain = Math.max(0, 20 - curseReduction);
 
-          // Visual effect for mana drain
-          const layout = getGridLayout();
-          if (effects && effects.floatingText) {
-            effects.floatingText.spawn(`💎-${manaDrain}`, x, y, layout, '#9b59b6');
+            if (manaDrain > 0) {
+              game.state.currentRun.mana = Math.max(0, game.state.currentRun.mana - manaDrain);
+              console.log(`Cursed cell! Mana drained by ${manaDrain}`);
+
+              // Visual effect for mana drain
+              const layout = getGridLayout();
+              if (effects && effects.floatingText) {
+                effects.floatingText.spawn(`💎-${manaDrain}`, x, y, layout, '#9b59b6');
+              }
+            } else {
+              console.log('Curse Ward negated mana drain!');
+              const layout = getGridLayout();
+              if (effects && effects.floatingText) {
+                effects.floatingText.spawn('WARDED', x, y, layout, '#ffd700');
+              }
+            }
           }
           animateStatChange('mana-display', 'mana-change');
           updateHUD();
-          // Note: Cursed cells still reveal and grant rewards (reduced by drain)
+          // Note: Cursed cells still reveal and grant rewards
         }
 
         // Calculate how many cells were revealed (including cascade)

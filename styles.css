@@ -80,6 +80,30 @@ body {
     font-size: 1.1em;
 }
 
+/* Timer color states */
+#timer-display.timer-normal {
+    color: #90ee90; /* Light green - plenty of time */
+}
+
+#timer-display.timer-warning {
+    color: #ffa500; /* Orange - getting low */
+}
+
+#timer-display.timer-critical {
+    color: #ff4444; /* Red - almost out */
+    animation: timer-pulse 0.5s ease-in-out infinite;
+}
+
+#timer-display.timer-overtime {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+@keyframes timer-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
 /* Shield indicator - shown when shield is active */
 .shield-indicator {
     font-size: 1em;
@@ -228,6 +252,100 @@ body {
 .stats-section {
     max-width: 800px;
     margin: 0 auto;
+}
+
+/* ===========================
+   Board Complete Overlay
+   =========================== */
+
+.board-complete-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1500; /* Below game over overlay but above game */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    cursor: pointer; /* Indicate tappable */
+}
+
+.board-complete-overlay:not(.hidden) {
+    opacity: 1;
+}
+
+.board-complete-overlay.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.board-complete-content {
+    text-align: center;
+    padding: 40px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 20px;
+    border: 3px solid #4ade80; /* Green success border */
+    box-shadow: 0 0 40px rgba(74, 222, 128, 0.3);
+    animation: board-complete-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 90%;
+    width: 320px;
+}
+
+@keyframes board-complete-pop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.board-complete-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+    animation: sparkle-pulse 1s ease-in-out infinite;
+}
+
+@keyframes sparkle-pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.1);
+        filter: brightness(1.3);
+    }
+}
+
+.board-complete-title {
+    font-size: 2em;
+    font-weight: bold;
+    color: #4ade80;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+}
+
+.board-complete-board {
+    font-size: 1.2em;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.board-complete-hint {
+    font-size: 0.9em;
+    color: #888;
+    animation: hint-fade 1.5s ease-in-out infinite;
+}
+
+@keyframes hint-fade {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 
 /* ===========================

@@ -287,6 +287,18 @@ class CanvasRenderer {
         this.renderHighlightedMines(gameState.grid, highlightedMines, camera);
       }
 
+      // Render Trap Detector highlighted traps
+      const highlightedTraps = gameState.currentRun?.highlightedTraps;
+      if (highlightedTraps && highlightedTraps.length > 0) {
+        this.renderHighlightedTraps(gameState.grid, highlightedTraps, camera);
+      }
+
+      // Render revealed traps (from Trap Map consumable)
+      const revealedTraps = gameState.currentRun?.revealedTraps;
+      if (revealedTraps && revealedTraps.length > 0) {
+        this.renderHighlightedTraps(gameState.grid, revealedTraps, camera);
+      }
+
       // Render hover highlight if a cell is being hovered
       if (gameState.hoverCell) {
         this.renderHoverHighlight(gameState.grid, gameState.hoverCell, camera);
@@ -794,6 +806,74 @@ class CanvasRenderer {
       ctx.fillStyle = `rgba(0, 0, 0, ${pulseAlpha + 0.2})`;
       ctx.beginPath();
       ctx.arc(cellX + cellSize - 8, cellY + 8, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Renders Trap Detector highlighted traps with a pulsing purple indicator
+   * @param {Grid} grid - The grid being rendered
+   * @param {Array<{x: number, y: number}>} highlightedTraps - Array of trap coordinates
+   * @param {Camera} [camera] - Optional camera for pan/zoom
+   */
+  renderHighlightedTraps(grid, highlightedTraps, camera) {
+    const ctx = this.ctx;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
+    const cameraEnabled = camera && camera.isEnabled();
+
+    // Pulsing animation (subtle)
+    const pulsePhase = (performance.now() % 1000) / 1000;
+    const pulseAlpha = this.reducedMotion ? 0.6 : 0.4 + 0.2 * Math.sin(pulsePhase * Math.PI * 2);
+
+    ctx.save();
+
+    if (cameraEnabled) {
+      ctx.translate(camera.offsetX, camera.offsetY);
+      ctx.scale(camera.scale, camera.scale);
+    }
+
+    for (const trap of highlightedTraps) {
+      const { x, y } = trap;
+      const cell = grid.getCell(x, y);
+
+      // Only highlight if cell is still unrevealed
+      if (!cell || cell.isRevealed) continue;
+
+      let cellX, cellY;
+
+      if (cameraEnabled) {
+        cellX = x * cellSpan;
+        cellY = y * cellSpan;
+      } else {
+        const layout = this.calculateGridLayout(grid);
+        if (!layout) continue;
+        cellX = layout.offsetX + x * cellSpan;
+        cellY = layout.offsetY + y * cellSpan;
+      }
+
+      // Draw warning overlay (purple tint)
+      ctx.fillStyle = `rgba(155, 89, 182, ${pulseAlpha * 0.4})`;
+      ctx.fillRect(cellX, cellY, cellSize, cellSize);
+
+      // Draw danger border (bright purple)
+      ctx.strokeStyle = `rgba(155, 89, 182, ${pulseAlpha + 0.3})`;
+      ctx.lineWidth = Math.max(3, 4 / this.dpr);
+      ctx.strokeRect(cellX + 2, cellY + 2, cellSize - 4, cellSize - 4);
+
+      // Draw small spike icon hint in corner
+      const iconSize = 6;
+      const iconX = cellX + cellSize - 10;
+      const iconY = cellY + 6;
+      ctx.fillStyle = `rgba(155, 89, 182, ${pulseAlpha + 0.4})`;
+      ctx.beginPath();
+      ctx.moveTo(iconX, iconY + iconSize);
+      ctx.lineTo(iconX + iconSize / 2, iconY);
+      ctx.lineTo(iconX + iconSize, iconY + iconSize);
+      ctx.closePath();
       ctx.fill();
     }
 

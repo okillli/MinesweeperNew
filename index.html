@@ -38,6 +38,11 @@
                 </div>
             </div>
             <div class="hud-right">
+                <!-- Timer (shown for timed boards) -->
+                <div id="timer-container" class="stat hidden" aria-live="polite">
+                    <span class="stat-label stat-icon" id="timer-label" aria-label="Timer">⏱️</span>
+                    <span id="timer-display" class="stat-value" aria-labelledby="timer-label">1:30</span>
+                </div>
                 <!-- Zoom Controls (shown for large boards) -->
                 <div id="zoom-controls" class="zoom-controls hidden" role="toolbar" aria-label="Zoom controls">
                     <button id="zoom-out" class="zoom-btn" aria-label="Zoom out" title="Zoom out">−</button>
@@ -46,7 +51,7 @@
                 </div>
                 <div class="stat">
                     <span class="stat-label stat-icon" id="board-label" aria-label="Board">📊</span>
-                    <span id="board-display" class="stat-value" aria-labelledby="board-label">1/6</span>
+                    <span id="board-display" class="stat-value" aria-labelledby="board-label">1/10</span>
                 </div>
             </div>
         </div>
@@ -113,8 +118,8 @@
                         <div class="tutorial-icon">🏆</div>
                         <h3>Your Goal</h3>
                         <p>Reveal all safe cells to complete each board.</p>
-                        <p>Survive <strong>6 boards</strong> to win the run!</p>
-                        <p class="tutorial-tip">Coins earned can buy items between boards.</p>
+                        <p>Survive <strong>10 boards</strong> to win the run!</p>
+                        <p class="tutorial-tip">Later boards add traps, curses, and timers!</p>
                     </div>
                 </div>
 
@@ -552,8 +557,8 @@
                             <div class="guide-item">
                                 <span class="guide-icon">📊</span>
                                 <div>
-                                    <strong>6 Boards Per Run</strong>
-                                    <p>Tutorial → Easy → Normal → Hard → Very Hard → Boss</p>
+                                    <strong>10 Boards Per Run</strong>
+                                    <p>Tutorial → Plains → Forest → Cavern (traps) → Ruins → Fortress (curses) → Volcano (timer) → Abyss → Citadel → Final Boss</p>
                                 </div>
                             </div>
                             <div class="guide-item">
@@ -575,6 +580,34 @@
                                 <div>
                                     <strong>Characters</strong>
                                     <p>Each has unique starting stats and abilities.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Hazards Section -->
+                    <details class="guide-section">
+                        <summary class="guide-section-title">Hazards</summary>
+                        <div class="guide-section-content">
+                            <div class="guide-item">
+                                <span class="guide-icon">⚠️</span>
+                                <div>
+                                    <strong>Trap Cells (Board 4+)</strong>
+                                    <p>Deal 1 damage when revealed, but still reveal. Look for purple highlights!</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">✨</span>
+                                <div>
+                                    <strong>Cursed Cells (Board 6+)</strong>
+                                    <p>Drain 20 mana when revealed. Look for the gold shimmer on unrevealed cells.</p>
+                                </div>
+                            </div>
+                            <div class="guide-item">
+                                <span class="guide-icon">⏱️</span>
+                                <div>
+                                    <strong>Timer (Board 7+)</strong>
+                                    <p>Beat the clock! Overtime reduces coin rewards by 50%.</p>
                                 </div>
                             </div>
                         </div>
