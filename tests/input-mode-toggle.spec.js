@@ -7,6 +7,9 @@
 
 const { test, expect } = require('@playwright/test');
 
+// Configure longer timeout for all tests in this file (Firefox is slower)
+test.setTimeout(60000);
+
 test.describe('Input Mode Toggle Feature', () => {
 
   /**
@@ -34,6 +37,19 @@ test.describe('Input Mode Toggle Feature', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to game and start a new run
     await page.goto('/');
+
+    // Skip tutorial by marking it as completed in localStorage
+    await page.evaluate(() => {
+      const savedData = localStorage.getItem('minequest_save');
+      const data = savedData ? JSON.parse(savedData) : { persistent: {} };
+      data.persistent = data.persistent || {};
+      data.persistent.tutorialCompleted = true;
+      data.persistent.seenTips = data.persistent.seenTips || [];
+      localStorage.setItem('minequest_save', JSON.stringify(data));
+    });
+
+    // Reload to apply the save data
+    await page.reload();
     await page.click('text=Start Run');
 
     // Wait for quest screen and select first quest
@@ -144,7 +160,10 @@ test.describe('Input Mode Toggle Feature', () => {
     expect(somethingHappened).toBe(true);
   });
 
-  test('Long-press always flags regardless of mode', async ({ page }) => {
+  test('Long-press always flags regardless of mode', async ({ page, browserName }) => {
+    // Skip on Firefox and WebKit - Touch API not available in desktop browsers
+    test.skip(browserName !== 'chromium', 'Touch API only available in Chromium');
+
     const manaDisplay = page.locator('#mana-display');
     const canvas = page.locator('#game-canvas');
 
@@ -321,6 +340,17 @@ test.describe('Mode Button Position Setting', () => {
   test('Button position can be changed in settings', async ({ page }) => {
     await page.goto('/');
 
+    // Skip tutorial by marking it as completed in localStorage
+    await page.evaluate(() => {
+      const savedData = localStorage.getItem('minequest_save');
+      const data = savedData ? JSON.parse(savedData) : { persistent: {} };
+      data.persistent = data.persistent || {};
+      data.persistent.tutorialCompleted = true;
+      data.persistent.seenTips = data.persistent.seenTips || [];
+      localStorage.setItem('minequest_save', JSON.stringify(data));
+    });
+    await page.reload();
+
     // Go to settings
     await page.click('text=Settings');
     await page.waitForSelector('#settings-screen.active', { timeout: 5000 });
@@ -361,6 +391,17 @@ test.describe('Mode Button Position Setting', () => {
 
   test('Button position setting persists', async ({ page }) => {
     await page.goto('/');
+
+    // Skip tutorial by marking it as completed in localStorage
+    await page.evaluate(() => {
+      const savedData = localStorage.getItem('minequest_save');
+      const data = savedData ? JSON.parse(savedData) : { persistent: {} };
+      data.persistent = data.persistent || {};
+      data.persistent.tutorialCompleted = true;
+      data.persistent.seenTips = data.persistent.seenTips || [];
+      localStorage.setItem('minequest_save', JSON.stringify(data));
+    });
+    await page.reload();
 
     // Go to settings and change to left
     await page.click('text=Settings');

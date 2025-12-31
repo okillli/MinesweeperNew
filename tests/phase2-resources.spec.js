@@ -7,6 +7,9 @@
 
 const { test, expect } = require('@playwright/test');
 
+// Configure longer timeout for all tests in this file (Firefox is slower)
+test.setTimeout(60000);
+
 test.describe('Phase 2: Resource Systems', () => {
 
   /**
@@ -42,20 +45,34 @@ test.describe('Phase 2: Resource Systems', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to game and start a new run
     await page.goto('/');
-    await page.click('text=Start Run');
+
+    // Skip tutorial by marking it as completed in localStorage
+    await page.evaluate(() => {
+      const savedData = localStorage.getItem('minequest_save');
+      const data = savedData ? JSON.parse(savedData) : { persistent: {} };
+      data.persistent = data.persistent || {};
+      data.persistent.tutorialCompleted = true;
+      data.persistent.seenTips = data.persistent.seenTips || [];
+      localStorage.setItem('minequest_save', JSON.stringify(data));
+    });
+
+    // Reload to apply the save data
+    await page.reload();
+    await page.waitForSelector('#menu-screen.active', { timeout: 10000 });
+    await page.click('text=Start Run', { force: true });
 
     // Wait for quest screen and select first quest (force click for mobile viewports)
-    await page.waitForSelector('#quest-screen.active', { timeout: 5000 });
-    await page.locator('.quest-card:first-child').scrollIntoViewIfNeeded();
+    await page.waitForSelector('#quest-screen.active', { timeout: 10000 });
+    await page.waitForTimeout(100); // Small delay for Firefox
     await page.click('.quest-card:first-child', { force: true });
 
     // Wait for character screen and select first character (Explorer)
-    await page.waitForSelector('#character-screen.active', { timeout: 5000 });
-    await page.locator('.character-card:first-child').scrollIntoViewIfNeeded();
+    await page.waitForSelector('#character-screen.active', { timeout: 10000 });
+    await page.waitForTimeout(100); // Small delay for Firefox
     await page.click('.character-card:first-child', { force: true });
 
     // Wait for game to be ready - canvas exists and game screen is active
-    await page.waitForSelector('#game-screen.active', { timeout: 5000 });
+    await page.waitForSelector('#game-screen.active', { timeout: 10000 });
     await page.waitForSelector('#game-canvas', { state: 'attached', timeout: 10000 });
 
     // Extra wait for game initialization and canvas sizing
@@ -278,6 +295,19 @@ test.describe('Phase 2: Input Methods', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+
+    // Skip tutorial by marking it as completed in localStorage
+    await page.evaluate(() => {
+      const savedData = localStorage.getItem('minequest_save');
+      const data = savedData ? JSON.parse(savedData) : { persistent: {} };
+      data.persistent = data.persistent || {};
+      data.persistent.tutorialCompleted = true;
+      data.persistent.seenTips = data.persistent.seenTips || [];
+      localStorage.setItem('minequest_save', JSON.stringify(data));
+    });
+
+    // Reload to apply the save data
+    await page.reload();
     await page.click('text=Start Run');
 
     // Wait for quest screen and select first quest

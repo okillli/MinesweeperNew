@@ -20,7 +20,7 @@
         <div id="hud" class="hud hidden" role="status" aria-live="polite">
             <div class="hud-left">
                 <div class="stat">
-                    <span class="stat-label" id="hp-label">HP:</span>
+                    <span class="stat-label stat-icon" id="hp-label" aria-label="HP">❤️</span>
                     <span id="hp-display" class="stat-value" aria-labelledby="hp-label">3</span>
                     <div class="hp-bar-container" aria-hidden="true">
                         <div id="hp-bar" class="hp-bar" style="width: 100%;"></div>
@@ -28,17 +28,17 @@
                     </div>
                 </div>
                 <div class="stat">
-                    <span class="stat-label" id="mana-label">Mana:</span>
+                    <span class="stat-label stat-icon" id="mana-label" aria-label="Mana">💎</span>
                     <span id="mana-display" class="stat-value" aria-labelledby="mana-label">0/100</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label" id="coins-label">Coins:</span>
+                    <span class="stat-label stat-icon" id="coins-label" aria-label="Coins">🪙</span>
                     <span id="coins-display" class="stat-value" aria-labelledby="coins-label">0</span>
                 </div>
             </div>
             <div class="hud-right">
                 <div class="stat">
-                    <span class="stat-label" id="board-label">Board:</span>
+                    <span class="stat-label stat-icon" id="board-label" aria-label="Board">📊</span>
                     <span id="board-display" class="stat-value" aria-labelledby="board-label">1/6</span>
                 </div>
             </div>
@@ -60,9 +60,9 @@
                 </div>
 
                 <div class="stats-preview">
-                    <p>Gems: <span id="menu-gems">0</span></p>
-                    <p>Runs: <span id="menu-runs">0</span></p>
-                    <p>Wins: <span id="menu-wins">0</span></p>
+                    <p>💠 <span id="menu-gems">0</span></p>
+                    <p>🎮 <span id="menu-runs">0</span> runs</p>
+                    <p>🏆 <span id="menu-wins">0</span> wins</p>
                 </div>
             </div>
         </div>
@@ -217,7 +217,7 @@
             <div class="screen-content">
                 <h2>Shop</h2>
                 <p class="shop-info">Choose your upgrades wisely!</p>
-                <p class="shop-coins">Coins: <span id="shop-coins-display">0</span></p>
+                <p class="shop-coins">🪙 <span id="shop-coins-display">0</span></p>
 
                 <div id="shop-items" class="shop-items">
                     <!-- Shop items will be populated by JavaScript -->
@@ -250,15 +250,15 @@
 
                     <div class="stats-summary">
                         <h3>Run Statistics</h3>
-                        <p>Boards Cleared: <span id="stat-boards">0</span></p>
-                        <p>Cells Revealed: <span id="stat-cells">0</span></p>
-                        <p>Coins Earned: <span id="stat-coins">0</span></p>
-                        <p>Damage Taken: <span id="stat-damage">0</span></p>
+                        <p>📊 Boards Cleared: <span id="stat-boards">0</span></p>
+                        <p>🔍 Cells Revealed: <span id="stat-cells">0</span></p>
+                        <p>🪙 Coins Earned: <span id="stat-coins">0</span></p>
+                        <p>❤️ Damage Taken: <span id="stat-damage">0</span></p>
                     </div>
 
                     <div class="rewards">
                         <h3>Rewards</h3>
-                        <p class="gems-earned">+<span id="gems-earned">0</span> Gems</p>
+                        <p class="gems-earned">💠 +<span id="gems-earned">0</span></p>
                     </div>
 
                     <div class="gameover-actions">

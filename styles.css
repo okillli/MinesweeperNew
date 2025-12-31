@@ -65,6 +65,13 @@ body {
     color: #aaa;
 }
 
+/* Emoji icons in HUD - always visible, properly sized */
+.stat-icon {
+    font-size: 1.1em;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
 .stat-value {
     font-weight: bold;
     color: #fff;
@@ -1444,7 +1451,13 @@ h3 {
     }
 
     .stat-label {
-        display: none; /* Hide labels on very small screens */
+        display: none; /* Hide text labels on very small screens */
+    }
+
+    /* Keep emoji icons visible on small screens */
+    .stat-icon {
+        display: inline !important;
+        font-size: 1em;
     }
 
     .screen-content {
