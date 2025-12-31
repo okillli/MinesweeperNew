@@ -42,6 +42,8 @@ body {
     align-items: center;
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
     z-index: 100;
+    flex-shrink: 0; /* Never compress HUD - always visible */
+    min-height: 44px; /* Minimum touch target height */
 }
 
 .hud.hidden {
@@ -532,6 +534,8 @@ h3 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    overflow: hidden; /* Prevent canvas from pushing outside screen bounds */
+    min-height: 0; /* Allow flex item to shrink below content size */
 }
 
 #game-canvas {
@@ -1585,6 +1589,27 @@ h3 {
     .ability-button {
         width: 44px;
         height: 44px;
+    }
+}
+
+/* Wide-screen tablets in landscape (e.g., iPad landscape, Android tablets) */
+@media (min-width: 768px) and (max-height: 700px) and (orientation: landscape) {
+    .hud {
+        padding: 6px 20px;
+    }
+
+    .stat {
+        font-size: 0.9em;
+    }
+
+    .stat-value {
+        font-size: 1em;
+    }
+
+    /* Ensure HUD stays compact but readable */
+    .hp-bar-container {
+        width: 80px;
+        height: 6px;
     }
 }
 

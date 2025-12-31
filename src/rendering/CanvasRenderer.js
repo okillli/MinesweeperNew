@@ -227,7 +227,6 @@ class CanvasRenderer {
 
     const minCellSize = 28; // Absolute minimum for usability
     const idealCellSize = 44; // WCAG recommended touch target
-    const maxCellSize = 60; // Maximum to avoid overly large cells
     const padding = this.padding;
 
     // Add some margin around the grid
@@ -243,16 +242,18 @@ class CanvasRenderer {
     const maxCellWidth = (availableWidth - (grid.width - 1) * padding) / grid.width;
     const maxCellHeight = (availableHeight - (grid.height - 1) * padding) / grid.height;
 
-    // Use the smaller of width/height constraints
+    // Use the smaller of width/height constraints to fill the available area
     let calculatedSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
 
-    // Clamp to reasonable bounds
-    calculatedSize = Math.max(minCellSize, Math.min(maxCellSize, calculatedSize));
-
-    // Prefer ideal size if it fits
-    if (idealCellSize <= Math.min(maxCellWidth, maxCellHeight)) {
-      calculatedSize = Math.min(idealCellSize, calculatedSize);
+    // For large boards (15x15+), prefer ideal size to keep cells manageable
+    // Camera system handles zoom/pan for these boards
+    const isLargeBoard = grid.width >= 15 || grid.height >= 15;
+    if (isLargeBoard && calculatedSize > idealCellSize) {
+      calculatedSize = idealCellSize;
     }
+
+    // Clamp to minimum for usability
+    calculatedSize = Math.max(minCellSize, calculatedSize);
 
     this.cellSize = calculatedSize;
   }
