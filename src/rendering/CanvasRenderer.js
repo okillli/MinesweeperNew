@@ -274,7 +274,18 @@ class CanvasRenderer {
       // Get camera reference
       const camera = gameState.camera;
 
-      this.renderGrid(gameState.grid, camera);
+      this.renderGrid(gameState.grid, camera, gameState);
+
+      // Render Treasure Sense highlighting (if player has the passive)
+      if (gameState.currentRun?.hasTreasureSense) {
+        this.renderTreasureSenseHighlights(gameState.grid, camera);
+      }
+
+      // Render Mine Detector highlighted mines
+      const highlightedMines = gameState.currentRun?.highlightedMines;
+      if (highlightedMines && highlightedMines.length > 0) {
+        this.renderHighlightedMines(gameState.grid, highlightedMines, camera);
+      }
 
       // Render hover highlight if a cell is being hovered
       if (gameState.hoverCell) {
@@ -303,8 +314,9 @@ class CanvasRenderer {
    * Renders the entire grid centered on the canvas
    * @param {Grid} grid - The grid to render
    * @param {Camera} [camera] - Optional camera for pan/zoom
+   * @param {GameState} [gameState] - Optional game state for special effects
    */
-  renderGrid(grid, camera) {
+  renderGrid(grid, camera, gameState) {
     const ctx = this.ctx;
     const cellSize = this.cellSize;
     const padding = this.padding;
@@ -409,11 +421,24 @@ class CanvasRenderer {
 
     // Draw cell background
     if (cell.isRevealed) {
-      ctx.fillStyle = cell.isMine ? '#e63946' : '#eee';
+      if (cell.isMine) {
+        ctx.fillStyle = '#e63946'; // Red for mines
+      } else if (cell.isTrap) {
+        ctx.fillStyle = '#9b59b6'; // Purple for traps
+      } else if (cell.isCursed) {
+        ctx.fillStyle = '#8b7355'; // Gold/brown for cursed
+      } else {
+        ctx.fillStyle = '#eee'; // Light gray for safe cells
+      }
     } else {
-      ctx.fillStyle = '#aaa';
+      ctx.fillStyle = '#aaa'; // Medium gray for unrevealed
     }
     ctx.fillRect(x, y, size, size);
+
+    // Draw cursed shimmer effect on unrevealed cursed cells
+    if (!cell.isRevealed && cell.isCursed && !cell.isFlagged) {
+      this.renderCursedShimmer(x, y, size);
+    }
 
     // Draw cell border with DPR-aware line width for crisp rendering
     ctx.strokeStyle = '#888';
@@ -424,6 +449,8 @@ class CanvasRenderer {
     if (cell.isRevealed) {
       if (cell.isMine) {
         this.renderMine(x, y, size);
+      } else if (cell.isTrap) {
+        this.renderTrap(x, y, size);
       } else if (cell.number > 0) {
         this.renderNumber(cell.number, x, y, size, revealAge);
       }
@@ -512,6 +539,52 @@ class CanvasRenderer {
     this.ctx.moveTo(x + size * 0.3, y + size * 0.2);
     this.ctx.lineTo(x + size * 0.3, y + size * 0.8);
     this.ctx.stroke();
+  }
+
+  /**
+   * Renders a trap as a spike/triangle pointing up
+   * @param {number} x - The x position on the canvas
+   * @param {number} y - The y position on the canvas
+   * @param {number} size - The cell size
+   */
+  renderTrap(x, y, size) {
+    const ctx = this.ctx;
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+    const spikeSize = size * 0.35;
+
+    // Draw spike (triangle pointing up)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - spikeSize);
+    ctx.lineTo(centerX - spikeSize * 0.7, centerY + spikeSize * 0.5);
+    ctx.lineTo(centerX + spikeSize * 0.7, centerY + spikeSize * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Spike outline for visibility
+    ctx.strokeStyle = '#4a0080';
+    ctx.lineWidth = Math.max(1, 1.5 / this.dpr);
+    ctx.stroke();
+  }
+
+  /**
+   * Renders a subtle gold shimmer effect on unrevealed cursed cells
+   * Helps players identify cursed cells before revealing
+   * @param {number} x - The x position on the canvas
+   * @param {number} y - The y position on the canvas
+   * @param {number} size - The cell size
+   */
+  renderCursedShimmer(x, y, size) {
+    const ctx = this.ctx;
+
+    // Draw a subtle gold border/highlight
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = Math.max(2, 2.5 / this.dpr);
+
+    // Draw inner border
+    const inset = size * 0.1;
+    ctx.strokeRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
   }
 
   /**
@@ -656,6 +729,138 @@ class CanvasRenderer {
     ctx.strokeStyle = '#FFD700'; // Gold - high contrast against all cell states
     ctx.lineWidth = Math.max(2, 4 / this.dpr);
     ctx.strokeRect(cellX + 2, cellY + 2, size - 4, size - 4);
+    ctx.restore();
+  }
+
+  /**
+   * Renders Mine Detector highlighted mines with a pulsing warning indicator
+   * @param {Grid} grid - The grid being rendered
+   * @param {Array<{x: number, y: number}>} highlightedMines - Array of mine coordinates
+   * @param {Camera} [camera] - Optional camera for pan/zoom
+   */
+  renderHighlightedMines(grid, highlightedMines, camera) {
+    const ctx = this.ctx;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
+    const cameraEnabled = camera && camera.isEnabled();
+
+    // Get viewport dimensions for camera
+    const viewportW = this.canvas.width / this.dpr;
+    const viewportH = this.canvas.height / this.dpr;
+
+    // Pulsing animation (subtle)
+    const pulsePhase = (performance.now() % 1000) / 1000;
+    const pulseAlpha = this.reducedMotion ? 0.6 : 0.4 + 0.2 * Math.sin(pulsePhase * Math.PI * 2);
+
+    ctx.save();
+
+    if (cameraEnabled) {
+      // Apply camera transform
+      ctx.translate(viewportW / 2, viewportH / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+    }
+
+    for (const mine of highlightedMines) {
+      const { x, y } = mine;
+      const cell = grid.getCell(x, y);
+
+      // Only highlight if cell is still unrevealed and unflagged
+      if (!cell || cell.isRevealed || cell.isFlagged) continue;
+
+      let cellX, cellY;
+
+      if (cameraEnabled) {
+        cellX = x * cellSpan;
+        cellY = y * cellSpan;
+      } else {
+        const layout = this.calculateGridLayout(grid);
+        if (!layout) continue;
+        cellX = layout.offsetX + x * cellSpan;
+        cellY = layout.offsetY + y * cellSpan;
+      }
+
+      // Draw warning overlay (red tint)
+      ctx.fillStyle = `rgba(255, 0, 0, ${pulseAlpha * 0.3})`;
+      ctx.fillRect(cellX, cellY, cellSize, cellSize);
+
+      // Draw danger border (bright red)
+      ctx.strokeStyle = `rgba(255, 50, 50, ${pulseAlpha + 0.2})`;
+      ctx.lineWidth = Math.max(3, 4 / this.dpr);
+      ctx.strokeRect(cellX + 2, cellY + 2, cellSize - 4, cellSize - 4);
+
+      // Draw small mine icon hint in corner
+      ctx.fillStyle = `rgba(0, 0, 0, ${pulseAlpha + 0.2})`;
+      ctx.beginPath();
+      ctx.arc(cellX + cellSize - 8, cellY + 8, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Renders Treasure Sense highlighting for high-value cells
+   * High-value = unrevealed cells adjacent to 3+ mines (will show high numbers)
+   * @param {Grid} grid - The grid being rendered
+   * @param {Camera} [camera] - Optional camera for pan/zoom
+   */
+  renderTreasureSenseHighlights(grid, camera) {
+    const ctx = this.ctx;
+    const cellSize = this.cellSize;
+    const padding = this.padding;
+    const cellSpan = cellSize + padding;
+    const cameraEnabled = camera && camera.isEnabled();
+
+    // Get viewport dimensions for camera
+    const viewportW = this.canvas.width / this.dpr;
+    const viewportH = this.canvas.height / this.dpr;
+
+    // Subtle golden glow animation
+    const glowPhase = (performance.now() % 2000) / 2000;
+    const glowAlpha = this.reducedMotion ? 0.3 : 0.2 + 0.15 * Math.sin(glowPhase * Math.PI * 2);
+
+    ctx.save();
+
+    if (cameraEnabled) {
+      ctx.translate(viewportW / 2, viewportH / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+    }
+
+    // Find high-value cells (adjacent to 3+ mines = number 3-8 when revealed)
+    for (let y = 0; y < grid.height; y++) {
+      for (let x = 0; x < grid.width; x++) {
+        const cell = grid.getCell(x, y);
+
+        // Only highlight unrevealed, unflagged cells with high adjacent mine count
+        if (!cell || cell.isRevealed || cell.isFlagged || cell.isMine) continue;
+        if (cell.number < 3) continue; // Only highlight cells that will show 3+
+
+        let cellX, cellY;
+
+        if (cameraEnabled) {
+          cellX = x * cellSpan;
+          cellY = y * cellSpan;
+        } else {
+          const layout = this.calculateGridLayout(grid);
+          if (!layout) continue;
+          cellX = layout.offsetX + x * cellSpan;
+          cellY = layout.offsetY + y * cellSpan;
+        }
+
+        // Draw golden glow overlay
+        ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
+        ctx.fillRect(cellX, cellY, cellSize, cellSize);
+
+        // Draw subtle gold border
+        ctx.strokeStyle = `rgba(255, 200, 50, ${glowAlpha + 0.1})`;
+        ctx.lineWidth = Math.max(2, 2 / this.dpr);
+        ctx.strokeRect(cellX + 1, cellY + 1, cellSize - 2, cellSize - 2);
+      }
+    }
+
     ctx.restore();
   }
 

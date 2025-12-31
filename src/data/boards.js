@@ -2,14 +2,22 @@
  * boards.js
  *
  * Board configurations for LiMineZZsweeperIE.
- * Defines the 6 boards in a run with scaling difficulty.
+ * Defines the 10 boards in a run with scaling difficulty.
  *
  * DEPENDENCIES: None (pure data)
  * DEPENDENTS: GameState.js (generateNextBoard)
  *
  * Board Progression:
- * - Boards 1-5: Regular boards with increasing difficulty
- * - Board 6: Boss board (largest, most mines)
+ * - Boards 1-3: Pure minesweeper (familiar gameplay)
+ * - Board 4-5: Traps introduced
+ * - Board 6: Cursed cells introduced
+ * - Board 7+: Timer introduced
+ * - Board 10: Final Boss (all mechanics)
+ *
+ * Hazard Types:
+ * - traps: Deal 1 damage when revealed (cell still reveals)
+ * - cursed: Drain 20 mana when revealed (no HP damage)
+ * - timer: Countdown timer (overtime = -50% coins)
  */
 
 const BOARDS = [
@@ -18,60 +26,127 @@ const BOARDS = [
     name: 'Tutorial',
     width: 8,
     height: 8,
-    mines: 10,
+    mines: 8,
     coinMult: 1.0,
-    description: 'A gentle start'
+    description: 'A gentle start',
+    traps: 0,
+    cursed: 0,
+    timer: 0
   },
   {
     id: 2,
-    name: 'Easy',
-    width: 10,
-    height: 10,
-    mines: 15,
+    name: 'Plains',
+    width: 9,
+    height: 9,
+    mines: 12,
     coinMult: 1.0,
-    description: 'Getting warmer'
+    description: 'Open fields ahead',
+    traps: 0,
+    cursed: 0,
+    timer: 0
   },
   {
     id: 3,
-    name: 'Normal',
-    width: 12,
-    height: 12,
-    mines: 25,
-    coinMult: 1.5,
-    description: 'Standard challenge'
+    name: 'Forest',
+    width: 10,
+    height: 10,
+    mines: 18,
+    coinMult: 1.2,
+    description: 'Watch your step',
+    traps: 0,
+    cursed: 0,
+    timer: 0
   },
   {
     id: 4,
-    name: 'Hard',
-    width: 14,
-    height: 14,
-    mines: 35,
-    coinMult: 2.0,
-    description: 'Things get serious'
+    name: 'Cavern',
+    width: 11,
+    height: 11,
+    mines: 22,
+    coinMult: 1.4,
+    description: 'Danger lurks below',
+    traps: 2,
+    cursed: 0,
+    timer: 0
   },
   {
     id: 5,
-    name: 'Very Hard',
-    width: 14,
-    height: 14,
-    mines: 40,
-    coinMult: 2.5,
-    description: 'Almost there...'
+    name: 'Ruins',
+    width: 12,
+    height: 12,
+    mines: 28,
+    coinMult: 1.6,
+    description: 'Ancient traps remain',
+    traps: 3,
+    cursed: 0,
+    timer: 0
   },
   {
     id: 6,
-    name: 'Boss',
+    name: 'Fortress',
+    width: 13,
+    height: 13,
+    mines: 34,
+    coinMult: 1.8,
+    description: 'Cursed halls await',
+    traps: 3,
+    cursed: 4,
+    timer: 0
+  },
+  {
+    id: 7,
+    name: 'Volcano',
+    width: 14,
+    height: 14,
+    mines: 42,
+    coinMult: 2.0,
+    description: 'Race against time',
+    traps: 3,
+    cursed: 4,
+    timer: 90
+  },
+  {
+    id: 8,
+    name: 'Abyss',
+    width: 15,
+    height: 15,
+    mines: 50,
+    coinMult: 2.5,
+    description: 'The depths call',
+    traps: 4,
+    cursed: 5,
+    timer: 120
+  },
+  {
+    id: 9,
+    name: 'Citadel',
     width: 16,
     height: 16,
-    mines: 50,
+    mines: 58,
     coinMult: 3.0,
-    description: 'The final challenge'
+    description: 'Almost there...',
+    traps: 5,
+    cursed: 6,
+    timer: 150
+  },
+  {
+    id: 10,
+    name: 'Final Boss',
+    width: 18,
+    height: 18,
+    mines: 70,
+    coinMult: 4.0,
+    description: 'The ultimate challenge',
+    traps: 6,
+    cursed: 8,
+    timer: 180,
+    isBoss: true
   }
 ];
 
 /**
  * Get board configuration by board number (1-indexed)
- * @param {number} boardNumber - Board number (1-6)
+ * @param {number} boardNumber - Board number (1-10)
  * @returns {Object|null} Board configuration or null if invalid
  */
 function getBoardConfig(boardNumber) {
@@ -124,7 +199,7 @@ const DIFFICULTY_PRESETS = {
  * Get a scaled board configuration based on difficulty settings
  * Supports both scaling mode and custom dimensions mode
  *
- * @param {number} boardNumber - Board number (1-6)
+ * @param {number} boardNumber - Board number (1-10)
  * @param {Object} settings - Settings object with difficulty options
  * @param {string} settings.difficulty - 'easy', 'normal', 'hard', or 'custom'
  * @param {number} settings.boardSizeScale - Size scale 50-150% (used when difficulty='custom' and !useCustomDimensions)

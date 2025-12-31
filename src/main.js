@@ -296,10 +296,20 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHPBar(run.hp, run.maxHp, previousHpValue);
     previousHpValue = run.hp;
 
+    // Update shield indicator
+    const shieldIndicator = document.getElementById('shield-indicator');
+    if (shieldIndicator) {
+      if (run.shieldActive) {
+        shieldIndicator.classList.remove('hidden');
+      } else {
+        shieldIndicator.classList.add('hidden');
+      }
+    }
+
     // Update other HUD elements
     document.getElementById('mana-display').textContent = `${run.mana}/${run.maxMana}`;
     document.getElementById('coins-display').textContent = run.coins;
-    document.getElementById('board-display').textContent = `${run.boardNumber}/6`;
+    document.getElementById('board-display').textContent = `${run.boardNumber}/${getTotalBoards()}`;
 
     // Check for mana full tip
     if (run.mana >= run.maxMana) {
@@ -987,25 +997,37 @@ document.addEventListener('DOMContentLoaded', () => {
     button.className = `ability-button ability-${type}`;
 
     if (type === 'active') {
-      const canUse = ItemSystem.canUseAbility(game.state, item.id);
+      const def = ItemSystem.getItem(item.id);
+      const isNotImplemented = def && def.effect.type === 'rewind';
+      const canUse = !isNotImplemented && ItemSystem.canUseAbility(game.state, item.id);
+
       if (!canUse) {
         button.classList.add('disabled');
       }
 
+      // Show "Soon" for unimplemented abilities
+      const costLabel = isNotImplemented ? 'Soon' : item.manaCost;
       button.innerHTML = `
         <span class="ability-name">${item.name}</span>
-        <span class="ability-cost">${item.manaCost}</span>
+        <span class="ability-cost">${costLabel}</span>
       `;
 
+      if (isNotImplemented) {
+        button.title = 'Coming soon in a future update!';
+      }
+
       button.addEventListener('click', () => {
+        if (isNotImplemented) {
+          console.log(`${item.name} is coming soon!`);
+          return;
+        }
         if (!ItemSystem.canUseAbility(game.state, item.id)) return;
 
         // For abilities that need targeting, enter targeting mode
-        const def = ItemSystem.getItem(item.id);
         if (def && (def.effect.type === 'reveal_area' || def.effect.type === 'reveal_column')) {
           enterAbilityTargetingMode(item.id);
         } else {
-          // Execute immediately (auto-chord, etc.)
+          // Execute immediately (auto-chord, mine detector, etc.)
           const manaCost = ItemSystem.getAbilityManaCost(game.state, item.id);
           const result = ItemSystem.useActiveAbility(game.state, item.id);
           if (result.success) {
@@ -1120,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Handles victory (all 6 boards cleared)
+   * Handles victory (all boards cleared)
    */
   function handleVictory() {
     game.state.isGameOver = true;
@@ -1158,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title.classList.add('victory-title');
     }
 
-    console.log('Victory! All 6 boards cleared!');
+    console.log('Victory! All boards cleared!');
   }
 
   // ============================================================================
@@ -2056,7 +2078,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Trigger ability activation visual effect
         if (effects) {
-          const layout = renderer.calculateGridLayout();
+          const layout = game.renderer.calculateGridLayout(game.state.grid);
           effects.abilityActivation(manaCost, x, y, layout);
         }
 
@@ -2125,6 +2147,15 @@ document.addEventListener('DOMContentLoaded', () => {
           const manaEarned = safeCells * 5;
           game.state.addCoins(coinsEarned);
           game.state.addMana(manaEarned);
+
+          // Apply Combo Master bonus (+5 mana, +10 coins per chord)
+          const chordBonus = ItemSystem.getChordBonus(game.state);
+          if (chordBonus.coinBonus > 0 || chordBonus.manaBonus > 0) {
+            game.state.addCoins(chordBonus.coinBonus);
+            game.state.addMana(chordBonus.manaBonus);
+            console.log(`Combo Master bonus: +${chordBonus.coinBonus} coins, +${chordBonus.manaBonus} mana`);
+          }
+
           updateHUD();
           console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
         }
@@ -2210,15 +2241,66 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        // Check if we hit a trap (damage + reveal continues)
+        if (revealedCell.isTrap) {
+          // Mark board as imperfect
+          game.state.currentRun.perfectBoardTracker = false;
+          game.state.currentRun.safeRevealStreak = 0;
+
+          // Check for shield protection
+          if (game.state.currentRun.shieldActive) {
+            game.state.currentRun.shieldActive = false;
+            console.log('Shield blocked trap damage!');
+            showTip('tip_shield');
+          } else {
+            // Visual effects: damage feedback (no explosion for traps)
+            const layout = getGridLayout();
+            effects.damage(1, x, y, layout);
+            animateStatChange('hp-display', 'hp-change');
+            if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
+
+            // Damage system - lose 1 HP per trap
+            game.state.takeDamage(1);
+            console.log(`Hit trap! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+            // Game over if HP depleted
+            if (game.state.currentRun.hp <= 0) {
+              console.log('HP depleted! Game Over.');
+              handleGameOver();
+              return;
+            }
+          }
+          updateHUD();
+          // Note: Don't return - trap cells still reveal and grant rewards
+        }
+
+        // Check if we hit a cursed cell (mana drain)
+        if (revealedCell.isCursed) {
+          const manaDrain = 20;
+          game.state.currentRun.mana = Math.max(0, game.state.currentRun.mana - manaDrain);
+          console.log(`Cursed cell! Mana drained by ${manaDrain}`);
+
+          // Visual effect for mana drain
+          const layout = getGridLayout();
+          if (effects && effects.floatingText) {
+            effects.floatingText.spawn(`💎-${manaDrain}`, x, y, layout, '#9b59b6');
+          }
+          animateStatChange('mana-display', 'mana-change');
+          updateHUD();
+          // Note: Cursed cells still reveal and grant rewards (reduced by drain)
+        }
+
         // Calculate how many cells were revealed (including cascade)
         const cellsRevealed = grid.revealed - revealedBefore;
 
         // Update cells revealed stat
         game.state.currentRun.stats.cellsRevealed += cellsRevealed;
 
-        // Update safe reveal streak for Fortify Armor
-        game.state.currentRun.safeRevealStreak += cellsRevealed;
-        ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+        // Update safe reveal streak for Fortify Armor (reset by trap)
+        if (!revealedCell.isTrap) {
+          game.state.currentRun.safeRevealStreak += cellsRevealed;
+          ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+        }
 
         // Award coins with multipliers (+10 per cell base)
         const baseCoins = cellsRevealed * 10;
@@ -2661,6 +2743,15 @@ document.addEventListener('DOMContentLoaded', () => {
           const manaEarned = safeCells * 5;
           game.state.addCoins(coinsEarned);
           game.state.addMana(manaEarned);
+
+          // Apply Combo Master bonus (+5 mana, +10 coins per chord)
+          const chordBonus = ItemSystem.getChordBonus(game.state);
+          if (chordBonus.coinBonus > 0 || chordBonus.manaBonus > 0) {
+            game.state.addCoins(chordBonus.coinBonus);
+            game.state.addMana(chordBonus.manaBonus);
+            console.log(`Combo Master bonus: +${chordBonus.coinBonus} coins, +${chordBonus.manaBonus} mana`);
+          }
+
           updateHUD();
           console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
         }
@@ -2744,15 +2835,67 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        // Check if we hit a trap (damage + reveal continues)
+        if (revealedCell.isTrap) {
+          // Mark board as imperfect
+          game.state.currentRun.perfectBoardTracker = false;
+          game.state.currentRun.safeRevealStreak = 0;
+
+          // Check for shield protection
+          if (game.state.currentRun.shieldActive) {
+            game.state.currentRun.shieldActive = false;
+            console.log('Shield blocked trap damage!');
+            showTip('tip_shield');
+          } else {
+            // Visual effects: damage feedback (no explosion for traps)
+            const layout = getGridLayout();
+            effects.damage(1, x, y, layout);
+            animateStatChange('hp-display', 'hp-change');
+            if (typeof AudioManager !== 'undefined') AudioManager.play('mine');
+
+            // Damage system - lose 1 HP per trap
+            game.state.takeDamage(1);
+            console.log(`Hit trap! HP: ${game.state.currentRun.hp}/${game.state.currentRun.maxHp}`);
+
+            // Game over if HP depleted
+            if (game.state.currentRun.hp <= 0) {
+              console.log('HP depleted! Game Over.');
+              handleGameOver();
+              touchStartPos = null;
+              return;
+            }
+          }
+          updateHUD();
+          // Note: Don't return - trap cells still reveal and grant rewards
+        }
+
+        // Check if we hit a cursed cell (mana drain)
+        if (revealedCell.isCursed) {
+          const manaDrain = 20;
+          game.state.currentRun.mana = Math.max(0, game.state.currentRun.mana - manaDrain);
+          console.log(`Cursed cell! Mana drained by ${manaDrain}`);
+
+          // Visual effect for mana drain
+          const layout = getGridLayout();
+          if (effects && effects.floatingText) {
+            effects.floatingText.spawn(`💎-${manaDrain}`, x, y, layout, '#9b59b6');
+          }
+          animateStatChange('mana-display', 'mana-change');
+          updateHUD();
+          // Note: Cursed cells still reveal and grant rewards (reduced by drain)
+        }
+
         // Calculate how many cells were revealed (including cascade)
         const cellsRevealed = grid.revealed - revealedBefore;
 
         // Update cells revealed stat
         game.state.currentRun.stats.cellsRevealed += cellsRevealed;
 
-        // Update safe reveal streak for Fortify Armor
-        game.state.currentRun.safeRevealStreak += cellsRevealed;
-        ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+        // Update safe reveal streak for Fortify Armor (reset by trap)
+        if (!revealedCell.isTrap) {
+          game.state.currentRun.safeRevealStreak += cellsRevealed;
+          ItemSystem.checkFortifyArmor(game.state, game.state.currentRun.safeRevealStreak);
+        }
 
         // Award coins with multipliers (+10 per cell base)
         const baseCoins = cellsRevealed * 10;
@@ -3245,6 +3388,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const manaEarned = safeCells * 5;
       game.state.addCoins(coinsEarned);
       game.state.addMana(manaEarned);
+
+      // Apply Combo Master bonus (+5 mana, +10 coins per chord)
+      const chordBonus = ItemSystem.getChordBonus(game.state);
+      if (chordBonus.coinBonus > 0 || chordBonus.manaBonus > 0) {
+        game.state.addCoins(chordBonus.coinBonus);
+        game.state.addMana(chordBonus.manaBonus);
+        console.log(`Combo Master bonus: +${chordBonus.coinBonus} coins, +${chordBonus.manaBonus} mana`);
+      }
+
       updateHUD();
       console.log(`Chord revealed ${safeCells} safe cells | +${coinsEarned} coins | +${manaEarned} mana`);
     }

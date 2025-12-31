@@ -4,6 +4,7 @@
  * The Grid is the core data structure for the minesweeper game. It handles:
  * - Cell creation and initialization
  * - Mine placement (random generation)
+ * - Hazard placement (traps, cursed cells)
  * - Number calculation (counting adjacent mines)
  * - Cell revealing with auto-cascade for zeros
  * - Flagging mechanics
@@ -38,7 +39,7 @@
  * - Cascading reveals can affect many cells at once
  *
  * ASSUMPTIONS:
- * - Cell structure remains stable (x, y, isMine, isRevealed, isFlagged, number)
+ * - Cell structure remains stable (x, y, isMine, isTrap, isCursed, isRevealed, isFlagged, number)
  * - Grid coordinates are always within bounds when called from main.js
  * - Grid is initialized before any operations are performed
  *
@@ -55,8 +56,11 @@ class Grid {
    * @param {number} width - Number of columns in the grid
    * @param {number} height - Number of rows in the grid
    * @param {number} mineCount - Number of mines to place
+   * @param {Object} [config={}] - Optional configuration for hazards
+   * @param {number} [config.traps=0] - Number of trap cells to place
+   * @param {number} [config.cursed=0] - Number of cursed cells to place
    */
-  constructor(width, height, mineCount) {
+  constructor(width, height, mineCount, config = {}) {
     // Validate dimensions are positive integers
     if (!Number.isInteger(width) || width <= 0) {
       throw new Error(`Invalid grid width: ${width}. Must be a positive integer.`);
@@ -97,6 +101,18 @@ class Grid {
     this.mineCount = mineCount;
 
     /**
+     * Number of trap cells in the grid
+     * @type {number}
+     */
+    this.trapCount = config.traps || 0;
+
+    /**
+     * Number of cursed cells in the grid
+     * @type {number}
+     */
+    this.cursedCount = config.cursed || 0;
+
+    /**
      * 2D array of cells, indexed as cells[y][x]
      * @type {Cell[][]}
      */
@@ -124,7 +140,8 @@ class Grid {
    * This is the main initialization method that:
    * 1. Creates all cells
    * 2. Places mines randomly
-   * 3. Calculates numbers for all cells
+   * 3. Places hazards (traps, cursed cells)
+   * 4. Calculates numbers for all cells
    */
   generate() {
     // Create cells
@@ -137,6 +154,10 @@ class Grid {
 
     // Place mines (randomly)
     this.placeMines();
+
+    // Place hazards (traps and cursed cells)
+    this.placeTraps();
+    this.placeCursedCells();
 
     // Calculate numbers
     this.calculateNumbers();
@@ -161,6 +182,60 @@ class Grid {
         this.cells[y][x].isMine = true;
         placed++;
       }
+    }
+  }
+
+  /**
+   * Randomly places trap cells in the grid
+   *
+   * Traps deal 1 damage when revealed but the cell still reveals.
+   * Placed on non-mine cells only.
+   */
+  placeTraps() {
+    if (this.trapCount <= 0) return;
+
+    let placed = 0;
+    let attempts = 0;
+    const maxAttempts = this.width * this.height * 10; // Prevent infinite loop
+
+    while (placed < this.trapCount && attempts < maxAttempts) {
+      const x = Math.floor(Math.random() * this.width);
+      const y = Math.floor(Math.random() * this.height);
+      const cell = this.cells[y][x];
+
+      // Don't place traps on mines or existing traps
+      if (!cell.isMine && !cell.isTrap) {
+        cell.isTrap = true;
+        placed++;
+      }
+      attempts++;
+    }
+  }
+
+  /**
+   * Randomly places cursed cells in the grid
+   *
+   * Cursed cells drain mana when revealed (no HP damage).
+   * Placed on non-mine, non-trap cells only.
+   */
+  placeCursedCells() {
+    if (this.cursedCount <= 0) return;
+
+    let placed = 0;
+    let attempts = 0;
+    const maxAttempts = this.width * this.height * 10; // Prevent infinite loop
+
+    while (placed < this.cursedCount && attempts < maxAttempts) {
+      const x = Math.floor(Math.random() * this.width);
+      const y = Math.floor(Math.random() * this.height);
+      const cell = this.cells[y][x];
+
+      // Don't place curses on mines, traps, or existing cursed cells
+      if (!cell.isMine && !cell.isTrap && !cell.isCursed) {
+        cell.isCursed = true;
+        placed++;
+      }
+      attempts++;
     }
   }
 
@@ -198,6 +273,31 @@ class Grid {
         const nx = x + dx;
         const ny = y + dy;
         if (this.isValid(nx, ny) && this.cells[ny][nx].isMine) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Counts how many flags are adjacent to a given cell
+   *
+   * Checks all 8 neighboring cells (including diagonals) and
+   * counts how many are flagged. Used by Auto-Chord ability.
+   *
+   * @param {number} x - Column index
+   * @param {number} y - Row index
+   * @returns {number} Number of adjacent flags (0-8)
+   */
+  countAdjacentFlags(x, y) {
+    let count = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (this.isValid(nx, ny) && this.cells[ny][nx].isFlagged) {
           count++;
         }
       }

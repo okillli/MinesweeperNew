@@ -38,6 +38,12 @@ class Cell {
     /** @type {boolean} Whether this cell contains a mine */
     this.isMine = false;
 
+    /** @type {boolean} Whether this cell contains a trap (deals damage when revealed) */
+    this.isTrap = false;
+
+    /** @type {boolean} Whether this cell is cursed (drains mana when revealed) */
+    this.isCursed = false;
+
     /** @type {boolean} Whether this cell has been revealed to the player */
     this.isRevealed = false;
 

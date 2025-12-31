@@ -80,6 +80,24 @@ body {
     font-size: 1.1em;
 }
 
+/* Shield indicator - shown when shield is active */
+.shield-indicator {
+    font-size: 1em;
+    margin-left: 4px;
+    animation: shield-pulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(100, 200, 255, 0.8));
+    cursor: help;
+}
+
+.shield-indicator.hidden {
+    display: none;
+}
+
+@keyframes shield-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+
 /* HP display color coding */
 #hp-display {
     transition: color 0.3s ease;

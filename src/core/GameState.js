@@ -75,7 +75,7 @@ class GameState {
     this.currentRun = {
       quest: null,           // Current quest object from quests.js
       character: null,       // Selected character class from characters.js
-      boardNumber: 0,        // Current board (0-5, incremented before each board)
+      boardNumber: 0,        // Current board (0-indexed, incremented before each board)
       hp: 3,                 // Current HP
       maxHp: 3,              // Maximum HP (can be modified by items)
       mana: 0,               // Current mana
@@ -90,6 +90,12 @@ class GameState {
       shieldActive: false,   // True if Shield Token is protecting from next hit
       highlightedMines: [],  // Array of {x,y} for Mine Detector highlighting
       safeRevealStreak: 0,   // Count of safe reveals for Fortify Armor
+
+      // Timer state (for timed boards)
+      timerDuration: 0,      // Total timer duration in seconds (0 = no timer)
+      timerRemaining: 0,     // Remaining time in seconds
+      isOvertime: false,     // True if timer has expired (coin penalty active)
+      timerPaused: false,    // True when timer is paused (shop, pause menu)
 
       // Character passive multipliers
       manaCostMultiplier: 1.0,    // Mana cost multiplier (Mage: 0.75)
@@ -130,7 +136,7 @@ class GameState {
         difficulty: 'normal',     // 'easy', 'normal', 'hard', 'custom'
         boardSizeScale: 100,      // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
         mineDensityScale: 100,    // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
-        startingBoard: 1,         // Which board to start from (1-6)
+        startingBoard: 1,         // Which board to start from (1-10)
         // Custom dimensions (used when difficulty='custom' and useCustomDimensions=true)
         useCustomDimensions: false,  // If true, use exact dimensions instead of scaling
         customWidth: 10,             // Custom grid width (6-30)
@@ -224,6 +230,12 @@ class GameState {
     this.currentRun.manaCostMultiplier = 1.0;
     this.currentRun.characterCoinMult = 1.0;
 
+    // Reset timer state
+    this.currentRun.timerDuration = 0;
+    this.currentRun.timerRemaining = 0;
+    this.currentRun.isOvertime = false;
+    this.currentRun.timerPaused = false;
+
     // Clear items
     this.currentRun.items = {
       passive: [],
@@ -258,18 +270,21 @@ class GameState {
    * @returns {Object|null} Board config or null if run complete
    */
   generateNextBoard() {
-    // Increment board number (1-6)
+    // Increment board number
     this.currentRun.boardNumber++;
 
     // Get board configuration with difficulty scaling applied
     const config = getScaledBoardConfig(this.currentRun.boardNumber, this.persistent.settings);
     if (!config) {
-      // Run complete - all 6 boards cleared
+      // Run complete - all boards cleared
       return null;
     }
 
-    // Create new grid with scaled dimensions
-    this.grid = new Grid(config.width, config.height, config.mines);
+    // Create new grid with scaled dimensions and hazards
+    this.grid = new Grid(config.width, config.height, config.mines, {
+      traps: config.traps || 0,
+      cursed: config.cursed || 0
+    });
 
     // Initialize camera for large boards
     if (this.camera) {
@@ -284,6 +299,12 @@ class GameState {
     this.currentRun.perfectBoardTracker = true;
     this.currentRun.highlightedMines = [];
     this.currentRun.safeRevealStreak = 0;
+
+    // Set timer from board config (0 = no timer)
+    this.currentRun.timerDuration = config.timer || 0;
+    this.currentRun.timerRemaining = config.timer || 0;
+    this.currentRun.isOvertime = false;
+    this.currentRun.timerPaused = false;
 
     // Apply passive item stat modifiers
     if (typeof ItemSystem !== 'undefined') {
@@ -481,10 +502,10 @@ class GameState {
 
   /**
    * Check if the current board is the boss board
-   * @returns {boolean} - Whether current board is the boss (board 6)
+   * @returns {boolean} - Whether current board is the final boss
    */
   isBossBoard() {
-    return this.currentRun.boardNumber === 6;
+    return this.currentRun.boardNumber === getTotalBoards();
   }
 
   /**
@@ -492,7 +513,7 @@ class GameState {
    * @returns {boolean} - Whether all boards have been cleared
    */
   isRunComplete() {
-    return this.currentRun.boardNumber >= 6;
+    return this.currentRun.boardNumber >= getTotalBoards();
   }
 
   /**
@@ -566,6 +587,10 @@ class GameState {
       safeRevealStreak: 0,
       manaCostMultiplier: 1.0,
       characterCoinMult: 1.0,
+      timerDuration: 0,
+      timerRemaining: 0,
+      isOvertime: false,
+      timerPaused: false,
       items: { passive: [], active: [], consumables: [] },
       stats: {
         cellsRevealed: 0,
@@ -598,7 +623,7 @@ class GameState {
         difficulty: 'normal',     // 'easy', 'normal', 'hard', 'custom'
         boardSizeScale: 100,      // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
         mineDensityScale: 100,    // 50-150% (used when difficulty='custom' with useCustomDimensions=false)
-        startingBoard: 1,         // Which board to start from (1-6)
+        startingBoard: 1,         // Which board to start from (1-10)
         // Custom dimensions (used when difficulty='custom' and useCustomDimensions=true)
         useCustomDimensions: false,  // If true, use exact dimensions instead of scaling
         customWidth: 10,             // Custom grid width (6-30)

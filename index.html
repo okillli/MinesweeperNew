@@ -22,6 +22,7 @@
                 <div class="stat">
                     <span class="stat-label stat-icon" id="hp-label" aria-label="HP">❤️</span>
                     <span id="hp-display" class="stat-value" aria-labelledby="hp-label">3</span>
+                    <span id="shield-indicator" class="shield-indicator hidden" aria-label="Shield active" title="Shield: Next mine hit blocked!">🛡️</span>
                     <div class="hp-bar-container" aria-hidden="true">
                         <div id="hp-bar" class="hp-bar" style="width: 100%;"></div>
                         <div id="hp-bar-damage" class="hp-bar-damage" style="width: 0%;"></div>
@@ -265,6 +266,19 @@
                         <button id="gameover-menu-button" class="btn btn-secondary">Return to Menu</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Board Complete Overlay (appears briefly before shop transition) -->
+        <div id="board-complete-overlay" class="board-complete-overlay hidden"
+             role="status"
+             aria-live="polite"
+             aria-label="Board complete">
+            <div class="board-complete-content">
+                <div class="board-complete-icon" aria-hidden="true">✨</div>
+                <h2 class="board-complete-title">Board Complete!</h2>
+                <p class="board-complete-board">Board <span id="completed-board-number">1</span> of 6</p>
+                <p class="board-complete-hint">Tap to continue</p>
             </div>
         </div>
 

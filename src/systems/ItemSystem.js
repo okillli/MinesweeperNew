@@ -54,6 +54,9 @@ class ItemSystem {
   static applyPassiveEffects(gameState) {
     const passives = gameState.currentRun.items.passive;
 
+    // Reset visual modifier flags
+    gameState.currentRun.hasTreasureSense = false;
+
     for (const item of passives) {
       const def = this.getItem(item.id);
       if (!def || !def.effect) continue;
@@ -68,6 +71,13 @@ class ItemSystem {
             gameState.currentRun.hp += effect.value;
           } else if (effect.stat === 'maxMana') {
             gameState.currentRun.maxMana += effect.value;
+          }
+          break;
+
+        case 'visual_modifier':
+          // Treasure Sense: highlight high-value cells
+          if (effect.highlightType === 'high_value') {
+            gameState.currentRun.hasTreasureSense = true;
           }
           break;
         // Other passive types are applied dynamically (multipliers, etc.)
@@ -160,6 +170,13 @@ class ItemSystem {
       return { success: false, message: 'Invalid ability' };
     }
 
+    const effect = def.effect;
+
+    // Check for unimplemented abilities BEFORE spending mana
+    if (effect.type === 'rewind') {
+      return { success: false, message: 'Rewind coming soon!', notImplemented: true };
+    }
+
     // Check mana
     const manaCost = this.getAbilityManaCost(gameState, itemId);
     if (!gameState.spendMana(manaCost)) {
@@ -168,10 +185,11 @@ class ItemSystem {
 
     const grid = gameState.grid;
     if (!grid) {
+      // Refund mana if no grid
+      gameState.addMana(manaCost);
       return { success: false, message: 'No active grid' };
     }
 
-    const effect = def.effect;
     let result = { success: true, message: '', data: {} };
 
     switch (effect.type) {
@@ -191,11 +209,9 @@ class ItemSystem {
         result = this._executeAutoChord(grid, gameState);
         break;
 
-      case 'rewind':
-        result = this._executeRewind(gameState, effect.count);
-        break;
-
       default:
+        // Refund mana for unknown effects
+        gameState.addMana(manaCost);
         result = { success: false, message: 'Unknown ability effect' };
     }
 
@@ -382,8 +398,8 @@ class ItemSystem {
           // If flags match number, chord is safe
           if (flagCount === cell.number) {
             const revealed = grid.chord(x, y);
-            if (revealed > 0) {
-              totalRevealed += revealed;
+            if (revealed.length > 0) {
+              totalRevealed += revealed.length;
               chordsPerformed++;
               changed = true;
             }
